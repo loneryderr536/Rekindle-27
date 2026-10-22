@@ -1,0 +1,17 @@
+.superpowers/
+node_modules/
+.next/
+/out/
+/build
+/coverage
+.DS_Store
+*.pem
+npm-debug.log*
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+
+# env files: only the example and the dummy test values are committed
+.env*
+!.env.example
+!.env.test

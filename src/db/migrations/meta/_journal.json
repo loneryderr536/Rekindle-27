@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792607932824,
+      "tag": "0000_steady_karnak",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792609060590,
+      "tag": "0001_first_xorn",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792609904815,
+      "tag": "0002_sparkling_lord_hawal",
+      "breakpoints": true
+    }
+  ]
+}

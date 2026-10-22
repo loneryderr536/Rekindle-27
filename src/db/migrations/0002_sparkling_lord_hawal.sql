@@ -1,0 +1,2 @@
+ALTER TABLE "bookings" ADD COLUMN "refund_amount_paise" integer;--> statement-breakpoint
+ALTER TABLE "bookings" ADD CONSTRAINT "bookings_refund_amount_paise_nonneg" CHECK ("bookings"."refund_amount_paise" >= 0);

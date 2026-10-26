@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN, login, SCANNER, seatButton } from "./helpers";
+import { ADMIN, login, SCANNER, seatButton, startBooking } from "./helpers";
 
 test("admin blocks seat; public map shows it unavailable", async ({ browser, baseURL }) => {
   const adminCtx = await browser.newContext({ baseURL });
@@ -19,12 +19,12 @@ test("admin blocks seat; public map shows it unavailable", async ({ browser, bas
   // A guest with no session sees it greyed out and cannot pick it.
   const guestCtx = await browser.newContext({ baseURL });
   const guest = await guestCtx.newPage();
-  await guest.goto("/register");
+  await startBooking(guest, { name: "Guest Viewer", email: "viewer.e2e@example.com", phone: "9876543219" }, 1);
   const seat = seatButton(guest, "S-A-1", "Silver", "blocked");
   await expect(seat).toBeVisible();
   await expect(seat).toHaveAttribute("aria-disabled", "true");
   await seat.click({ force: true });
-  await expect(guest.getByText("Tap a seat to pick it.")).toBeVisible();
+  await expect(guest.getByText("Picked 0 of 1")).toBeVisible();
 
   await guestCtx.close();
   await adminCtx.close();

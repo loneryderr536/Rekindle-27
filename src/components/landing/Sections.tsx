@@ -152,10 +152,10 @@ export function PlanSection() {
             </>
           );
           const style = { background: c.bg, color: c.fg };
-          return c.href.startsWith("/") ? (
-            <Link key={c.k} href={c.href} style={style}>{body}</Link>
-          ) : (
+          return c.href.includes("#") ? (
             <a key={c.k} href={c.href} style={style}>{body}</a>
+          ) : (
+            <Link key={c.k} href={c.href} style={style}>{body}</Link>
           );
         })}
       </div>

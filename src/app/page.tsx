@@ -1,12 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { fredoka, poppins } from "@/components/landing/fonts";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { RevealFallback } from "@/components/landing/RevealFallback";
 import { AboutSection, FaqSection, LandingFooter, PlanSection, RekindleSection } from "@/components/landing/Sections";
 import { Stats } from "@/components/landing/Stats";
 import { StoryIntro } from "@/components/landing/StoryIntro";
 import { countSeats } from "@/server/seats/countSeats";
-import "./landing.css";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +28,7 @@ export default async function Home() {
   const seats = await countSeats().catch(() => null);
   const days = daysToGo();
   return (
-    <div id="o26-root" className={`${fredoka.variable} ${poppins.variable}`}>
+    <div id="o26-root">
       <LandingHeader />
       <main>
         <StoryIntro />

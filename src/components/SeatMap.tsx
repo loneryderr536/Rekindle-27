@@ -9,6 +9,8 @@ type Props = {
   selected: string[];
   onToggle: (seatId: string) => void;
   maxSelectable: number;
+  /** Shown when a pick would go over `maxSelectable`; defaults to the per-booking maximum. */
+  limitMessage?: string;
   /** Admin tooling: blocked seats are selectable too (held and sold never are). */
   adminMode?: boolean;
 };
@@ -29,7 +31,7 @@ function seatRadius(seats: SeatView[]): number {
   return Number.isFinite(min) ? Math.min(12, min * 0.4) : 12;
 }
 
-export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, adminMode = false }: Props) {
+export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, limitMessage, adminMode = false }: Props) {
   const [zoom, setZoom] = useState(0);
   const [limitHit, setLimitHit] = useState(false);
   const tierById = useMemo(() => new Map(tiers.map((t) => [t.id, t])), [tiers]);
@@ -95,14 +97,14 @@ export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, admin
           <svg viewBox={`${minX} ${minY} ${w} ${h}`} className="block h-auto w-full" role="group" aria-label="Seat map">
             <defs>
               <radialGradient id="stage-glow" cx="50%" cy="0%" r="90%">
-                <stop offset="0%" stopColor="#F6C66B" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#F6C66B" stopOpacity="0" />
+                <stop offset="0%" stopColor="#F9A90B" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#F9A90B" stopOpacity="0" />
               </radialGradient>
             </defs>
             <ellipse cx={cx} cy={stageY} rx={w * 0.42} ry={34} fill="url(#stage-glow)" aria-hidden="true" />
             <path
               d={`M ${minX + w * 0.18} ${stageY} Q ${cx} ${stageY + 26} ${minX + w * 0.82} ${stageY}`}
-              fill="none" stroke="#2B1433" strokeWidth={3} strokeLinecap="round" aria-hidden="true"
+              fill="none" stroke="#0B1020" strokeWidth={3} strokeLinecap="round" aria-hidden="true"
             />
             <text x={cx} y={stageY + 4} textAnchor="middle" className="stage-label" aria-hidden="true">Stage</text>
 
@@ -135,19 +137,19 @@ export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, admin
                   <circle className="seat-focus" cx={seat.x} cy={seat.y} r={r + 4} />
                   {isSelected ? (
                     <>
-                      <circle cx={seat.x} cy={seat.y} r={r} fill="#1A1320" stroke={tier?.color ?? "#888"} strokeWidth={3} />
+                      <circle cx={seat.x} cy={seat.y} r={r} fill="#0B1020" stroke={tier?.color ?? "#888"} strokeWidth={3} />
                       <path d={`M ${seat.x - k} ${seat.y} l ${k * 0.7} ${k * 0.7} l ${k * 1.3} ${-k * 1.4}`}
                         fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
                     </>
                   ) : blockedView ? (
-                    <circle cx={seat.x} cy={seat.y} r={r} fill="#5B5266" stroke={tier?.color ?? "#888"} strokeWidth={2.5} strokeDasharray="3 2" />
+                    <circle cx={seat.x} cy={seat.y} r={r} fill="#4A5160" stroke={tier?.color ?? "#888"} strokeWidth={2.5} strokeDasharray="3 2" />
                   ) : open ? (
                     <circle cx={seat.x} cy={seat.y} r={r} fill={tier?.color ?? "#888"} stroke="#ffffff" strokeWidth={1.5} />
                   ) : (
                     <>
-                      <circle cx={seat.x} cy={seat.y} r={r} fill="#DCD9E0" stroke="#B9B3C2" strokeWidth={1} />
+                      <circle cx={seat.x} cy={seat.y} r={r} fill="#E6DFCC" stroke="#D8D2C2" strokeWidth={1} />
                       <path d={`M ${seat.x - k} ${seat.y - k} L ${seat.x + k} ${seat.y + k} M ${seat.x + k} ${seat.y - k} L ${seat.x - k} ${seat.y + k}`}
-                        stroke="#8F8899" strokeWidth={1.6} strokeLinecap="round" />
+                        stroke="#8F887A" strokeWidth={1.6} strokeLinecap="round" />
                     </>
                   )}
                 </g>
@@ -158,7 +160,7 @@ export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, admin
       </div>
 
       <p role="status" aria-live="polite" className="min-h-0 px-4 text-sm font-medium text-danger empty:hidden">
-        {limitHit ? `Maximum ${maxSelectable} seats per booking` : ""}
+        {limitHit ? (limitMessage ?? `Maximum ${maxSelectable} seats per booking`) : ""}
       </p>
     </div>
   );

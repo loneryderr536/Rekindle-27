@@ -14,13 +14,16 @@ const MENU = [
   { href: LINKS.register, label: "Register" },
 ];
 
-/** Starts hidden; the scroll story fades it in once the burning logo has risen into the logo slot. */
-export function LandingHeader() {
+/**
+ * The site header. On the landing page (`solid` off) it starts hidden and the scroll story fades it
+ * in once the burning logo has risen into the logo slot; every other page shows it from the start.
+ */
+export function LandingHeader({ solid = false }: { solid?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header id="o26-header">
+    <header id="o26-header" className={solid ? "o26-header-solid" : undefined}>
       <nav aria-label="Main" className="o26-nav">
         <div className="o26-hl">
           <a className="o26-hlink o26-hdesk" href={LINKS.home}>Home</a>
@@ -61,10 +64,11 @@ export function LandingHeader() {
                   {item.label}
                 </>
               );
-              return item.href.startsWith("/") ? (
-                <Link key={item.label} href={item.href} onClick={closeMenu} className="o26-ff-fredoka">{content}</Link>
-              ) : (
+              // Section links are plain anchors so the landing page loads fresh (its story starts on mount).
+              return item.href.includes("#") ? (
                 <a key={item.label} href={item.href} onClick={closeMenu} className="o26-ff-fredoka">{content}</a>
+              ) : (
+                <Link key={item.label} href={item.href} onClick={closeMenu} className="o26-ff-fredoka">{content}</Link>
               );
             })}
           </div>

@@ -18,14 +18,17 @@ function seat(n: number, tierId = "t-gold", status: SeatView["status"] = "availa
 }
 
 /** SeatMap is controlled; this harness owns the selection like the page does. */
-function Harness({ seats, onToggle }: { seats: SeatView[]; onToggle?: (id: string) => void }) {
+function Harness({ seats, onToggle, max = 6, limitMessage }: {
+  seats: SeatView[]; onToggle?: (id: string) => void; max?: number; limitMessage?: string;
+}) {
   const [selected, setSelected] = useState<string[]>([]);
   return (
     <SeatMap
       seats={seats}
       tiers={tiers}
       selected={selected}
-      maxSelectable={6}
+      maxSelectable={max}
+      limitMessage={limitMessage}
       onToggle={(id) => {
         onToggle?.(id);
         setSelected((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
@@ -68,7 +71,14 @@ test("7th selection is blocked with message 'Maximum 6 seats per booking'", asyn
 });
 
 test("total shows ₹2,300.00 for one Gold + one Silver", () => {
-  render(<CheckoutForm selected={[seat(1), seat(1, "t-silver")]} tiers={tiers} onSubmit={async () => {}} />);
+  render(
+    <CheckoutForm
+      selected={[seat(1), seat(1, "t-silver")]}
+      tiers={tiers}
+      attendee={{ name: "Asha Rao", email: "asha@example.com", phone: "9876543210" }}
+      onSubmit={async () => {}}
+    />,
+  );
   expect(screen.getByTestId("checkout-total").textContent).toBe("₹2,300.00");
 });
 
@@ -87,4 +97,14 @@ test("adminMode: blocked seats are selectable, held and sold are not; public mod
   render(<SeatMap seats={seats} tiers={tiers} selected={[]} maxSelectable={50} onToggle={pub} />);
   await userEvent.click(screen.getByRole("button", { name: "G-A-1, Gold, blocked" }));
   expect(pub).not.toHaveBeenCalled();
+});
+
+test("a booking for 2 participants stops at 2 seats with the custom message", async () => {
+  render(<Harness seats={[seat(1), seat(2), seat(3)]} max={2} limitMessage="You're booking 2 seats." />);
+  await userEvent.click(screen.getByRole("button", { name: "G-A-1, Gold, available" }));
+  await userEvent.click(screen.getByRole("button", { name: "G-A-2, Gold, available" }));
+  const third = screen.getByRole("button", { name: "G-A-3, Gold, available" });
+  await userEvent.click(third);
+  expect(third.getAttribute("aria-pressed")).toBe("false");
+  expect(screen.getByText("You're booking 2 seats.")).toBeTruthy();
 });

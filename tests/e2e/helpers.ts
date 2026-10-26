@@ -56,11 +56,23 @@ export async function stubRazorpay(context: BrowserContext, opts: { pay: boolean
   });
 }
 
-/** Fills the checkout sheet (after "Continue") and submits it. */
-export async function fillDetails(page: Page, who: { name: string; email: string; phone: string }): Promise<void> {
+/** Step 1 on /register: fills in who is coming and how many, then goes on to the seat map. */
+export async function startBooking(
+  page: Page,
+  who: { name: string; email: string; phone: string },
+  participants: number,
+): Promise<void> {
+  await page.goto("/register");
   await page.getByLabel("Full name").fill(who.name);
   await page.getByLabel("Email").fill(who.email);
   await page.getByLabel("Mobile number").fill(who.phone);
+  for (let i = 1; i < participants; i++) await page.getByRole("button", { name: "More participants" }).click();
+  await page.getByRole("button", { name: /^Choose / }).click();
+  await page.waitForURL(/\/register\/seats$/);
+}
+
+/** Pays from the confirm sheet (after "Continue"). */
+export async function confirmAndPay(page: Page): Promise<void> {
   await page.getByRole("button", { name: /^Pay / }).click();
 }
 

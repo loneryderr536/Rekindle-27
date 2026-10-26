@@ -1,31 +1,35 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookingApp } from "@/components/BookingApp";
-import { EVENT } from "@/lib/event";
+import { AttendeeForm } from "@/components/AttendeeForm";
+import { BrandPage, PageIntro, RegisterSteps } from "@/components/landing/BrandPage";
+import { LINKS } from "@/components/landing/links";
 
 export const metadata: Metadata = { title: "Register" };
 
 export default function RegisterPage() {
   return (
-    <main className="flex flex-1 flex-col">
-      <header className="relative overflow-hidden bg-plum px-4 pb-10 pt-8 text-white">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 -bottom-24 mx-auto h-48 max-w-2xl rounded-[50%] bg-marigold/35 blur-3xl"
-        />
-        <div className="relative mx-auto max-w-3xl">
-          <Link href="/" className="mb-4 inline-block text-sm font-semibold text-white/80 underline">
-            ← Back to {EVENT.name}
-          </Link>
-          <h1 className="font-display text-4xl font-bold leading-[1.05] sm:text-5xl">{EVENT.name}</h1>
-          <p className="mt-3 text-lg text-white/90">{EVENT.date}</p>
-          <p className="text-white/75">{EVENT.venue}</p>
-          <Link href="/booking/find" className="mt-4 inline-block text-sm font-semibold text-white underline">
+    <BrandPage>
+      <div className="o26-wrap flex w-full flex-wrap items-start gap-[clamp(28px,4vw,64px)] px-6 pb-[clamp(56px,7vw,104px)] pt-[clamp(40px,6vw,88px)]">
+        <div className="flex min-w-0 flex-[1_1_380px] flex-col gap-6">
+          <RegisterSteps current={1} />
+          <PageIntro
+            eyebrow="ONE·26 · Registration"
+            title={<>Save your <span className="o26-hot">seat</span></>}
+            lead="Tell us who's coming and how many of you there are. Next you'll pick your seats on the map, then pay to confirm."
+          />
+          <blockquote className="o26-quote o26-ff-fredoka">
+            “Stir up the gift of God, which is in thee.”
+            <cite className="o26-ff-poppins">2 TIMOTHY 1:6</cite>
+          </blockquote>
+          <Link href={LINKS.findBooking} className="text-sm font-semibold underline">
             Already booked? Find your tickets
           </Link>
         </div>
-      </header>
-      <BookingApp />
-    </main>
+        <section className="o26-card min-w-0 flex-[1_1_420px] p-[clamp(22px,3vw,36px)]" aria-labelledby="details-h">
+          <h2 id="details-h" className="font-display m-0 mb-5 text-3xl font-semibold">Your details</h2>
+          <AttendeeForm />
+        </section>
+      </div>
+    </BrandPage>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
 import { formatInr } from "@/lib/money";
@@ -26,21 +27,19 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
     : [];
 
   return (
-    <main className="flex flex-1 flex-col">
+    <BrandPage>
       {b.status === "pending" && <AutoRefresh ms={PENDING_REFRESH_MS} />}
-      <header className="bg-plum px-4 pb-8 pt-8 text-white">
-        <div className="mx-auto max-w-xl">
-          <p className="text-white/80">{EVENT.name}</p>
-          <h1 className="font-display mt-1 text-4xl font-bold">Booking {b.publicCode}</h1>
-          <p className="mt-2 text-white/80">{EVENT.date}, {EVENT.venue}</p>
-        </div>
-      </header>
-
-      <section className="mx-auto w-full max-w-xl px-4 py-6">
+      <section className="mx-auto w-full max-w-xl px-6 pb-[clamp(56px,7vw,104px)] pt-[clamp(40px,6vw,72px)]">
+        <PageIntro
+          eyebrow={`ONE·26 · ${EVENT.name}`}
+          title={<>Booking <span className="o26-hot">{b.publicCode}</span></>}
+          lead={`${EVENT.date}, ${EVENT.venue}`}
+        />
+        <div className="o26-card mt-8 p-6">
         <div className="flex flex-wrap items-center gap-3">
           <span
             className={`rounded-full px-3 py-1 text-sm font-semibold ${
-              showTickets ? "bg-marigold text-plum" : "bg-white text-ink ring-1 ring-line"
+              showTickets ? "bg-marigold text-ink" : "bg-sand text-ink ring-1 ring-line"
             }`}
           >
             {bookingStatusLabel(b.status)}
@@ -73,12 +72,13 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
         {showTickets && (
           <p className="mt-4 text-muted">Show one code per person at the gate. We&apos;ve also emailed these to {b.email}.</p>
         )}
+        </div>
 
         <ul className="mt-6 space-y-5">
           {b.tickets.map((t, i) => (
-            <li key={t.seatLabel} className="ticket-stub">
+            <li key={t.seatLabel} className="ticket-stub shadow-[0_20px_40px_rgba(11,16,32,0.08)]">
               <div className="flex items-baseline gap-3 py-3">
-                <span className="font-display text-2xl font-bold">{t.seatLabel}</span>
+                <span className="font-display text-2xl font-semibold">{t.seatLabel}</span>
                 <span className="text-muted">{t.tierName}</span>
                 <span className="ml-auto tabular-nums">{formatInr(t.pricePaise)}</span>
               </div>
@@ -92,6 +92,6 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
           ))}
         </ul>
       </section>
-    </main>
+    </BrandPage>
   );
 }

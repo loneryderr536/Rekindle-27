@@ -1,17 +1,19 @@
 @import "tailwindcss";
 
 /*
- * House palette: an auditorium before curtain-up. Plum is the dark house,
- * marigold is the stage light, the page itself is a cool programme-paper lilac.
+ * ONE·26 Rekindle brand palette. The token names predate the rebrand: "plum" is now the night
+ * navy, "plum-soft" the teal, "marigold" the flame amber and "paper" the warm cream page.
  */
 :root {
-  --plum: #2b1433;
-  --plum-soft: #4a1942;
-  --marigold: #f6c66b;
-  --paper: #f4f2f7;
-  --ink: #1a1320;
-  --muted: #625a6c;
-  --line: #d9d4e0;
+  --plum: #0b1020;
+  --plum-soft: #0a5470;
+  --marigold: #f9a90b;
+  --flame: #ff4520;
+  --paper: #fdfbf4;
+  --sand: #f4efe2;
+  --ink: #0b1020;
+  --muted: #4a5160;
+  --line: #e6dfcc;
   --danger: #b3261e;
   color-scheme: light;
 }
@@ -20,14 +22,15 @@
   --color-plum: var(--plum);
   --color-plum-soft: var(--plum-soft);
   --color-marigold: var(--marigold);
+  --color-flame: var(--flame);
   --color-paper: var(--paper);
+  --color-sand: var(--sand);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-danger: var(--danger);
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
-  --font-display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", "Noto Sans Display", ui-sans-serif,
-    system-ui, sans-serif;
+  --font-sans: var(--o26-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--o26-fredoka), ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -38,7 +41,6 @@ body {
 
 .font-display {
   font-family: var(--font-display);
-  font-stretch: condensed;
 }
 
 :focus-visible {
@@ -105,9 +107,9 @@ body {
   font-size: 0.875rem;
 }
 .field input {
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
-  padding: 0.7rem 0.8rem;
+  border: 1.5px solid #d8d2c2;
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
   background: #fff;
   font-size: 1rem;
 }
@@ -122,27 +124,40 @@ body {
 .btn-primary,
 .btn-ghost {
   border-radius: 999px;
-  padding: 0.8rem 1.4rem;
-  font-weight: 700;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
   text-align: center;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 .btn-primary {
-  background: var(--plum);
-  color: #fff;
+  background: var(--marigold);
+  color: var(--ink);
+  box-shadow: 0 10px 24px rgba(249, 169, 11, 0.3);
+}
+.btn-primary:not(:disabled):hover {
+  transform: translateY(-2px);
 }
 .btn-primary:disabled {
-  background: #8d8394;
+  background: var(--line);
+  color: var(--muted);
+  box-shadow: none;
 }
 .btn-ghost {
-  border: 1px solid var(--line);
-  background: #fff;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+}
+.btn-ghost:disabled {
+  opacity: 0.5;
 }
 
 /* A ticket stub: notched edges where the perforation would tear. */
 .ticket-stub {
   position: relative;
   background: #fff;
-  border-radius: 0.75rem;
+  border-radius: 22px;
   padding: 0.5rem 1.1rem 0.9rem;
   mask: radial-gradient(circle 9px at 0 50%, #0000 98%, #000) left / 51% 100% no-repeat,
     radial-gradient(circle 9px at 100% 50%, #0000 98%, #000) right / 51% 100% no-repeat;
@@ -161,4 +176,30 @@ body {
   .sheet {
     animation: none;
   }
+}
+
+/* Round − / + buttons for counts (participants). */
+.o26-stepper {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  border: 1.5px solid #d8d2c2;
+  background: #fff;
+  color: var(--ink);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.o26-stepper:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* White card on the cream page, as in the landing page's step list. */
+.o26-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 20px 40px rgba(11, 16, 32, 0.08);
 }

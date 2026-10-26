@@ -1,16 +1,28 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FindBookingForm } from "@/components/FindBookingForm";
+import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 
 export const metadata: Metadata = { title: "Find your booking", robots: { index: false } };
 
 export default function FindBookingPage() {
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-12">
-      <h1 className="font-display mb-1 text-3xl font-bold text-plum">Find your booking</h1>
-      <p className="mb-6 text-muted">Lost the email? Enter your booking code and email to see your tickets.</p>
-      <FindBookingForm />
-      <Link href="/register" className="mt-6 text-center text-sm font-semibold underline">Back to seats</Link>
-    </main>
+    <BrandPage>
+      <div className="o26-wrap flex w-full flex-wrap items-start gap-[clamp(28px,4vw,64px)] px-6 pb-[clamp(56px,7vw,104px)] pt-[clamp(40px,6vw,88px)]">
+        <div className="min-w-0 flex-[1_1_380px]">
+          <PageIntro
+            eyebrow="ONE·26 · Your tickets"
+            title={<>Find your <span className="o26-hot">booking</span></>}
+            lead="Lost the email? Enter your booking code and email to see your tickets."
+          />
+        </div>
+        <section className="o26-card min-w-0 flex-[1_1_380px] p-[clamp(22px,3vw,36px)]">
+          <FindBookingForm />
+          <p className="mb-0 mt-6 text-center text-sm">
+            Not booked yet? <Link href="/register" className="font-semibold underline">Save your seat</Link>
+          </p>
+        </section>
+      </div>
+    </BrandPage>
   );
 }

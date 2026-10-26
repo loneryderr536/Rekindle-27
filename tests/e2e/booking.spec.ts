@@ -1,17 +1,23 @@
 import { expect, test } from "@playwright/test";
-import { fillDetails, login, query, SCANNER, seatButton, stubRazorpay } from "./helpers";
+import { confirmAndPay, login, query, SCANNER, seatButton, startBooking, stubRazorpay } from "./helpers";
 
 test("guest books 2 seats, pays, sees QR, gate scan green then red", async ({ browser, baseURL }) => {
   const guestCtx = await browser.newContext({ baseURL });
   await stubRazorpay(guestCtx, { pay: true, baseURL: baseURL! });
   const page = await guestCtx.newPage();
 
-  await page.goto("/register");
+  await startBooking(page, { name: "Asha Rao", email: "asha.e2e@example.com", phone: "9876543210" }, 2);
+  await expect(page.getByText("Picked 0 of 2")).toBeVisible();
   await seatButton(page, "G-A-1", "Gold").click();
+  await expect(page.getByRole("button", { name: "Continue" })).toBeDisabled();
   await seatButton(page, "G-A-2", "Gold").click();
+  // Two participants means two seats: a third pick is refused.
+  await seatButton(page, "G-A-3", "Gold").click();
+  await expect(page.getByText(/You're booking 2 seats/)).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
   await expect(page.getByTestId("checkout-total")).toContainText("3,000");
-  await fillDetails(page, { name: "Asha Rao", email: "asha.e2e@example.com", phone: "9876543210" });
+  await expect(page.getByRole("dialog").getByText("asha.e2e@example.com")).toBeVisible();
+  await confirmAndPay(page);
 
   // Stubbed Checkout pays at once; the app verifies the signature and lands on the booking page.
   await page.waitForURL(/\/booking\/(?!success)[^/]+$/, { timeout: 30_000 });
@@ -71,17 +77,17 @@ test("two browsers race for the same seat: one succeeds, other sees 'seat just t
   const snapshot = await (await b.request.get("/api/seats")).text();
   await b.route("**/api/seats", (route) => route.fulfill({ contentType: "application/json", body: snapshot }));
 
-  await a.goto("/register");
-  await b.goto("/register");
+  await startBooking(a, { name: "Racer One", email: "racer1.e2e@example.com", phone: "9876543211" }, 1);
+  await startBooking(b, { name: "Racer Two", email: "racer2.e2e@example.com", phone: "9876543212" }, 1);
   for (const p of [a, b]) {
     await seatButton(p, SEAT, "Gold").click();
     await p.getByRole("button", { name: "Continue" }).click();
   }
 
-  await fillDetails(a, { name: "Racer One", email: "racer1.e2e@example.com", phone: "9876543211" });
+  await confirmAndPay(a);
   await expect(a.getByText(/Seats held for/)).toBeVisible();
 
-  await fillDetails(b, { name: "Racer Two", email: "racer2.e2e@example.com", phone: "9876543212" });
+  await confirmAndPay(b);
   await expect(b.getByText(/seats were just taken/i)).toBeVisible();
 
   const held = await query<{ n: number }>(

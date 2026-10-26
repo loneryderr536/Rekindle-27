@@ -16,15 +16,15 @@ export function TierLegend({ tiers }: { tiers: TierView[] }) {
       ))}
       <li className="flex items-center gap-2 text-muted">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-          <circle cx="8" cy="8" r="6.5" fill="#1A1320" />
+          <circle cx="8" cy="8" r="6.5" fill="#0B1020" />
           <path d="M5 8l2 2 4-4.2" fill="none" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         Your pick
       </li>
       <li className="flex items-center gap-2 text-muted">
         <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-          <circle cx="8" cy="8" r="6.5" fill="#DCD9E0" stroke="#B9B3C2" />
-          <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#8F8899" strokeWidth="1.5" strokeLinecap="round" />
+          <circle cx="8" cy="8" r="6.5" fill="#E6DFCC" stroke="#D8D2C2" />
+          <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#8F887A" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         Taken
       </li>

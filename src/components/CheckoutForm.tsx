@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import type { Attendee } from "@/lib/attendee";
 import { formatInr } from "@/lib/money";
 import type { SeatView, TierView } from "@/server/seats/listSeats";
 
@@ -9,6 +11,8 @@ export type CheckoutDetails = { name: string; email: string; phone: string; turn
 type Props = {
   selected: SeatView[];
   tiers: TierView[];
+  /** Entered on /register; this form only confirms it. */
+  attendee: Omit<Attendee, "participants">;
   onSubmit: (details: CheckoutDetails) => Promise<void>;
   onCancel?: () => void;
 };
@@ -46,7 +50,8 @@ function loadTurnstile(): Promise<TurnstileApi> {
   return turnstileScript;
 }
 
-export function CheckoutForm({ selected, tiers, onSubmit, onCancel }: Props) {
+/** The last step before Razorpay: the attendee's details, the picked seats and total, and the bot check. */
+export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: Props) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const testMode = siteKey === "test";
   const [token, setToken] = useState<string>(testMode ? TEST_TOKEN : "");
@@ -83,15 +88,9 @@ export function CheckoutForm({ selected, tiers, onSubmit, onCancel }: Props) {
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (busy || !token) return;
-    const data = new FormData(e.currentTarget);
     setBusy(true);
     try {
-      await onSubmit({
-        name: String(data.get("name") ?? "").trim(),
-        email: String(data.get("email") ?? "").trim(),
-        phone: String(data.get("phone") ?? "").trim(),
-        turnstileToken: token,
-      });
+      await onSubmit({ name: attendee.name, email: attendee.email, phone: attendee.phone, turnstileToken: token });
     } finally {
       setBusy(false);
       // Turnstile tokens are single-use: get a fresh one for any retry.
@@ -122,19 +121,18 @@ export function CheckoutForm({ selected, tiers, onSubmit, onCancel }: Props) {
         </li>
       </ul>
 
-      <label className="field">
-        <span>Full name</span>
-        <input name="name" required minLength={2} maxLength={80} autoComplete="name" />
-      </label>
-      <label className="field">
-        <span>Email</span>
-        <input name="email" type="email" required autoComplete="email" inputMode="email" />
-        <small>Your tickets are sent here.</small>
-      </label>
-      <label className="field">
-        <span>Mobile number</span>
-        <input name="phone" type="tel" required autoComplete="tel" inputMode="tel" placeholder="98765 43210" />
-      </label>
+      <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[22px] bg-sand px-5 py-4 text-sm">
+        <dt className="text-muted">Name</dt>
+        <dd className="m-0 font-semibold">{attendee.name}</dd>
+        <dt className="text-muted">Email</dt>
+        <dd className="m-0 break-all font-semibold">{attendee.email}</dd>
+        <dt className="text-muted">Mobile</dt>
+        <dd className="m-0 font-semibold">{attendee.phone}</dd>
+        <dd className="col-span-2 m-0 pt-1">
+          <Link href="/register" className="font-semibold underline">Edit details</Link>
+          <span className="text-muted"> &middot; tickets are emailed to this address</span>
+        </dd>
+      </dl>
 
       {!testMode && <div ref={widgetEl} className="min-h-[65px]" />}
       {widgetError && (
@@ -147,7 +145,7 @@ export function CheckoutForm({ selected, tiers, onSubmit, onCancel }: Props) {
 
       <div className="flex gap-3">
         {onCancel && (
-          <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>Back to seats</button>
+          <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>Back</button>
         )}
         <button type="submit" className="btn-primary flex-1" disabled={busy || !token}>
           {busy ? "Reserving seats…" : `Pay ${formatInr(total)}`}

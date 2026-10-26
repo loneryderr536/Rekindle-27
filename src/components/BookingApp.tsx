@@ -2,11 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { CheckoutForm, type CheckoutDetails } from "@/components/CheckoutForm";
+import { PageIntro, RegisterSteps } from "@/components/landing/BrandPage";
 import { SeatMap } from "@/components/SeatMap";
 import { TierLegend } from "@/components/TierLegend";
 import { clearHoldToken, readHoldToken, saveHoldToken } from "@/lib/activeHold";
-import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
+import { clearAttendee, type Attendee } from "@/lib/attendee";
 import { checkoutTimeoutSeconds, clockOffsetMs, formatCountdown, remainingMs } from "@/lib/countdown";
 import { EVENT } from "@/lib/event";
 import { holdErrorMessage } from "@/lib/holdErrors";
@@ -43,7 +45,11 @@ async function fetchSeats(): Promise<SeatsData> {
   return { ...data, dateHeader: res.headers.get("date") };
 }
 
-export function BookingApp() {
+/**
+ * Step 2 and 3 of registration: pick exactly as many seats as the attendee has participants,
+ * then hold them and pay. `attendee` is null only while resuming a hold made earlier in this browser.
+ */
+export function BookingApp({ attendee }: { attendee: Attendee | null }) {
   const router = useRouter();
   const [seats, setSeats] = useState<SeatView[] | null>(null);
   const [tiers, setTiers] = useState<TierView[]>([]);
@@ -235,6 +241,7 @@ export function BookingApp() {
           onSuccess: (r) => {
             checkoutRef.current = null;
             clearHoldToken();
+            clearAttendee();
             savePendingPayment({ ...r, accessToken: h.accessToken });
             router.push("/booking/success");
           },
@@ -297,53 +304,81 @@ export function BookingApp() {
     await pay(h, who);
   }
 
+  const wanted = attendee?.participants ?? 0;
+  const picked = selected.length;
+
+  const intro = (
+    <div className="flex flex-col gap-6">
+      <RegisterSteps current={hold ? 3 : 2} />
+      <PageIntro
+        eyebrow="ONE·26 · Registration"
+        title={<>Pick your <span className="o26-hot">{wanted === 1 ? "seat" : "seats"}</span></>}
+        lead={
+          attendee ? (
+            <>
+              Choose {wanted === 1 ? "one seat" : `${wanted} seats`} for {attendee.name}&apos;s booking. Seats are held for 10
+              minutes while you pay.
+            </>
+          ) : (
+            "Your seats are on hold. Pay now, or release them to start again."
+          )
+        }
+      />
+    </div>
+  );
+
   if (seats === null) {
     return (
-      <section className="mx-auto w-full max-w-3xl px-4 py-10 text-muted" aria-live="polite">
-        {loadFailed ? "Couldn't load the seat map. Check your connection; we'll keep trying." : "Loading seats…"}
+      <section className="o26-wrap w-full px-6 pb-16 pt-[clamp(40px,6vw,72px)]">
+        {intro}
+        <p className="mt-8 text-muted" aria-live="polite">
+          {loadFailed ? "Couldn't load the seat map. Check your connection; we'll keep trying." : "Loading seats…"}
+        </p>
       </section>
     );
   }
 
   return (
     <>
-      <section className="mx-auto w-full max-w-3xl flex-1 px-4 pb-40 pt-6">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="font-display text-2xl font-bold">Choose your seats</h2>
-          <p className="text-sm text-muted">Up to {MAX_SEATS_PER_BOOKING} per booking</p>
-        </div>
-        <div className="mt-3">
+      <section className="o26-wrap w-full flex-1 px-6 pb-48 pt-[clamp(40px,6vw,72px)]">
+        {intro}
+        <div className="mt-8">
           <TierLegend tiers={tiers} />
         </div>
         {loadFailed && (
           <p className="mt-3 text-sm text-muted" role="status">Seat availability may be out of date. Reconnecting…</p>
         )}
-        <div className="mt-4 -mx-4 bg-white sm:mx-0 sm:rounded-2xl sm:border sm:border-line">
+        <div className="o26-card mt-5 overflow-hidden p-2 sm:p-4">
           <SeatMap
             seats={seats}
             tiers={tiers}
             selected={hold ? [] : selected}
             onToggle={toggle}
-            maxSelectable={MAX_SEATS_PER_BOOKING}
+            maxSelectable={hold || !attendee ? 0 : wanted}
+            limitMessage={
+              !attendee
+                ? "Add your details first to pick seats."
+                : `You're booking ${wanted === 1 ? "1 seat" : `${wanted} seats`}. Tap a picked seat to swap it, or change the number in your details.`
+            }
           />
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-white/95 backdrop-blur">
-        <div className="mx-auto max-w-3xl px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur">
+        <div className="o26-wrap px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {notice && (
             <p role="alert" className={`mb-2 text-sm font-medium ${notice.tone === "error" ? "text-danger" : "text-ink"}`}>
               {notice.text}
             </p>
           )}
           {hold && remaining !== null ? (
-            <div className="flex items-center gap-3">
-              <div className="flex-1">
-                <p className="font-semibold">
-                  {hold.publicCode} &middot; {formatInr(hold.amountPaise)}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-display m-0 text-xl font-semibold">
+                  {hold.publicCode} &middot; <span className="tabular-nums">{formatInr(hold.amountPaise)}</span>
                 </p>
-                <p className="text-sm text-muted">
-                  Seats held for <span className="font-semibold tabular-nums text-ink" aria-live="off">{formatCountdown(remaining)}</span>
+                <p className="m-0 text-sm text-muted">
+                  Seats held for <span className="font-semibold tabular-nums text-flame" aria-live="off">{formatCountdown(remaining)}</span>
                 </p>
               </div>
               <button type="button" className="btn-ghost" disabled={paying || releasing} onClick={() => void releaseHold(hold)}>
@@ -353,34 +388,44 @@ export function BookingApp() {
                 {paying ? "Payment open…" : "Pay now"}
               </button>
             </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <p className="flex-1">
-                {selected.length === 0 ? (
-                  <span className="text-muted">Tap a seat to pick it.</span>
-                ) : (
-                  <>
-                    <span className="font-semibold">{selected.length} {selected.length === 1 ? "seat" : "seats"}</span>
-                    <span className="ml-2 tabular-nums">{formatInr(total)}</span>
-                  </>
-                )}
-              </p>
-              <button type="button" className="btn-primary" disabled={selected.length === 0} onClick={() => setCheckoutOpen(true)}>
+          ) : attendee ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-display m-0 text-xl font-semibold" aria-live="polite">
+                  Picked {picked} of {wanted}
+                </p>
+                <p className="m-0 text-sm text-muted">
+                  {picked === 0 ? (
+                    "Tap a seat on the map to pick it."
+                  ) : (
+                    <>
+                      {selectedSeats.map((x) => x.label).join(", ")} &middot; <span className="tabular-nums">{formatInr(total)}</span>
+                    </>
+                  )}
+                </p>
+              </div>
+              <Link href="/register" className="btn-ghost">Edit details</Link>
+              <button type="button" className="btn-primary" disabled={picked !== wanted} onClick={() => setCheckoutOpen(true)}>
                 Continue
               </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="m-0 flex-1 text-muted">Add your details to pick seats.</p>
+              <Link href="/register" className="btn-primary">Your details</Link>
             </div>
           )}
         </div>
       </div>
 
-      {checkoutOpen && !hold && (
-        <div className="fixed inset-0 z-30 flex items-end justify-center bg-plum/60 sm:items-center" role="dialog"
+      {checkoutOpen && !hold && attendee && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-ink/60 sm:items-center" role="dialog"
           aria-modal="true" aria-labelledby="checkout-title"
           onKeyDown={(e) => e.key === "Escape" && setCheckoutOpen(false)}>
-          <div className="sheet max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-paper p-5 sm:rounded-2xl">
-            <h2 id="checkout-title" className="font-display mb-4 text-2xl font-bold">Your details</h2>
+          <div className="sheet max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-paper p-6 sm:rounded-[28px]">
+            <h2 id="checkout-title" className="font-display m-0 mb-4 text-3xl font-semibold">Confirm &amp; pay</h2>
             {notice?.tone === "error" && <p role="alert" className="mb-3 text-sm font-medium text-danger">{notice.text}</p>}
-            <CheckoutForm selected={selectedSeats} tiers={tiers} onSubmit={submitDetails} onCancel={() => setCheckoutOpen(false)} />
+            <CheckoutForm selected={selectedSeats} tiers={tiers} attendee={attendee} onSubmit={submitDetails} onCancel={() => setCheckoutOpen(false)} />
           </div>
         </div>
       )}

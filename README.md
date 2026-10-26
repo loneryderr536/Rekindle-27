@@ -1,4 +1,4 @@
-# Event booking
+# Rekindle (Code One 26) 
 
 A single-event seat-booking website. Guests pick seats on a map, the seats are held for a few minutes, they pay with Razorpay, and they receive an email with one QR ticket per seat. Staff check guests in at the gate with the built-in scanner page; the organizer manages seats, prices, comps and exports from an admin area.
 

@@ -178,17 +178,14 @@ test("same email in other case with active hold → ACTIVE_HOLD_EXISTS", async (
   );
 });
 
-test("same client IP with active hold → ACTIVE_HOLD_EXISTS", async () => {
+test("different guests on the same client IP (shared network) can both hold; the IP is stored", async () => {
   const { gold } = await venue();
   await createHold({ seatIds: [gold[0].id], ...guestN(1), clientIp: "1.2.3.4" });
-  await expectAppError(
-    createHold({ seatIds: [gold[1].id], ...guestN(2), clientIp: "1.2.3.4" }),
-    "ACTIVE_HOLD_EXISTS", 409,
-  );
-  expect(await statusOf(gold[1].id)).toBe("available");
-  expect(await bookingCount()).toBe(1);
-  const [b] = await db.select().from(bookings);
-  expect(b.clientIp).toBe("1.2.3.4");
+  const r = await createHold({ seatIds: [gold[1].id], ...guestN(2), clientIp: "1.2.3.4" });
+  expect(r.amountPaise).toBe(150000);
+  expect(await bookingCount()).toBe(2);
+  const all = await db.select().from(bookings);
+  expect(all.map((b) => b.clientIp)).toEqual(["1.2.3.4", "1.2.3.4"]);
 });
 
 test("different client IPs do not block each other", async () => {

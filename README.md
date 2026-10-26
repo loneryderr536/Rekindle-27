@@ -13,7 +13,7 @@ Stack: Next.js (App Router, TypeScript), PostgreSQL 16, Drizzle ORM, Razorpay, R
 
 ```bash
 npm install
-docker compose up -d                 # Postgres on :5432 (app) and :5433 (tests). Skip if you run Postgres yourself.
+docker compose up -d                 # Postgres on :5434 (app) and :5433 (tests). Skip if you run Postgres yourself.
 cp .env.example .env.local           # then fill in the values (table below)
 # create .env.test by hand (see "Testing"; it is git-ignored, so it cannot be copied from the repo)
 npm run db:migrate
@@ -22,16 +22,16 @@ npm run admin:create -- you@example.com admin
 npm run dev
 ```
 
-Open http://localhost:3000 for the booking page and http://localhost:3000/admin/login for the admin area.
+Open http://localhost:3000 for the landing page, http://localhost:3000/register for seat booking, and http://localhost:3000/admin/login for the admin area. Guests who lost their email can get their tickets back at http://localhost:3000/booking/find. To cancel a paid booking, open it in Admin > Bookings and use **Cancel & refund** (frees the seats, voids the QR codes, refunds in full); complimentary bookings have **Cancel comp** instead (no refund, the guest is emailed). Full refunds made in the Razorpay dashboard cancel the booking too, via the webhook or, if that is lost, the reconcile job.
 
 Notes:
 
-- With the Docker database, `DATABASE_URL` is `postgres://postgres:postgres@127.0.0.1:5432/booking`.
+- With the Docker database, `DATABASE_URL` is `postgres://postgres:postgres@127.0.0.1:5434/booking`. It uses port 5434, not 5432, so it does not clash with a Postgres installed directly on the machine (which usually takes 5432).
 - Event name, date and venue are placeholders in `src/lib/event.ts`. Edit them before launch.
 - On a fresh clone run `npx next typegen` before `npx tsc --noEmit`.
 - The gate scanner uses the phone camera, which browsers only allow on HTTPS. To try it locally use `npx next dev --experimental-https`.
 - To create a scanner login: `npm run admin:create -- gate@example.com scanner`. Add `--reset-password` to change a password.
-- Seat CSV columns: `section,row,number,x,y,tier` (see `scripts/sample-venue.csv`). `--create-tiers` creates tiers named in the CSV that do not exist yet; set their prices in Admin > Tiers.
+- Seat CSV columns: `section,row,number,x,y,tier` (see `scripts/sample-venue.csv`). `--create-tiers` creates tiers named in the CSV that do not exist yet. Gold and Silver get Rs 1,500 and Rs 800; any other name gets a placeholder price (the script warns). Set the real prices in Admin > Tiers.
 
 ## Scripts
 

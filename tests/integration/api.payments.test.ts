@@ -83,8 +83,9 @@ function webhook(raw: string, opts: { eventId?: string | null; signature?: strin
 
 async function setup(paymentId = "pay_test_1") {
   const { seats } = await seedVenue();
-  const h = await holdWithOrder([seats[0].id, seats[1].id]);
-  return { ...h, paymentId, f: { orderId: h.orderId, paymentId, amount: h.amountPaise } };
+  const seatIds = [seats[0].id, seats[1].id];
+  const h = await holdWithOrder(seatIds);
+  return { ...h, seatIds, paymentId, f: { orderId: h.orderId, paymentId, amount: h.amountPaise } };
 }
 
 async function bookingOf(id: string) {
@@ -97,6 +98,13 @@ async function ticketCount(bookingId: string): Promise<number> {
     sql`SELECT count(*)::int AS n FROM tickets WHERE booking_id = ${bookingId}`,
   );
   return rows[0].n;
+}
+
+async function outboxKinds(bookingId: string): Promise<string[]> {
+  const { rows } = await db.execute<{ kind: string }>(
+    sql`SELECT kind FROM email_outbox WHERE booking_id = ${bookingId} ORDER BY created_at`,
+  );
+  return rows.map((r) => r.kind);
 }
 
 test("verify with valid signature confirms", async () => {
@@ -159,8 +167,8 @@ test("verify for an unknown order → 404 UNKNOWN_ORDER", async () => {
   expect((await res.json()).error.code).toBe("UNKNOWN_ORDER");
 });
 
-test("verify is rate limited at 30 per IP", async () => {
-  for (let i = 0; i < 30; i++) {
+test("verify is rate limited at 120 per IP", async () => {
+  for (let i = 0; i < 120; i++) {
     expect((await verify({}, { "x-forwarded-for": "7.7.7.7" })).status).toBe(400);
   }
   const res = await verify({}, { "x-forwarded-for": "7.7.7.7" });
@@ -271,14 +279,35 @@ test("refund.processed marks a refund_due booking refunded", async () => {
   expect((await bookingOf(h.bookingId)).status).toBe("refund_due");
   const res = await webhook(fixture("refund.processed", h.f), { eventId: "evt_r2" });
   expect(res.status).toBe(200);
+  expect(await res.json()).toEqual({ ok: true, result: "refunded" });
   expect((await bookingOf(h.bookingId)).status).toBe("refunded");
+  expect(await outboxKinds(h.bookingId)).toContain("refund_notice");
 });
 
-test("refund.processed does not touch a paid booking", async () => {
+test("refund.processed for a full dashboard refund of a paid booking cancels it", async () => {
   const h = await setup();
   await webhook(fixture("payment.captured", h.f), { eventId: "evt_p" });
-  await webhook(fixture("refund.processed", h.f), { eventId: "evt_q" });
+  expect(await ticketCount(h.bookingId)).toBe(2);
+  const res = await webhook(fixture("refund.processed", h.f), { eventId: "evt_q" });
+  expect(await res.json()).toEqual({ ok: true, result: "cancelled" });
+  const b = await bookingOf(h.bookingId);
+  expect(b.status).toBe("refunded");
+  expect(b.refundAmountPaise).toBe(h.amountPaise);
+  expect(await ticketCount(h.bookingId)).toBe(0);
+  const { rows } = await db.execute<{ status: string; booking_id: string | null }>(
+    sql`SELECT status, booking_id FROM seats WHERE id IN (${h.seatIds[0]}, ${h.seatIds[1]})`,
+  );
+  expect(rows).toEqual([{ status: "available", booking_id: null }, { status: "available", booking_id: null }]);
+  expect(await outboxKinds(h.bookingId)).toEqual(expect.arrayContaining(["refund_notice"]));
+});
+
+test("refund.processed for a partial refund leaves a paid booking paid", async () => {
+  const h = await setup();
+  await webhook(fixture("payment.captured", h.f), { eventId: "evt_p" });
+  const res = await webhook(fixture("refund.processed", { ...h.f, amount: 100 }), { eventId: "evt_q" });
+  expect(await res.json()).toEqual({ ok: true, result: "partial" });
   expect((await bookingOf(h.bookingId)).status).toBe("paid");
+  expect(await ticketCount(h.bookingId)).toBe(2);
 });
 
 test("unknown event type is recorded and ignored", async () => {

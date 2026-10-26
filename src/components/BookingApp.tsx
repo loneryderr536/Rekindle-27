@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CheckoutForm, type CheckoutDetails } from "@/components/CheckoutForm";
 import { SeatMap } from "@/components/SeatMap";
 import { TierLegend } from "@/components/TierLegend";
+import { clearHoldToken, readHoldToken, saveHoldToken } from "@/lib/activeHold";
 import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
 import { checkoutTimeoutSeconds, clockOffsetMs, formatCountdown, remainingMs } from "@/lib/countdown";
 import { EVENT } from "@/lib/event";
@@ -52,6 +53,7 @@ export function BookingApp() {
   const [hold, setHold] = useState<Hold | null>(null);
   const [buyer, setBuyer] = useState<Omit<CheckoutDetails, "turnstileToken"> | null>(null);
   const [paying, setPaying] = useState(false);
+  const [releasing, setReleasing] = useState(false);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const holdRef = useRef<Hold | null>(null);
@@ -105,18 +107,86 @@ export function BookingApp() {
     };
   }, [refresh]);
 
-  /** The hold is over (or too close to its end to pay): close Checkout, then start over. */
-  const expireHold = useCallback(() => {
+  /** Forgets the hold on this page (close Checkout, back to picking seats) and shows `n`. */
+  const dropHold = useCallback((n: Notice) => {
     checkoutRef.current?.close();
     checkoutRef.current = null;
     holdRef.current = null;
+    clearHoldToken();
     setHold(null);
     setPaying(false);
     setSelected([]);
     setCheckoutOpen(false);
-    setNotice({ tone: "error", text: EXPIRED_MESSAGE });
+    setNotice(n);
     refresh();
   }, [refresh]);
+
+  /** The hold is over (or too close to its end to pay): start over. */
+  const expireHold = useCallback(() => dropHold({ tone: "error", text: EXPIRED_MESSAGE }), [dropHold]);
+
+  // After a reload, pick up a hold this browser made earlier so the guest can still pay for it or release it.
+  useEffect(() => {
+    const token = readHoldToken();
+    if (!token) return;
+    let cancelled = false;
+    (async () => {
+      const sentAt = Date.now();
+      const res = await fetch("/api/holds/current", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken: token }),
+      });
+      if (cancelled) return;
+      if (!res.ok) {
+        if (res.status === 404) clearHoldToken();
+        return;
+      }
+      const body = (await res.json()) as Omit<Hold, "clockOffsetMs"> & { name: string; email: string; phone: string };
+      if (cancelled || holdRef.current) return;
+      const dateHeader = res.headers.get("date");
+      const h: Hold = {
+        bookingId: body.bookingId,
+        publicCode: body.publicCode,
+        accessToken: body.accessToken,
+        amountPaise: body.amountPaise,
+        holdExpiresAt: body.holdExpiresAt,
+        razorpayOrderId: body.razorpayOrderId,
+        razorpayKeyId: body.razorpayKeyId,
+        clockOffsetMs: dateHeader ? clockOffsetMs(dateHeader, sentAt) : seatsOffsetRef.current,
+      };
+      holdRef.current = h;
+      setNow(Date.now());
+      setHold(h);
+      setBuyer({ name: body.name, email: body.email, phone: body.phone });
+      setSelected([]);
+      setNotice({ tone: "info", text: "Your seats are still on hold. Pay now, or release them to pick again." });
+    })().catch(() => {
+      // Offline: keep the token; the hold expires on its own if it is never resumed.
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  /** Gives the held seats back so the guest (or anyone) can pick again. */
+  async function releaseHold(h: Hold) {
+    setReleasing(true);
+    try {
+      const res = await fetch("/api/holds/current", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ accessToken: h.accessToken }),
+      });
+      if (!res.ok) throw new Error(`DELETE /api/holds/current ${res.status}`);
+      if (holdRef.current?.bookingId === h.bookingId) {
+        dropHold({ tone: "info", text: "Your seats were released. Pick seats again whenever you're ready." });
+      }
+    } catch {
+      setNotice({ tone: "error", text: "Couldn't release your seats. Check your connection and try again." });
+    } finally {
+      setReleasing(false);
+    }
+  }
 
   // Hold countdown on the server's clock; at zero the hold is gone and the attendee starts over.
   useEffect(() => {
@@ -164,6 +234,7 @@ export function BookingApp() {
           description: EVENT.name,
           onSuccess: (r) => {
             checkoutRef.current = null;
+            clearHoldToken();
             savePendingPayment({ ...r, accessToken: h.accessToken });
             router.push("/booking/success");
           },
@@ -217,6 +288,7 @@ export function BookingApp() {
     };
     const who = { name: details.name, email: details.email, phone: details.phone };
     holdRef.current = h; // before the refresh below, so our own held seats aren't reported as taken
+    saveHoldToken(h.accessToken);
     setNow(Date.now());
     setHold(h);
     setBuyer(who);
@@ -274,7 +346,10 @@ export function BookingApp() {
                   Seats held for <span className="font-semibold tabular-nums text-ink" aria-live="off">{formatCountdown(remaining)}</span>
                 </p>
               </div>
-              <button type="button" className="btn-primary" disabled={paying || !canPay} onClick={() => buyer && void pay(hold, buyer)}>
+              <button type="button" className="btn-ghost" disabled={paying || releasing} onClick={() => void releaseHold(hold)}>
+                {releasing ? "Releasing…" : "Release seats"}
+              </button>
+              <button type="button" className="btn-primary" disabled={paying || releasing || !canPay} onClick={() => buyer && void pay(hold, buyer)}>
                 {paying ? "Payment open…" : "Pay now"}
               </button>
             </div>

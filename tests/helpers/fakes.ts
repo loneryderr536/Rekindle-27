@@ -1,5 +1,5 @@
 import type { EmailSender } from "@/server/email/sender";
-import type { PaymentGateway } from "@/server/payments/gateway";
+import type { GatewayRefund, PaymentGateway } from "@/server/payments/gateway";
 
 type Payment = Awaited<ReturnType<PaymentGateway["fetchOrderPayments"]>>[number];
 
@@ -8,6 +8,7 @@ export class FakeGateway implements PaymentGateway {
   orders: { amountPaise: number; receipt: string; notes: Record<string, string>; id: string }[] = [];
   refunds: { paymentId: string; amountPaise: number; id: string }[] = [];
   private payments = new Map<string, Payment[]>();
+  private dashboardRefunds: GatewayRefund[] = [];
   private orderCount = 0;
   private refundCount = 0;
   private failOrder = false;
@@ -23,6 +24,16 @@ export class FakeGateway implements PaymentGateway {
 
   setPayments(orderId: string, payments: Payment[]): void {
     this.payments.set(orderId, payments);
+  }
+
+  /** A refund made by hand in the Razorpay dashboard (not through this app). */
+  addDashboardRefund(paymentId: string, amountPaise: number, status: GatewayRefund["status"] = "processed"): void {
+    this.dashboardRefunds.push({ id: `rfnd_dash_${this.dashboardRefunds.length + 1}`, paymentId, amount: amountPaise, status });
+  }
+
+  async listRefunds(): Promise<GatewayRefund[]> {
+    const own = this.refunds.map((r) => ({ id: r.id, paymentId: r.paymentId, amount: r.amountPaise, status: "processed" as const }));
+    return [...own, ...this.dashboardRefunds];
   }
 
   async createOrder(p: { amountPaise: number; receipt: string; notes: Record<string, string> }) {

@@ -13,17 +13,19 @@ export type TicketInfo = {
 export type BookingWithTickets = Pick<
   Booking,
   "id" | "publicCode" | "accessToken" | "name" | "email" | "status" | "amountPaise" | "refundAmountPaise" | "seatCount"
+  | "paidAt"
 > & { tickets: TicketInfo[] };
 
 type BookingRow = {
   id: string; public_code: string; access_token: string; name: string; email: string;
   status: Booking["status"]; amount_paise: number; refund_amount_paise: number | null; seat_count: number;
+  paid_at: Date | null;
 };
 
 /** The booking plus one entry per seat (ordered by seat label), or null if it does not exist. */
 export async function loadBookingWithTickets(bookingId: string): Promise<BookingWithTickets | null> {
   const { rows } = await db.execute<BookingRow>(sql`
-    SELECT id, public_code, access_token, name, email, status, amount_paise, refund_amount_paise, seat_count
+    SELECT id, public_code, access_token, name, email, status, amount_paise, refund_amount_paise, seat_count, paid_at
       FROM bookings WHERE id = ${bookingId}`);
   const b = rows[0];
   if (!b) return null;
@@ -44,6 +46,7 @@ export async function loadBookingWithTickets(bookingId: string): Promise<Booking
     amountPaise: b.amount_paise,
     refundAmountPaise: b.refund_amount_paise,
     seatCount: b.seat_count,
+    paidAt: b.paid_at ? new Date(b.paid_at) : null,
     tickets: items.rows.map((r) => ({
       seatLabel: r.label, tierName: r.tier_name, pricePaise: r.price_paise, token: r.token,
     })),

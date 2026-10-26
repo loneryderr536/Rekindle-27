@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 import { AppError } from "@/lib/errors";
-import type { PaymentGateway } from "./gateway";
+import type { GatewayRefund, PaymentGateway } from "./gateway";
 
 type Payment = Awaited<ReturnType<PaymentGateway["fetchOrderPayments"]>>[number];
 
@@ -12,6 +12,7 @@ type Payment = Awaited<ReturnType<PaymentGateway["fetchOrderPayments"]>>[number]
 export class FakeAppGateway implements PaymentGateway {
   private orders = new Map<string, number>();
   private payments = new Map<string, Payment[]>();
+  private refunds: GatewayRefund[] = [];
   private orderCount = 0;
   private refundCount = 0;
 
@@ -39,9 +40,15 @@ export class FakeAppGateway implements PaymentGateway {
     return this.payments.get(orderId) ?? [];
   }
 
-  async refund(): Promise<{ id: string; status: string }> {
+  async refund(paymentId: string, amountPaise: number): Promise<{ id: string; status: string }> {
     this.refundCount += 1;
-    return { id: `rfnd_fake_${this.refundCount}`, status: "processed" };
+    const id = `rfnd_fake_${this.refundCount}`;
+    this.refunds.push({ id, paymentId, amount: amountPaise, status: "processed" });
+    return { id, status: "processed" };
+  }
+
+  async listRefunds(): Promise<GatewayRefund[]> {
+    return [...this.refunds];
   }
 }
 

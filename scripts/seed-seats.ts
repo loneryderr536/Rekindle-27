@@ -3,10 +3,10 @@
  *
  * Usage: npm run seed:seats -- scripts/sample-venue.csv [--create-tiers]
  *
- * Tiers referenced by the CSV must already exist (the admin tiers page arrives in a later
- * task). Pass `--create-tiers` to insert Gold (150000 paise, #d4a017) and Silver (80000 paise,
- * #9ca3af) if they are missing. Re-running is safe: existing available seats are updated,
- * non-available seats are left untouched.
+ * Tiers referenced by the CSV must already exist (create them in Admin > Tiers), or pass
+ * `--create-tiers` to create every missing one: Gold (Rs 1,500) and Silver (Rs 800) get their usual
+ * prices, any other name a placeholder price that you must set in Admin > Tiers before launch.
+ * Re-running is safe: existing available seats are updated, non-available seats are left untouched.
  */
 import { readFileSync } from "node:fs";
 import { config } from "dotenv";
@@ -21,19 +21,22 @@ async function main() {
     process.exit(1);
   }
 
-  const { db, closeDb } = await import("../src/db/client");
-  const { tiers } = await import("../src/db/schema");
-  const { importSeats, parseVenueCsv } = await import("../src/server/seats/importSeats");
+  const { closeDb } = await import("../src/db/client");
+  const { createMissingTiers, importSeats, parseVenueCsv, PLACEHOLDER_TIER_PRICE_PAISE } = await import(
+    "../src/server/seats/importSeats"
+  );
   try {
     const rows = parseVenueCsv(readFileSync(file, "utf8"));
     if (createTiers) {
-      await db
-        .insert(tiers)
-        .values([
-          { name: "Gold", pricePaise: 150000, color: "#d4a017", sortOrder: 0 },
-          { name: "Silver", pricePaise: 80000, color: "#9ca3af", sortOrder: 1 },
-        ])
-        .onConflictDoNothing({ target: tiers.name });
+      const created = await createMissingTiers(rows);
+      for (const t of created) console.log(`created tier "${t.name}" at ${t.pricePaise / 100} INR`);
+      const placeholders = created.filter((t) => t.pricePaise === PLACEHOLDER_TIER_PRICE_PAISE);
+      if (placeholders.length > 0) {
+        console.warn(
+          `WARNING: ${placeholders.map((t) => `"${t.name}"`).join(", ")} got a placeholder price. ` +
+            "Set the real price in Admin > Tiers before tickets go on sale.",
+        );
+      }
     }
     const { inserted } = await importSeats(rows);
     console.log(`inserted: ${inserted}`);

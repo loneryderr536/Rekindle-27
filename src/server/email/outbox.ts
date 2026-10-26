@@ -1,19 +1,20 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { getEmailSender } from "@/server/email/sender";
-import { refundNoticeEmail, ticketCid, ticketsEmail } from "@/server/email/templates";
+import { cancellationEmail, refundNoticeEmail, ticketCid, ticketsEmail } from "@/server/email/templates";
 import { loadBookingWithTickets } from "@/server/tickets/loadBooking";
 import { qrPng } from "@/server/tickets/qr";
 import { qrPayload } from "@/server/tickets/tokens";
 
 const MAX_ATTEMPTS = 5;
 
-type Row = { id: string; booking_id: string; kind: "tickets" | "refund_notice"; attempts: number };
+type Row = { id: string; booking_id: string; kind: "tickets" | "refund_notice" | "cancellation"; attempts: number };
 
 async function buildMessage(row: Row) {
   const b = await loadBookingWithTickets(row.booking_id);
   if (!b) throw new Error(`Booking ${row.booking_id} not found`);
   if (row.kind === "refund_notice") return { to: b.email, ...refundNoticeEmail(b) };
+  if (row.kind === "cancellation") return { to: b.email, ...cancellationEmail(b) };
   const attachments = await Promise.all(
     b.tickets
       .filter((t) => t.token !== null)
@@ -44,7 +45,9 @@ export async function processOutbox(limit = 20): Promise<{ sent: number; failed:
       const row = rows[0];
       if (!row) return; // sent or locked by another worker
       try {
-        await getEmailSender().send(await buildMessage(row));
+        // One key per outbox row: if the send succeeds but recording it fails, the retry is
+        // deduplicated by the provider. An admin resend inserts a new row, so it does send again.
+        await getEmailSender().send({ ...(await buildMessage(row)), idempotencyKey: `outbox-${row.id}` });
         await tx.execute(sql`UPDATE email_outbox SET status = 'sent', sent_at = now() WHERE id = ${row.id}`);
         sent += 1;
       } catch (e) {

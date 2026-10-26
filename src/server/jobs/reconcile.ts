@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
+import { applyGatewayRefund } from "@/server/payments/cancelBooking";
 import { confirmBooking } from "@/server/payments/confirmBooking";
 import type { PaymentGateway } from "@/server/payments/gateway";
 import { processRefunds } from "@/server/payments/refunds";
@@ -58,13 +59,48 @@ async function recoverStuckRefunds(gateway: PaymentGateway): Promise<number> {
   return recovered;
 }
 
-/** Safety net for lost webhooks: confirm captured payments, record refunds already made, then refund what is due. */
+/**
+ * A paid booking refunded in the Razorpay dashboard whose `refund.processed` webhook never arrived:
+ * one refund listing per run (not one call per booking), then the same rules as the webhook.
+ */
+async function recoverDashboardRefunds(gateway: PaymentGateway, now: Date): Promise<number> {
+  const since = Math.floor((now.getTime() - LOOKBACK_MS) / 1000);
+  const refundedByPayment = new Map<string, number>();
+  for (const r of await gateway.listRefunds(since)) {
+    if (r.status === "processed") refundedByPayment.set(r.paymentId, (refundedByPayment.get(r.paymentId) ?? 0) + r.amount);
+  }
+  if (refundedByPayment.size === 0) return 0;
+  const { rows } = await db.execute<{ id: string; payment_id: string }>(sql`
+    SELECT id, razorpay_payment_id AS payment_id FROM bookings
+     WHERE status = 'paid' AND razorpay_payment_id = ANY(${sql.param([...refundedByPayment.keys()])}::text[])`);
+  let cancelled = 0;
+  for (const b of rows) {
+    try {
+      const result = await applyGatewayRefund({ paymentId: b.payment_id, refundedPaise: refundedByPayment.get(b.payment_id)! });
+      if (result === "cancelled") cancelled += 1;
+    } catch (e) {
+      console.error(`reconcilePending: dashboard refund ${b.id}: ${reason(e)}`);
+    }
+  }
+  return cancelled;
+}
+
+/**
+ * Safety net for lost webhooks: confirm captured payments, record refunds already made (by this app
+ * or by hand in the dashboard), then refund what is due. `refunded` counts all refunds recorded.
+ */
 export async function reconcilePending(
   gateway: PaymentGateway,
   now: Date = new Date(),
 ): Promise<{ confirmed: number; checked: number; refunded: number }> {
   const { confirmed, checked } = await confirmCaptured(gateway, now);
   const recovered = await recoverStuckRefunds(gateway);
+  let dashboard = 0;
+  try {
+    dashboard = await recoverDashboardRefunds(gateway, now);
+  } catch (e) {
+    console.error(`reconcilePending: refund listing failed: ${reason(e)}`);
+  }
   const { refunded } = await processRefunds(gateway);
-  return { confirmed, checked, refunded: refunded + recovered };
+  return { confirmed, checked, refunded: refunded + recovered + dashboard };
 }

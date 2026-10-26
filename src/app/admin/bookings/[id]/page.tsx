@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { CancelBookingButton } from "@/components/CancelBookingButton";
 import { ResendTicketsButton } from "@/components/ResendTicketsButton";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { formatIst } from "@/lib/istTime";
@@ -70,7 +71,12 @@ export default async function AdminBookingDetail({ params }: PageProps<"/admin/b
         </div>
       </section>
 
-      <ResendTicketsButton bookingId={b.id} disabled={!resendable} />
+      <div className="flex flex-wrap items-start gap-6">
+        <ResendTicketsButton bookingId={b.id} disabled={!resendable} />
+        {(b.status === "paid" || b.status === "comp") && (
+          <CancelBookingButton bookingId={b.id} publicCode={b.publicCode} comp={b.status === "comp"} />
+        )}
+      </div>
     </main>
   );
 }

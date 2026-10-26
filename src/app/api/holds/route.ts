@@ -11,7 +11,8 @@ import { clientIp } from "@/server/security/clientIp";
 import { rateLimit } from "@/server/security/rateLimit";
 import { verifyTurnstile } from "@/server/security/turnstile";
 
-const LIMIT = 10;
+// Generous: Turnstile stops bots, and many guests can share one IP (offices, colleges, mobile carriers).
+const LIMIT = 60;
 const WINDOW_SECONDS = 600;
 
 export const runtime = "nodejs";
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request): Promise<Response> {
   try {
     const ip = clientIp(req);
-    // Staging load runs only (needs ALLOW_TEST_MODES=1, refused in production): no per-IP limit, no per-IP active-hold check.
+    // Staging load runs only (needs ALLOW_TEST_MODES=1, refused in production): no per-IP limit.
     const limitsOff = loadTestLimitsDisabled(env);
     const rl = limitsOff ? { ok: true as const } : await rateLimit(`holds:ip:${ip}`, LIMIT, WINDOW_SECONDS);
     if (!rl.ok) {
@@ -41,7 +42,7 @@ export async function POST(req: Request): Promise<Response> {
       throw new AppError("TURNSTILE_FAILED", "Bot check failed, please retry", 403);
     }
 
-    const hold = await createHold({ ...input, clientIp: limitsOff ? undefined : ip });
+    const hold = await createHold({ ...input, clientIp: ip });
 
     let orderId: string;
     try {

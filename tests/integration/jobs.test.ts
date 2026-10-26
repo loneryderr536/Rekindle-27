@@ -226,6 +226,42 @@ test("reconcile recovers a stuck refund (gateway already refunded) without refun
   expect(await db.select().from(emailOutbox).where(eq(emailOutbox.bookingId, b.bookingId))).toHaveLength(1);
 });
 
+test("reconcile cancels a paid booking refunded in the Razorpay dashboard when the webhook was lost", async () => {
+  const v = await seedVenue();
+  const b = await holdWithOrder([v.seats[0].id, v.seats[1].id], guestN(1));
+  expect(await confirmBooking({ orderId: b.orderId, paymentId: "pay_d", amountPaise: b.amountPaise })).toBe("confirmed");
+  const other = await holdWithOrder([v.seats[2].id], guestN(2));
+  expect(await confirmBooking({ orderId: other.orderId, paymentId: "pay_keep", amountPaise: other.amountPaise })).toBe("confirmed");
+  // Two partial refunds that add up to the full amount, plus a failed one that must not count.
+  gateway.addDashboardRefund("pay_d", b.amountPaise - 100);
+  gateway.addDashboardRefund("pay_d", 100);
+  gateway.addDashboardRefund("pay_keep", other.amountPaise, "failed");
+
+  expect(await reconcilePending(gateway)).toEqual({ confirmed: 0, checked: 0, refunded: 1 });
+  expect(gateway.refunds).toHaveLength(0);
+  expect(await bookingStatus(b.bookingId)).toBe("refunded");
+  expect(await statusOf(v.seats[0].id)).toBe("available");
+  expect(await db.select().from(tickets).where(eq(tickets.bookingId, b.bookingId))).toHaveLength(0);
+  expect(await bookingStatus(other.bookingId)).toBe("paid");
+  // Second run: nothing left to do.
+  expect(await reconcilePending(gateway)).toEqual({ confirmed: 0, checked: 0, refunded: 0 });
+});
+
+test("reconcile still runs the other steps when the refund listing fails", async () => {
+  const v = await seedVenue();
+  const b = await holdWithOrder([v.seats[0].id], guestN(1));
+  gateway.setPayments(b.orderId, [{ id: "pay_ok", status: "captured", amount: b.amountPaise }]);
+  gateway.listRefunds = async () => {
+    throw new Error("razorpay down");
+  };
+  const log = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    expect(await reconcilePending(gateway)).toEqual({ confirmed: 1, checked: 1, refunded: 0 });
+  } finally {
+    log.mockRestore();
+  }
+});
+
 // ---- cron routes ----
 
 const url = (name: string) => `http://localhost/api/cron/${name}`;

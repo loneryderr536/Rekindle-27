@@ -11,7 +11,8 @@ import { verifyPaymentSignature } from "@/server/payments/signatures";
 import { clientIp } from "@/server/security/clientIp";
 import { rateLimit } from "@/server/security/rateLimit";
 
-const LIMIT = 30;
+// Signature-gated anyway; high enough for many guests behind one shared IP.
+const LIMIT = 120;
 const WINDOW_SECONDS = 600;
 
 const VerifyInput = z.object({

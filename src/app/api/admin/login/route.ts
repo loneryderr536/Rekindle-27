@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { adminUsers } from "@/db/schema";
 import { AppError, jsonError } from "@/lib/errors";
+import { assertSameOrigin } from "@/server/auth/guard";
 import { hashPassword, verifyPassword } from "@/server/auth/password";
 import { createSession, sessionCookie } from "@/server/auth/session";
 import { clientIp } from "@/server/security/clientIp";
@@ -26,6 +27,8 @@ const getDummyHash = () => (dummyHash ??= hashPassword("dummy-password-for-timin
 
 export async function POST(req: Request): Promise<Response> {
   try {
+    // Stops another site from signing a visitor into an account of its choosing (login CSRF).
+    assertSameOrigin(req);
     let raw: unknown;
     try {
       raw = await req.json();

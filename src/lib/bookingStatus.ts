@@ -7,6 +7,7 @@ const LABELS: Record<Booking["status"], string> = {
   expired: "Expired",
   refund_due: "Refund in progress",
   refunded: "Refunded",
+  cancelled: "Cancelled",
 };
 
 /** Attendee-facing label for a booking status. */

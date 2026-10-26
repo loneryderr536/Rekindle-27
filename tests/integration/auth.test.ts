@@ -98,6 +98,21 @@ test("unknown email takes the same path and returns the same 401", async () => {
   expect(await res.json()).toEqual({ error: { code: "INVALID_CREDENTIALS", message: "Invalid email or password" } });
 });
 
+test("login from another site or without Origin → 403 BAD_ORIGIN", async () => {
+  await db.insert(adminUsers).values({ email: "a@example.com", role: "admin", passwordHash: await password.hashPassword("pw") });
+  for (const origin of ["https://evil.example", ""]) {
+    const req = new Request(`${ORIGIN}/api/admin/login`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(origin ? { origin } : {}) },
+      body: JSON.stringify({ email: "a@example.com", password: "pw" }),
+    });
+    const res = await login(req);
+    expect(res.status).toBe(403);
+    expect((await res.json()).error.code).toBe("BAD_ORIGIN");
+    expect(res.headers.get("set-cookie")).toBeNull();
+  }
+});
+
 test("invalid body → 400", async () => {
   const res = await login(loginReq({ email: "x" }));
   expect(res.status).toBe(400);

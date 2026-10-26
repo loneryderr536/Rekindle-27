@@ -5,7 +5,8 @@ import { AppError, jsonError } from "@/lib/errors";
 import { clientIp } from "@/server/security/clientIp";
 import { rateLimit } from "@/server/security/rateLimit";
 
-const LIMIT = 5;
+// Code + email is unguessable; the limit only slows scripted probing, so leave room for shared IPs.
+const LIMIT = 20;
 const WINDOW_SECONDS = 600;
 
 const LookupInput = z.object({

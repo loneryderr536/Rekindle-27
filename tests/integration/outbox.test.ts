@@ -45,6 +45,7 @@ test("processOutbox sends tickets email with one QR attachment per seat", async 
     expect(m.html).toContain(`cid:${a.contentId}`);
   }
   const row = await outboxRow(h.bookingId);
+  expect(m.idempotencyKey).toBe(`outbox-${row.id}`);
   expect(row.status).toBe("sent");
   expect(row.sentAt).not.toBeNull();
   expect(await processOutbox()).toEqual({ sent: 0, failed: 0 });
@@ -153,9 +154,9 @@ test("lookup finds booking case-insensitively; wrong email or code → identical
   expect(await badEmail.json()).toEqual(await badCode.json());
 });
 
-test("lookup validates input and is rate limited to 5 per IP", async () => {
+test("lookup validates input and is rate limited to 20 per IP", async () => {
   expect((await lookup({ publicCode: "" , email: "a@b.c" }, "7.7.7.7")).status).toBe(400);
-  for (let i = 0; i < 4; i++) expect((await lookup({ publicCode: "AAAAAA", email: "a@b.c" }, "7.7.7.7")).status).toBe(404);
+  for (let i = 0; i < 19; i++) expect((await lookup({ publicCode: "AAAAAA", email: "a@b.c" }, "7.7.7.7")).status).toBe(404);
   const limited = await lookup({ publicCode: "AAAAAA", email: "a@b.c" }, "7.7.7.7");
   expect(limited.status).toBe(429);
   expect((await limited.json()).error.code).toBe("RATE_LIMITED");

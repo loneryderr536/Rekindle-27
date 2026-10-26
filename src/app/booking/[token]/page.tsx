@@ -57,14 +57,17 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
         )}
         {b.status === "expired" && (
           <p className="mt-4">
-            This booking expired before payment was completed. <Link href="/" className="underline">Pick seats again</Link>.
+            This booking expired before payment was completed. <Link href="/register" className="underline">Pick seats again</Link>.
           </p>
         )}
+        {b.status === "cancelled" && <p className="mt-4">This booking has been cancelled and its tickets are no longer valid.</p>}
         {(b.status === "refund_due" || b.status === "refunded") && (
           <p className="mt-4">
             {b.status === "refunded"
               ? `Your payment of ${formatInr(b.refundAmountPaise ?? b.amountPaise)} has been refunded.`
-              : "We could not confirm your seats. Your payment will be refunded to your original payment method."}
+              : b.paidAt
+                ? "This booking has been cancelled. Your payment will be refunded to your original payment method."
+                : "We could not confirm your seats. Your payment will be refunded to your original payment method."}
           </p>
         )}
         {showTickets && (

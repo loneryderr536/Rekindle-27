@@ -6,7 +6,7 @@ test("guest books 2 seats, pays, sees QR, gate scan green then red", async ({ br
   await stubRazorpay(guestCtx, { pay: true, baseURL: baseURL! });
   const page = await guestCtx.newPage();
 
-  await page.goto("/");
+  await page.goto("/register");
   await seatButton(page, "G-A-1", "Gold").click();
   await seatButton(page, "G-A-2", "Gold").click();
   await page.getByRole("button", { name: "Continue" }).click();
@@ -71,8 +71,8 @@ test("two browsers race for the same seat: one succeeds, other sees 'seat just t
   const snapshot = await (await b.request.get("/api/seats")).text();
   await b.route("**/api/seats", (route) => route.fulfill({ contentType: "application/json", body: snapshot }));
 
-  await a.goto("/");
-  await b.goto("/");
+  await a.goto("/register");
+  await b.goto("/register");
   for (const p of [a, b]) {
     await seatButton(p, SEAT, "Gold").click();
     await p.getByRole("button", { name: "Continue" }).click();

@@ -7,6 +7,8 @@ export interface EmailSender {
     subject: string;
     html: string;
     attachments?: { filename: string; content: Buffer; contentId: string }[];
+    /** Same key → the provider sends once, so a retry after an unrecorded success is not a duplicate. */
+    idempotencyKey?: string;
   }): Promise<void>;
 }
 
@@ -25,7 +27,7 @@ export class ResendSender implements EmailSender {
         contentType: "image/png",
         contentId: a.contentId,
       })),
-    });
+    }, m.idempotencyKey ? { idempotencyKey: m.idempotencyKey } : undefined);
     if (error) throw new Error(`Resend: ${error.name}: ${error.message}`);
   }
 }

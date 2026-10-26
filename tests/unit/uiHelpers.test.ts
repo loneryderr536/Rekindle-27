@@ -8,7 +8,7 @@ test("every booking status has a friendly label", () => {
   const labels = Object.fromEntries(bookingStatus.enumValues.map((s) => [s, bookingStatusLabel(s)]));
   expect(labels).toEqual({
     pending: "Payment processing", paid: "Confirmed", expired: "Expired", comp: "Confirmed",
-    refund_due: "Refund in progress", refunded: "Refunded",
+    refund_due: "Refund in progress", refunded: "Refunded", cancelled: "Cancelled",
   });
 });
 

@@ -4,6 +4,7 @@ import { db } from "@/db/client";
 import { env } from "@/lib/env";
 import { AppError, jsonError } from "@/lib/errors";
 import { kickOutbox } from "@/server/email/kickOutbox";
+import { applyGatewayRefund } from "@/server/payments/cancelBooking";
 import { confirmBooking } from "@/server/payments/confirmBooking";
 import { verifyWebhookSignature } from "@/server/payments/signatures";
 
@@ -18,7 +19,11 @@ const PaymentEntity = z.object({
 });
 const PaymentPayload = z.object({ payload: z.object({ payment: z.object({ entity: PaymentEntity }) }) });
 const RefundPayload = z.object({
-  payload: z.object({ refund: z.object({ entity: z.object({ payment_id: z.string().min(1) }) }) }),
+  payload: z.object({
+    refund: z.object({ entity: z.object({ payment_id: z.string().min(1), amount: z.number().int().nonnegative() }) }),
+    // Razorpay includes the payment too; amount_refunded is its running total across partial refunds.
+    payment: z.object({ entity: z.object({ amount_refunded: z.number().int().nonnegative().optional() }) }).optional(),
+  }),
 });
 
 /** Runs the handler for one event and returns the JSON body to send back (always a 200 on success). */
@@ -37,11 +42,11 @@ async function handle(eventType: string, body: unknown): Promise<Record<string, 
       return { ok: true };
     }
     case "refund.processed": {
-      const paymentId = RefundPayload.parse(body).payload.refund.entity.payment_id;
-      await db.execute(sql`
-        UPDATE bookings SET status = 'refunded'
-         WHERE razorpay_payment_id = ${paymentId} AND status = 'refund_due'`);
-      return { ok: true };
+      const { refund, payment } = RefundPayload.parse(body).payload;
+      const refundedPaise = payment?.entity.amount_refunded ?? refund.entity.amount;
+      const result = await applyGatewayRefund({ paymentId: refund.entity.payment_id, refundedPaise });
+      if (result === "refunded" || result === "cancelled") kickOutbox();
+      return { ok: true, result };
     }
     default:
       return { ok: true, ignored: true };

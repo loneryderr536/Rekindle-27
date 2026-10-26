@@ -48,8 +48,9 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
 
   try {
     return await db.transaction(async (tx) => {
-      // Serialise holds by the same guest so the one-active-hold check is race-free.
-      for (const key of [phone, email, ...(clientIp ? [clientIp] : [])].sort()) {
+      // Serialise holds by the same guest so the one-active-hold check is race-free. The client IP is
+      // stored but not matched: guests on one office, college or mobile-carrier network share an IP.
+      for (const key of [phone, email].sort()) {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${key}))`);
       }
       const [active] = await tx
@@ -58,11 +59,7 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
         .where(and(
           eq(bookings.status, "pending"),
           gt(bookings.holdExpiresAt, now),
-          or(
-            eq(bookings.phone, phone),
-            eq(bookings.email, email),
-            ...(clientIp ? [eq(bookings.clientIp, clientIp)] : []),
-          ),
+          or(eq(bookings.phone, phone), eq(bookings.email, email)),
         ))
         .limit(1);
       if (active) {

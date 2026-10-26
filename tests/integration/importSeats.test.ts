@@ -3,7 +3,7 @@ import { expect, test } from "vitest";
 import { db } from "@/db/client";
 import { seats, tiers } from "@/db/schema";
 import { AppError } from "@/lib/errors";
-import { importSeats, parseVenueCsv } from "@/server/seats/importSeats";
+import { createMissingTiers, importSeats, parseVenueCsv, PLACEHOLDER_TIER_PRICE_PAISE } from "@/server/seats/importSeats";
 
 const HEADER = "section,row,number,x,y,tier";
 
@@ -70,4 +70,18 @@ test("importSeats rejects unknown tier naming it, and imports nothing", async ()
   const rows = parseVenueCsv(`${HEADER}\nA,A,1,10,10,Gold\nA,A,2,20,10,Platinum`);
   await expect(importSeats(rows)).rejects.toMatchObject({ code: "INVALID_CSV", message: expect.stringContaining("Platinum") });
   expect(await db.select().from(seats)).toHaveLength(0);
+});
+
+test("createMissingTiers creates every tier named in the CSV, once, with Gold/Silver defaults", async () => {
+  await db.insert(tiers).values({ name: "Gold", pricePaise: 200000, color: "#000000", sortOrder: 0 });
+  const rows = parseVenueCsv(`${HEADER}\nA,A,1,1,1,Gold\nA,A,2,2,1,Silver\nB,A,1,1,2,Balcony\nB,A,2,2,2,Balcony`);
+  expect(await createMissingTiers(rows)).toEqual([
+    { name: "Silver", pricePaise: 80000 },
+    { name: "Balcony", pricePaise: PLACEHOLDER_TIER_PRICE_PAISE },
+  ]);
+  const all = await db.select().from(tiers);
+  expect(all.find((t) => t.name === "Gold")?.pricePaise).toBe(200000);
+  expect(all.map((t) => [t.name, t.sortOrder]).sort()).toEqual([["Balcony", 2], ["Gold", 0], ["Silver", 1]]);
+  expect(await createMissingTiers(rows)).toEqual([]);
+  expect(await importSeats(rows)).toEqual({ inserted: 4 });
 });

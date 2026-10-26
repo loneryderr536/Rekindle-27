@@ -50,7 +50,10 @@ export function ConfirmPayment() {
         <p className="text-muted">
           If you paid, your tickets are on their way to your email. The email also links to your booking page.
         </p>
-        <Link href="/" className="btn-primary inline-block">Back to seats</Link>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link href="/booking/find" className="btn-ghost inline-block">Find my booking</Link>
+          <Link href="/register" className="btn-primary inline-block">Back to seats</Link>
+        </div>
       </div>
     );
   }

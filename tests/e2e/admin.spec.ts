@@ -19,7 +19,7 @@ test("admin blocks seat; public map shows it unavailable", async ({ browser, bas
   // A guest with no session sees it greyed out and cannot pick it.
   const guestCtx = await browser.newContext({ baseURL });
   const guest = await guestCtx.newPage();
-  await guest.goto("/");
+  await guest.goto("/register");
   const seat = seatButton(guest, "S-A-1", "Silver", "blocked");
   await expect(seat).toBeVisible();
   await expect(seat).toHaveAttribute("aria-disabled", "true");

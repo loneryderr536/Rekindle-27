@@ -113,9 +113,9 @@ test("seat already taken → 409 SEATS_TAKEN", async () => {
   expect((await res.json()).error.code).toBe("SEATS_TAKEN");
 });
 
-test("11th request from same IP → 429 with Retry-After", async () => {
+test("61st request from same IP → 429 with Retry-After", async () => {
   await seedVenue();
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 60; i++) {
     const res = await hold(valid([]), { "x-forwarded-for": "5.5.5.5, 10.0.0.1" });
     expect(res.status).toBe(400);
   }
@@ -127,14 +127,14 @@ test("11th request from same IP → 429 with Retry-After", async () => {
   expect((await hold(valid([]), { "x-forwarded-for": "6.6.6.6" })).status).toBe(400);
 });
 
-test("load-test flag (with ALLOW_TEST_MODES) lifts the per-IP hold limit and active-hold check", async () => {
-  const { seats } = await seedVenue();
+test("load-test flag (with ALLOW_TEST_MODES) lifts the per-IP hold limit", async () => {
+  const { seats } = await seedVenue({ seatsPerTier: 31 });
   const prev = { f: process.env.LOAD_TEST_DISABLE_RATE_LIMIT, a: process.env.ALLOW_TEST_MODES };
   Object.assign(process.env, { LOAD_TEST_DISABLE_RATE_LIMIT: "1", ALLOW_TEST_MODES: "1" });
   resetEnvForTests();
   try {
     const sameIp = { "x-forwarded-for": "7.7.7.7" };
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 62; i++) {
       const res = await hold(valid([seats[i].id], { ...guestN(i + 1) }), sameIp);
       expect(res.status).toBe(201);
     }

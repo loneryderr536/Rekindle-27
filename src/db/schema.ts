@@ -4,9 +4,9 @@ import {
 } from "drizzle-orm/pg-core";
 
 export const seatStatus = pgEnum("seat_status", ["available", "held", "sold", "blocked"]);
-export const bookingStatus = pgEnum("booking_status", ["pending", "paid", "expired", "comp", "refund_due", "refunded"]);
+export const bookingStatus = pgEnum("booking_status", ["pending", "paid", "expired", "comp", "refund_due", "refunded", "cancelled"]);
 export const adminRole = pgEnum("admin_role", ["admin", "scanner"]);
-export const outboxKind = pgEnum("outbox_kind", ["tickets", "refund_notice"]);
+export const outboxKind = pgEnum("outbox_kind", ["tickets", "refund_notice", "cancellation"]);
 export const outboxStatus = pgEnum("outbox_status", ["pending", "sent", "failed"]);
 
 const id = () => uuid("id").primaryKey().defaultRandom();

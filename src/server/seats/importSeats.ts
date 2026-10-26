@@ -40,6 +40,40 @@ export function parseVenueCsv(text: string): VenueRow[] {
   return rows;
 }
 
+/** Starting price and colour for tiers the seed script creates. Gold/Silver keep their old defaults. */
+const KNOWN_TIERS: Record<string, { pricePaise: number; color: string }> = {
+  Gold: { pricePaise: 150000, color: "#d4a017" },
+  Silver: { pricePaise: 80000, color: "#9ca3af" },
+};
+export const PLACEHOLDER_TIER_PRICE_PAISE = 100000;
+const PALETTE = ["#b45309", "#0f766e", "#7c3aed", "#be123c", "#1d4ed8", "#4d7c0f"];
+
+/**
+ * Creates every tier named in `rows` that does not exist yet (appended after the current sort
+ * order). Unknown names get PLACEHOLDER_TIER_PRICE_PAISE, which the organizer must change in
+ * Admin > Tiers. Returns the tiers it created.
+ */
+export async function createMissingTiers(rows: VenueRow[]): Promise<{ name: string; pricePaise: number }[]> {
+  const names = [...new Set(rows.map((r) => r.tier))];
+  if (names.length === 0) return [];
+  return db.transaction(async (tx) => {
+    const found = await tx.select({ name: tiers.name }).from(tiers).where(inArray(tiers.name, names));
+    const have = new Set(found.map((t) => t.name));
+    const missing = names.filter((n) => !have.has(n));
+    if (missing.length === 0) return [];
+    const { rows: next } = await tx.execute<{ next: number }>(sql`SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM tiers`);
+    const start = Number(next[0].next);
+    const values = missing.map((name, i) => ({
+      name,
+      pricePaise: KNOWN_TIERS[name]?.pricePaise ?? PLACEHOLDER_TIER_PRICE_PAISE,
+      color: KNOWN_TIERS[name]?.color ?? PALETTE[i % PALETTE.length],
+      sortOrder: start + i,
+    }));
+    await tx.insert(tiers).values(values).onConflictDoNothing({ target: tiers.name });
+    return values.map(({ name, pricePaise }) => ({ name, pricePaise }));
+  });
+}
+
 /**
  * Upserts seats by label (`section-row-number`) in one transaction. Existing seats are only
  * updated while `available`; held/sold/blocked seats are left untouched.

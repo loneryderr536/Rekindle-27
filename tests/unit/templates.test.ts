@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { refundNoticeEmail, ticketsEmail } from "@/server/email/templates";
+import { refundNoticeEmail, ticketCid, ticketsEmail } from "@/server/email/templates";
 import type { BookingWithTickets } from "@/server/tickets/loadBooking";
 
 const TOKEN = "T".repeat(43);
@@ -7,7 +7,7 @@ const TOKEN = "T".repeat(43);
 function booking(over: Partial<BookingWithTickets> = {}): BookingWithTickets {
   return {
     id: "b1", publicCode: "ABC123", accessToken: "acc_token_1", name: "Asha Rao", email: "asha@example.com",
-    status: "paid", amountPaise: 230000, refundAmountPaise: null, seatCount: 2,
+    status: "paid", amountPaise: 230000, refundAmountPaise: null, seatCount: 2, paidAt: null,
     tickets: [
       { seatLabel: "G-A-1", tierName: "Gold", pricePaise: 150000, token: TOKEN },
       { seatLabel: "S-A-1", tierName: "Silver", pricePaise: 80000, token: "U".repeat(43) },
@@ -43,4 +43,10 @@ test("refundNoticeEmail has subject, escaped name and refund amount", () => {
   expect(html).toContain("₹1,500.00");
   expect(html).toContain("&lt;b&gt;Eve&lt;/b&gt;");
   expect(html).not.toContain("<b>Eve");
+});
+
+test("ticketCid keeps plain labels and encodes anything a mail client could mangle", () => {
+  expect(ticketCid("G-A-1")).toBe("ticket-G-A-1");
+  expect(ticketCid("Box 1/A")).toBe("ticket-Box_20_1_2f_A");
+  expect(ticketCid("A_B")).not.toBe(ticketCid("A B"));
 });

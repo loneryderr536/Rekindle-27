@@ -42,7 +42,7 @@ Work top to bottom. Tick each item only after you have checked it for real.
 
 ## 6. Scheduled jobs
 
-The app needs three jobs calling `GET`/`POST` on its cron URLs: `/api/cron/cleanup` every 5 minutes, `/api/cron/reconcile` every 3 minutes, `/api/cron/outbox` every minute (as in `vercel.json`).
+The app needs three jobs calling `GET`/`POST` on its cron URLs: `/api/cron/cleanup` every 5 minutes, `/api/cron/reconcile` every 3 minutes, `/api/cron/outbox` every minute. This project is on Vercel Hobby, so `vercel.json` has no crons (Hobby rejects deploys with sub-daily crons) and an external scheduler runs them. On Pro, add them back to `vercel.json` under `"crons"`.
 
 - [ ] **Vercel Pro**: crons are listed in the project's Cron Jobs tab and show recent runs. Vercel Hobby only allows daily crons, so on Hobby this does not work.
 - [ ] **Or** an external scheduler (e.g. cron-job.org) calls the three URLs with header `x-cron-secret: <CRON_SECRET>` at `*/5`, `*/3` and `* * * * *`; each returns 200.

@@ -519,7 +519,7 @@ html:has(#o26-root) body {
   gap: 24px;
 }
 .o26-foot-brand { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.o26-foot-brand img { width: 64px; height: auto; }
+.o26-foot-logo { width: 72px; flex: none; }
 .o26-foot-name { display: flex; flex-direction: column; gap: 4px; }
 .o26-foot-title { font-weight: 600; font-size: 28px; color: #f9a90b; }
 .o26-foot-org { font-size: 14px; color: #c9ccd8; }

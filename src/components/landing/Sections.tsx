@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LINKS, LOGO } from "@/components/landing/links";
+import { FlameLogo } from "@/components/landing/FlameLogo";
+import { LINKS } from "@/components/landing/links";
 
 function FlameIcon({ width = 14, height = 18, fill = "#FF4520" }: { width?: number; height?: number; fill?: string }) {
   return (
@@ -189,7 +189,7 @@ export function LandingFooter() {
     <footer className="o26-footer">
       <div className="o26-wrap">
         <div className="o26-foot-brand">
-          <Image src={LOGO.src} width={LOGO.width} height={LOGO.height} alt="ONE·26 Rekindle logo" />
+          <div className="o26-foot-logo"><FlameLogo glow={false} /></div>
           <div className="o26-foot-name">
             <span className="o26-foot-title o26-ff-fredoka">ONE·26</span>
             <span className="o26-foot-org">Christos Marthoma Yuvajana Sakyam &amp; Young Family Fellowship</span>

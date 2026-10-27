@@ -2,11 +2,14 @@ import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingItems, bookings, seats, tiers } from "@/db/schema";
 import { HOLD_MINUTES } from "@/lib/constants";
+import { discountAmountPaise } from "@/lib/discount";
 import { AppError } from "@/lib/errors";
 import { normalizeIndianPhone } from "@/lib/phone";
 import { publicCode, randomToken } from "@/lib/random";
+import { findDiscount } from "@/server/discounts/findDiscount";
 
-export type CreateHoldInput = { seatIds: string[]; name: string; email: string; phone: string; clientIp?: string };
+export type CreateHoldInput = { seatIds: string[]; name: string; email: string; phone: string; clientIp?: string;
+  discountCode?: string };
 
 export type HoldResult = {
   bookingId: string;
@@ -113,8 +116,16 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
         .innerJoin(tiers, eq(seats.tierId, tiers.id))
         .where(inArray(seats.id, seatIds));
       await tx.insert(bookingItems).values(priced.map((p) => ({ bookingId: booking.id, ...p })));
-      const amountPaise = priced.reduce((sum, p) => sum + p.pricePaise, 0);
-      await tx.update(bookings).set({ amountPaise }).where(eq(bookings.id, booking.id));
+      const subtotalPaise = priced.reduce((sum, p) => sum + p.pricePaise, 0);
+      const discount = input.discountCode?.trim()
+        ? await findDiscount(input.discountCode, now, { executor: tx, lock: true })
+        : null;
+      const discountPaise = discount ? discountAmountPaise(subtotalPaise, discount.percent) : 0;
+      const amountPaise = subtotalPaise - discountPaise;
+      await tx
+        .update(bookings)
+        .set({ amountPaise, subtotalPaise, discountPaise, discountCode: discount?.code ?? null })
+        .where(eq(bookings.id, booking.id));
 
       return {
         bookingId: booking.id,

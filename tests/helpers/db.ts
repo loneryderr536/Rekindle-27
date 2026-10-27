@@ -5,7 +5,7 @@ import type { Seat, Tier } from "@/db/schema";
 
 const TABLES = [
   "tiers", "seats", "bookings", "booking_items", "tickets", "admin_users",
-  "admin_sessions", "audit_log", "email_outbox", "webhook_events", "rate_limits",
+  "admin_sessions", "audit_log", "email_outbox", "webhook_events", "rate_limits", "discount_codes",
 ];
 
 /** Safety guard: tests must never truncate a non-test database. */

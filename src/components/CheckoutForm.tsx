@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Attendee } from "@/lib/attendee";
+import { discountAmountPaise } from "@/lib/discount";
 import { formatInr } from "@/lib/money";
 import type { SeatView, TierView } from "@/server/seats/listSeats";
 
-export type CheckoutDetails = { name: string; email: string; phone: string; turnstileToken: string };
+export type CheckoutDetails = { name: string; email: string; phone: string; turnstileToken: string; discountCode?: string };
 
 type Props = {
   selected: SeatView[];
@@ -56,6 +57,10 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
   const testMode = siteKey === "test";
   const [token, setToken] = useState<string>(testMode ? TEST_TOKEN : "");
   const [busy, setBusy] = useState(false);
+  const [codeInput, setCodeInput] = useState("");
+  const [applied, setApplied] = useState<{ code: string; percent: number } | null>(null);
+  const [codeError, setCodeError] = useState("");
+  const [checkingCode, setCheckingCode] = useState(false);
   const [widgetError, setWidgetError] = useState(siteKey === "");
   const widgetEl = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
@@ -83,14 +88,48 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
   }, [siteKey, testMode]);
 
   const tierById = new Map(tiers.map((t) => [t.id, t]));
-  const total = selected.reduce((sum, s) => sum + (tierById.get(s.tierId)?.pricePaise ?? 0), 0);
+  const subtotal = selected.reduce((sum, s) => sum + (tierById.get(s.tierId)?.pricePaise ?? 0), 0);
+  const discount = applied ? discountAmountPaise(subtotal, applied.percent) : 0;
+  const total = subtotal - discount;
+  const codePending = codeInput.trim() !== "" && !applied;
+
+  async function applyCode() {
+    if (!codeInput.trim() || checkingCode) return;
+    setCheckingCode(true);
+    setCodeError("");
+    try {
+      const res = await fetch("/api/discount/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: codeInput }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { code?: string; percent?: number; error?: { code: string } };
+      if (res.ok && body.code && body.percent) {
+        setApplied({ code: body.code, percent: body.percent });
+      } else if (body.error?.code === "RATE_LIMITED") {
+        setCodeError("Too many attempts. Wait a few minutes, then try again.");
+      } else {
+        setCodeError("That discount code isn't valid.");
+      }
+    } catch {
+      setCodeError("Couldn't check the code. Check your connection and try again.");
+    } finally {
+      setCheckingCode(false);
+    }
+  }
+
+  function removeCode() {
+    setApplied(null);
+    setCodeInput("");
+    setCodeError("");
+  }
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (busy || !token) return;
+    if (busy || !token || codePending) return;
     setBusy(true);
     try {
-      await onSubmit({ name: attendee.name, email: attendee.email, phone: attendee.phone, turnstileToken: token });
+      await onSubmit({ name: attendee.name, email: attendee.email, phone: attendee.phone, turnstileToken: token, discountCode: applied?.code });
     } finally {
       setBusy(false);
       // Turnstile tokens are single-use: get a fresh one for any retry.
@@ -115,11 +154,44 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
             </li>
           );
         })}
+        {applied && (
+          <li className="flex items-baseline justify-between py-2 text-sm">
+            <span className="font-semibold">Discount ({applied.percent}% off)</span>
+            <span data-testid="checkout-discount" className="tabular-nums">&minus;{formatInr(discount)}</span>
+          </li>
+        )}
         <li className="flex items-baseline justify-between pt-3">
           <span className="font-semibold">Total</span>
           <span data-testid="checkout-total" className="text-xl font-bold tabular-nums">{formatInr(total)}</span>
         </li>
       </ul>
+
+      <div className="field">
+        <label htmlFor="discount-code"><span>Discount code</span></label>
+        {applied ? (
+          <p className="m-0 flex items-center gap-3 text-sm">
+            <span className="font-semibold">{applied.code} applied</span>
+            <button type="button" className="underline" onClick={removeCode} disabled={busy}>Remove</button>
+          </p>
+        ) : (
+          <div className="flex gap-3">
+            <input
+              id="discount-code"
+              value={codeInput}
+              autoComplete="off"
+              autoCapitalize="characters"
+              placeholder="e.g. REKINDLE10"
+              onChange={(e) => { setCodeInput(e.target.value); setCodeError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void applyCode(); } }}
+            />
+            <button type="button" className="btn-ghost" onClick={applyCode} disabled={!codeInput.trim() || checkingCode || busy}>
+              {checkingCode ? "Checking…" : "Apply"}
+            </button>
+          </div>
+        )}
+        {codeError && <small role="alert" className="!text-danger font-medium">{codeError}</small>}
+        {codePending && !codeError && <small>Tap Apply to use this code, or clear it to continue.</small>}
+      </div>
 
       <dl className="m-0 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-[22px] bg-sand px-5 py-4 text-sm">
         <dt className="text-muted">Name</dt>
@@ -147,7 +219,7 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
         {onCancel && (
           <button type="button" className="btn-ghost" onClick={onCancel} disabled={busy}>Back</button>
         )}
-        <button type="submit" className="btn-primary flex-1" disabled={busy || !token}>
+        <button type="submit" className="btn-primary flex-1" disabled={busy || !token || codePending}>
           {busy ? "Reserving seats…" : `Pay ${formatInr(total)}`}
         </button>
       </div>

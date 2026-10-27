@@ -10,6 +10,7 @@ export const HoldInput = z.object({
     .string()
     .refine((p) => normalizeIndianPhone(p) !== null, "Invalid Indian mobile number")
     .transform((p) => normalizeIndianPhone(p)!),
+  discountCode: z.string().trim().max(40).optional(),
   turnstileToken: z.string(),
 });
 

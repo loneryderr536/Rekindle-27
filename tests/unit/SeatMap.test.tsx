@@ -108,3 +108,20 @@ test("a booking for 2 participants stops at 2 seats with the custom message", as
   expect(third.getAttribute("aria-pressed")).toBe("false");
   expect(screen.getByText("You're booking 2 seats.")).toBeTruthy();
 });
+
+test("an applied discount code lowers the checkout total", async () => {
+  vi.stubGlobal("fetch", vi.fn(async () => Response.json({ code: "REKINDLE20", percent: 20 })));
+  render(
+    <CheckoutForm
+      selected={[seat(1), seat(1, "t-silver")]}
+      tiers={tiers}
+      attendee={{ name: "Asha Rao", email: "asha@example.com", phone: "9876543210" }}
+      onSubmit={async () => {}}
+    />,
+  );
+  await userEvent.type(screen.getByLabelText("Discount code"), "rekindle 20");
+  await userEvent.click(screen.getByRole("button", { name: "Apply" }));
+  expect(await screen.findByText("REKINDLE20 applied")).toBeTruthy();
+  expect(screen.getByTestId("checkout-total").textContent).toBe("₹1,840.00");
+  vi.unstubAllGlobals();
+});

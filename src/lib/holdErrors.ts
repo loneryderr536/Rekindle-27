@@ -13,6 +13,8 @@ export function holdErrorMessage(code: string, serverMessage: string): string {
       return "Payments are unavailable right now, so your seats were released. Try again in a minute.";
     case "INVALID_SEATS":
       return "Some of the selected seats can't be booked. Pick your seats again.";
+    case "INVALID_DISCOUNT":
+      return "That discount code isn't valid. Check it or remove it, then try again.";
     case "VALIDATION":
       return serverMessage;
     case "NETWORK":

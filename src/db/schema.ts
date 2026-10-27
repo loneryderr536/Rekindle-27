@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
-  check, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid,
+  boolean, check, doublePrecision, index, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid,
 } from "drizzle-orm/pg-core";
 
 export const seatStatus = pgEnum("seat_status", ["available", "held", "sold", "blocked"]);
@@ -37,6 +37,10 @@ export const bookings = pgTable(
     clientIp: text("client_ip"),
     status: bookingStatus("status").notNull(),
     amountPaise: integer("amount_paise").notNull(),
+    /** Seat total before any discount; null on bookings made before discount codes existed. */
+    subtotalPaise: integer("subtotal_paise"),
+    discountPaise: integer("discount_paise").notNull().default(0),
+    discountCode: text("discount_code"),
     seatCount: integer("seat_count").notNull(),
     razorpayOrderId: text("razorpay_order_id").unique(),
     razorpayPaymentId: text("razorpay_payment_id").unique(),
@@ -48,6 +52,27 @@ export const bookings = pgTable(
   (t) => [
     check("bookings_amount_paise_nonneg", sql`${t.amountPaise} >= 0`),
     check("bookings_refund_amount_paise_nonneg", sql`${t.refundAmountPaise} >= 0`),
+    check("bookings_discount_paise_nonneg", sql`${t.discountPaise} >= 0`),
+    index("bookings_discount_code_idx").on(t.discountCode),
+  ],
+);
+
+export const discountCodes = pgTable(
+  "discount_codes",
+  {
+    id: id(),
+    /** Normalised: upper-case letters and digits only, e.g. "REKINDLE10". */
+    code: text("code").notNull().unique(),
+    percent: integer("percent").notNull(),
+    active: boolean("active").notNull().default(true),
+    maxUses: integer("max_uses"),
+    expiresAt: tstz("expires_at"),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    // Below 100: Razorpay cannot create a zero-amount order.
+    check("discount_codes_percent_range", sql`${t.percent} BETWEEN 1 AND 99`),
+    check("discount_codes_max_uses_positive", sql`${t.maxUses} IS NULL OR ${t.maxUses} > 0`),
   ],
 );
 

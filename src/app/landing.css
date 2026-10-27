@@ -597,6 +597,9 @@ html:has(#o26-root) body {
   #faq { border-radius: 28px; }
   .o26-footer > div { justify-content: center; text-align: center; }
   .o26-footer > div > div { align-items: center; }
+  .o26-foot-brand { flex-direction: column; justify-content: center; }
+  .o26-foot-name { align-items: center; }
+  .o26-foot-links { justify-content: center; }
 }
 
 /* Pages other than the landing page show the header from the start, in the page flow. */

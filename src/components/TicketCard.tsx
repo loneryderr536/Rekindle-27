@@ -2,25 +2,25 @@
 
 import { useState, type PointerEvent } from "react";
 
-type Props = {
+type FaceProps = { qr: string; seatLabel: string; eventName: string; shortDate: string };
+type DetailsProps = {
   qr: string;
   seatLabel: string;
   tierName: string;
   orderCode: string;
   holder: string;
-  eventName: string;
-  shortDate: string;
   longDate: string;
   hallLine: string;
   gatesOpen: string;
 };
+type Props = FaceProps & DetailsProps;
 
 const GLASS = "linear-gradient(160deg, rgba(255, 122, 46, 0.55) 0%, rgba(184, 50, 15, 0.45) 35%, rgba(10, 84, 112, 0.55) 100%)";
 const NOTCH = "radial-gradient(circle at 0 204px, #0000 14px, #000 14.5px) left / 51% 100% no-repeat, radial-gradient(circle at 100% 204px, #0000 14px, #000 14.5px) right / 51% 100% no-repeat";
 const LOGO = "/landing/logo.png";
 
-/** One digital ticket: the floating holographic card with its entry QR, and the details plate under it. */
-export function TicketCard({ qr, seatLabel, tierName, orderCode, holder, eventName, shortDate, longDate, hallLine, gatesOpen }: Props) {
+/** The floating holographic card with its entry QR. */
+export function TicketFace({ qr, seatLabel, eventName, shortDate }: FaceProps) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const { x: tx, y: ty } = tilt;
 
@@ -31,13 +31,9 @@ export function TicketCard({ qr, seatLabel, tierName, orderCode, holder, eventNa
 
   const holo = `radial-gradient(circle at ${(50 + tx * 40).toFixed(0)}% ${(40 + ty * 40).toFixed(0)}%, rgba(253, 251, 244, 0.55) 0%, rgba(249, 169, 11, 0.25) 25%, rgba(26, 138, 168, 0.2) 50%, rgba(255, 69, 32, 0) 70%)`;
   const logoHolo = `linear-gradient(${(120 + tx * 60).toFixed(0)}deg, rgba(255, 69, 32, 0) 20%, rgba(255, 236, 170, 0.28) ${(45 + tx * 15).toFixed(0)}%, rgba(120, 220, 240, 0.18) ${(60 + ty * 15).toFixed(0)}%, rgba(253, 251, 244, 0) 85%)`;
-  // Labels are "section-row-number" (N-D-6); the ticket shows the seat as the guest finds it: D6.
-  const seatShort = seatLabel.split("-").slice(1).join("") || seatLabel;
-  const file = `${orderCode}-${seatLabel}`.replace(/[^A-Za-z0-9_-]+/g, "-");
 
   return (
-    <article aria-label={`Ticket for seat ${seatLabel}`} className="flex flex-col items-center">
-      <div className="relative mt-4" style={{ width: 250, height: 390 }}>
+    <div className="relative" style={{ width: 250, height: 390 }}>
         <div aria-hidden="true" className="tk-shadow" style={{ position: "absolute", left: 30, right: 30, bottom: -26, height: 22, borderRadius: "50%", background: "radial-gradient(ellipse, rgba(255, 90, 20, 0.55), rgba(255, 90, 20, 0) 70%)" }} />
         <div className="tk-float" style={{ position: "absolute", inset: 0 }}>
           <div
@@ -77,8 +73,16 @@ export function TicketCard({ qr, seatLabel, tierName, orderCode, holder, eventNa
           </div>
         </div>
       </div>
+  );
+}
 
-      <div className="mt-10 flex w-full max-w-[342px] flex-col items-center gap-2 rounded-[28px] border border-[#FDFBF4]/20 bg-[#0B1020]/55 px-5 py-3.5 text-center backdrop-blur-md">
+/** Seat, venue, order number and the QR download for one ticket. */
+export function TicketDetails({ qr, seatLabel, tierName, orderCode, holder, longDate, hallLine, gatesOpen }: DetailsProps) {
+  // Labels are "section-row-number" (N-D-6); the ticket shows the seat as the guest finds it: D6.
+  const seatShort = seatLabel.split("-").slice(1).join("") || seatLabel;
+  const file = `${orderCode}-${seatLabel}`.replace(/[^A-Za-z0-9_-]+/g, "-");
+  return (
+      <div className="flex w-full max-w-[342px] flex-col items-center gap-2 rounded-[28px] border border-[#FDFBF4]/20 bg-[#0B1020]/55 px-5 py-3.5 text-center backdrop-blur-md">
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-[#C9CCD8]">Seat · {tierName}</span>
           <span className="font-display text-[21px] font-semibold text-[#F9A90B]">{seatShort}</span>
@@ -101,6 +105,19 @@ export function TicketCard({ qr, seatLabel, tierName, orderCode, holder, eventNa
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 4v11M7 11l5 5 5-5M5 20h14" /></svg>
           Download QR
         </a>
+      </div>
+  );
+}
+
+/** One digital ticket: the card and its details plate. */
+export function TicketCard(props: Props) {
+  return (
+    <article aria-label={`Ticket for seat ${props.seatLabel}`} className="flex flex-col items-center">
+      <div className="mt-4">
+        <TicketFace {...props} />
+      </div>
+      <div className="mt-10 flex w-full justify-center">
+        <TicketDetails {...props} />
       </div>
     </article>
   );

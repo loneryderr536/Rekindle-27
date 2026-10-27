@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/AutoRefresh";
-import { TicketCard } from "@/components/TicketCard";
+import { TicketSet } from "@/components/TicketCarousel";
 import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
@@ -28,7 +28,7 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
     : [];
 
   return (
-    <BrandPage>
+    <BrandPage dark={showTickets ? "ticket" : undefined}>
       {b.status === "pending" && <AutoRefresh ms={PENDING_REFRESH_MS} />}
       <section className="mx-auto w-full max-w-xl px-6 pb-[clamp(56px,7vw,104px)] pt-[clamp(40px,6vw,72px)]">
         <PageIntro
@@ -76,34 +76,21 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
         </div>
 
         {showTickets ? (
-          <div
-            className="relative mt-6 overflow-hidden rounded-[32px] px-4 pb-10 pt-8 text-[#FDFBF4] shadow-[0_40px_80px_rgba(11,16,32,0.35)]"
-            style={{ background: "radial-gradient(ellipse at 50% 20%, #2A1426 0%, #0B1020 60%)" }}
-          >
-            <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 85%, rgba(255, 69, 32, 0.4), rgba(255, 69, 32, 0) 60%)" }} />
+          <div className="relative mt-10">
             <div className="relative text-center">
               <p className="m-0 text-sm text-[#E6E3DA]">{EVENT.longDate}</p>
               <h2 className="font-display m-0 text-[28px] font-semibold">ONE·26 {EVENT.name}</h2>
             </div>
-            <div className="relative flex flex-col gap-14">
-              {b.tickets.map((t, i) =>
-                qrs[i] ? (
-                  <TicketCard
-                    key={t.seatLabel}
-                    qr={qrs[i]!}
-                    seatLabel={t.seatLabel}
-                    tierName={t.tierName}
-                    orderCode={b.publicCode}
-                    holder={b.name}
-                    eventName={EVENT.name}
-                    shortDate={EVENT.shortDate}
-                    longDate={EVENT.longDate}
-                    hallLine={`${EVENT.venue} · ${EVENT.hall}`}
-                    gatesOpen={EVENT.gatesOpen}
-                  />
-                ) : null,
-              )}
-            </div>
+            <TicketSet
+              tickets={b.tickets.flatMap((t, i) => (qrs[i] ? [{ seatLabel: t.seatLabel, tierName: t.tierName, qr: qrs[i]! }] : []))}
+              orderCode={b.publicCode}
+              holder={b.name}
+              eventName={EVENT.name}
+              shortDate={EVENT.shortDate}
+              longDate={EVENT.longDate}
+              hallLine={`${EVENT.venue} · ${EVENT.hall}`}
+              gatesOpen={EVENT.gatesOpen}
+            />
           </div>
         ) : (
           <ul className="mt-6 space-y-5">

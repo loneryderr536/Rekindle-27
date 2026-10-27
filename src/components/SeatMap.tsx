@@ -107,15 +107,8 @@ export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, limit
   }
 
   return (
-    <div
-      className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[32px] pb-8 text-[#FDFBF4] shadow-[0_40px_80px_rgba(11,16,32,0.35)]"
-      style={{ background: "linear-gradient(180deg, #141B33 0%, #10183A 30%, #0B1020 100%)" }}
-    >
-      <div aria-hidden="true" className="st-glow" style={{ position: "absolute", left: -60, top: 150, width: 300, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(255, 69, 32, 0.75), rgba(255, 69, 32, 0) 70%)", filter: "blur(10px)" }} />
-      <div aria-hidden="true" className="st-glow" style={{ position: "absolute", right: -70, top: 140, width: 300, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(26, 138, 168, 0.8), rgba(10, 84, 112, 0) 70%)", filter: "blur(10px)", animationDelay: "-1.5s" }} />
-      <div aria-hidden="true" style={{ position: "absolute", left: 60, top: 190, width: 270, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(249, 169, 11, 0.55), rgba(249, 169, 11, 0) 70%)", filter: "blur(6px)" }} />
-
-      <div className="relative flex flex-col gap-0.5 px-[26px] pt-8">
+    <div className="o26-seatmap relative mx-auto w-full max-w-[460px] pb-8 text-[#FDFBF4]">
+      <div className="relative flex flex-col items-center gap-0.5 px-[26px] pt-2 text-center">
         <span className="text-xs text-[#C9CCD8]">{EVENT.weekdayDate}</span>
         <span className="font-display text-[22px] font-semibold">ONE·26 {EVENT.name}</span>
       </div>

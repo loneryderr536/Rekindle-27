@@ -218,3 +218,131 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .tk-float, .tk-card, .tk-sheen, .tk-pulse, .tk-shadow, .lg-shine, .lg-glow { animation: none !important; }
 }
+
+/* Full-screen dark pages: the seat map and the digital ticket are the page itself, not a card on cream. */
+body:has(.o26-dark) {
+  background: #0b1020;
+}
+#o26-root.o26-dark {
+  color: #fdfbf4;
+  background-attachment: fixed;
+}
+#o26-root.o26-dark-seats {
+  background:
+    radial-gradient(ellipse 60% 38% at 0% 38%, rgba(255, 69, 32, 0.5), rgba(255, 69, 32, 0) 70%),
+    radial-gradient(ellipse 60% 38% at 100% 36%, rgba(26, 138, 168, 0.55), rgba(10, 84, 112, 0) 70%),
+    radial-gradient(ellipse 45% 32% at 50% 42%, rgba(249, 169, 11, 0.35), rgba(249, 169, 11, 0) 70%),
+    linear-gradient(180deg, #141b33 0%, #10183a 30%, #0b1020 100%);
+  background-attachment: fixed;
+}
+#o26-root.o26-dark-ticket {
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 85%, rgba(255, 69, 32, 0.4), rgba(255, 69, 32, 0) 70%),
+    radial-gradient(ellipse at 50% 25%, #2a1426 0%, #0b1020 62%);
+  background-attachment: fixed;
+}
+#o26-root.o26-dark #o26-header {
+  background: rgba(11, 16, 32, 0.8);
+  border-bottom-color: rgba(253, 251, 244, 0.12);
+}
+#o26-root.o26-dark .o26-hlink {
+  color: #fdfbf4;
+}
+#o26-root.o26-dark .o26-hlink:hover,
+#o26-root.o26-dark .o26-hlink:focus-visible {
+  background: rgba(253, 251, 244, 0.12);
+  color: #fdfbf4;
+}
+#o26-root.o26-dark .o26-menu-btn {
+  background: rgba(253, 251, 244, 0.1);
+  color: #fdfbf4;
+  border-color: rgba(253, 251, 244, 0.3);
+}
+.o26-dark .o26-lead,
+.o26-dark .text-muted {
+  color: #c9ccd8;
+}
+.o26-dark .o26-eyebrow {
+  color: #e6e3da;
+}
+.o26-dark .o26-card {
+  background: rgba(11, 16, 32, 0.55);
+  border: 1px solid rgba(253, 251, 244, 0.2);
+  box-shadow: none;
+  backdrop-filter: blur(12px);
+}
+.o26-dark .btn-ghost {
+  color: #fdfbf4;
+  border-color: rgba(253, 251, 244, 0.45);
+  background: transparent;
+}
+.o26-dark .bg-white.text-muted {
+  background: rgba(253, 251, 244, 0.08);
+  color: #c9ccd8;
+  --tw-ring-color: rgba(253, 251, 244, 0.2);
+}
+
+/* The Confirm & pay sheet is a light panel on top of the dark page: keep its own colours. */
+.o26-dark .sheet {
+  color: var(--ink);
+}
+.o26-dark .sheet .text-muted {
+  color: var(--muted);
+}
+.o26-dark .sheet .btn-ghost {
+  color: var(--ink);
+  border-color: var(--ink);
+}
+
+/* On larger screens the seat map is scaled up a little. */
+@media (min-width: 768px) {
+  .o26-seatmap {
+    zoom: 1.25;
+  }
+}
+@media (min-width: 1100px) {
+  .o26-seatmap {
+    zoom: 1.4;
+  }
+}
+/* Ticket ring: the ring turns smoothly when Next / Previous is pressed. */
+.o26-ring {
+  transition: transform 0.9s cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+.o26-ring-card {
+  transition: opacity 0.6s ease;
+}
+@keyframes ticketIn {
+  from { opacity: 0; transform: translateY(12px); }
+}
+.o26-ticket-in {
+  animation: ticketIn 0.5s ease 0.35s both;
+}
+.o26-ring-btn {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(253, 251, 244, 0.45);
+  background: rgba(11, 16, 32, 0.5);
+  color: #fdfbf4;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+.o26-ring-btn:hover {
+  transform: scale(1.08);
+}
+.o26-ring-btn-next {
+  background: #f9a90b;
+  border-color: #f9a90b;
+  color: #0b1020;
+  box-shadow: 0 0 24px rgba(249, 169, 11, 0.45);
+}
+@media (prefers-reduced-motion: reduce) {
+  .o26-ring, .o26-ring-card, .o26-ticket-in { transition: none; animation: none; }
+}
+/* */
+
+/* */
+/* */

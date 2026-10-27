@@ -360,10 +360,10 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[#FDFBF4]/15 bg-[#0B1020]/90 text-[#FDFBF4] backdrop-blur">
         <div className="o26-wrap px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
           {notice && (
-            <p role="alert" className={`mb-2 text-sm font-medium ${notice.tone === "error" ? "text-danger" : "text-ink"}`}>
+            <p role="alert" className={`mb-2 text-sm font-medium ${notice.tone === "error" ? "text-[#FFB4A8]" : "text-[#FDFBF4]"}`}>
               {notice.text}
             </p>
           )}

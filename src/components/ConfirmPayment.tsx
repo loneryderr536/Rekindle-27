@@ -2,13 +2,22 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { clearPendingPayment, readPendingPayment } from "@/lib/pendingPayment";
 
-/** Verifies the Checkout result with the server, then shows the booking page (for confirmed and pending alike). */
+const LOOP_MS = 5200;
+/** Navy as the browser decodes the loader video (brand navy #0B1020 after H.264 rounding), so the clip blends into the panel. */
+const LOADER_NAVY = "#0b1021";
+
+/**
+ * Verifies the Checkout result with the server, then shows the booking page (for confirmed and pending alike).
+ * While it waits the burning logo plays; the redirect holds until the current loop ends on the finished logo.
+ */
 export function ConfirmPayment() {
   const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [problem, setProblem] = useState<"missing" | "failed" | null>(null);
+  const [target, setTarget] = useState<string | null>(null);
 
   useEffect(() => {
     const p = readPendingPayment();
@@ -36,12 +45,43 @@ export function ConfirmPayment() {
       }
       if (cancelled) return;
       clearPendingPayment();
-      router.replace(`/booking/${encodeURIComponent(token)}`);
+      setTarget(token);
     })().catch(() => !cancelled && setProblem("failed"));
     return () => {
       cancelled = true;
     };
-  }, [router]);
+  }, []);
+
+  // Verified: leave when the loader video wraps back to its first frame (the assembled logo).
+  useEffect(() => {
+    if (!target) return;
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      router.replace(`/booking/${encodeURIComponent(target)}`);
+    };
+    const video = videoRef.current;
+    if (!video || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      go();
+      return;
+    }
+    let raf = 0;
+    let last = video.currentTime;
+    const tick = () => {
+      const now = video.currentTime;
+      if (now < last) return go();
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    // If the video can't play (blocked autoplay, data saver), don't hold the tickets back.
+    const safety = setTimeout(go, LOOP_MS + 1500);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(safety);
+    };
+  }, [target, router]);
 
   if (problem) {
     return (
@@ -59,9 +99,26 @@ export function ConfirmPayment() {
   }
 
   return (
-    <div className="space-y-3 text-center" aria-live="polite">
-      <h1 className="font-display m-0 text-4xl font-semibold">Confirming your <span className="text-flame">payment</span></h1>
-      <p className="text-muted">Keep this page open. Your tickets appear in a moment.</p>
+    <div
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-2 px-6 text-center"
+      style={{ background: LOADER_NAVY }}
+      aria-live="polite"
+    >
+      <video
+        ref={videoRef}
+        className="aspect-square w-[min(80vw,52vh,520px)] motion-reduce:hidden"
+        src="/landing/loader.mp4"
+        poster="/landing/loader-poster.jpg"
+        autoPlay
+        muted
+        loop
+        playsInline
+        aria-hidden="true"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element -- still frame for reduced motion */}
+      <img className="hidden aspect-square w-[min(80vw,52vh,520px)] motion-reduce:block" src="/landing/loader-poster.jpg" alt="" />
+      <h1 className="font-display m-0 text-4xl font-semibold text-[#fdfbf4]">Confirming your <span className="text-flame">payment</span></h1>
+      <p className="m-0 text-[#c9ccd8]">Keep this page open. Your tickets appear in a moment.</p>
     </div>
   );
 }

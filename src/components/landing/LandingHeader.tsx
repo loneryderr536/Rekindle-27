@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { LogoShine } from "@/components/landing/LogoShine";
 import { LINKS, LOGO } from "@/components/landing/links";
 
 const MENU = [
@@ -48,7 +48,7 @@ export function LandingHeader({ solid = false }: { solid?: boolean }) {
           </button>
         </div>
         <a href={LINKS.home} aria-label="ONE·26 Rekindle — back to top" className="o26-logo-link">
-          <Image id="o26-hlogo" className="o26-logo-glow" src={LOGO.src} width={LOGO.width} height={LOGO.height} alt="ONE·26 Rekindle" />
+          <LogoShine id="o26-hlogo" src={LOGO.src} width={LOGO.width} height={LOGO.height} alt="ONE·26 Rekindle" />
         </a>
         <div className="o26-hr">
           <a className="o26-hlink o26-hdesk" href={LINKS.lineup}>Line-up</a>

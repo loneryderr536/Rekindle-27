@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Pick your seats", robots: { index: f
 export default function SeatsPage() {
   // No footer: the seat step has a fixed bar at the bottom.
   return (
-    <BrandPage footer={false} dark="seats">
+    <BrandPage footer={false}>
       <SeatsStep />
     </BrandPage>
   );

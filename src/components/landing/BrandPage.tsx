@@ -2,13 +2,10 @@ import type { ReactNode } from "react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/Sections";
 
-/**
- * Guest pages outside the landing page: the site header, the cream page and the footer.
- * `dark` makes the whole page the night-navy stage of the seat map ("seats") or the digital ticket ("ticket").
- */
-export function BrandPage({ children, footer = true, dark }: { children: ReactNode; footer?: boolean; dark?: "seats" | "ticket" }) {
+/** Guest pages outside the landing page: the site header, the page content on the shared stage, and the footer. */
+export function BrandPage({ children, footer = true }: { children: ReactNode; footer?: boolean }) {
   return (
-    <div id="o26-root" className={`flex flex-1 flex-col${dark ? ` o26-dark o26-dark-${dark}` : ""}`}>
+    <div id="o26-root" className="flex flex-1 flex-col">
       <LandingHeader solid />
       <main className="flex flex-1 flex-col">{children}</main>
       {footer && <LandingFooter />}

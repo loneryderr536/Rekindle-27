@@ -28,7 +28,7 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
     : [];
 
   return (
-    <BrandPage dark={showTickets ? "ticket" : undefined}>
+    <BrandPage>
       {b.status === "pending" && <AutoRefresh ms={PENDING_REFRESH_MS} />}
       <section className="mx-auto w-full max-w-xl px-6 pb-[clamp(56px,7vw,104px)] pt-[clamp(40px,6vw,72px)]">
         <PageIntro
@@ -40,7 +40,7 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
         <div className="flex flex-wrap items-center gap-3">
           <span
             className={`rounded-full px-3 py-1 text-sm font-semibold ${
-              showTickets ? "bg-marigold text-ink" : "bg-sand text-ink ring-1 ring-line"
+              showTickets ? "bg-marigold text-ink" : "bg-sand text-paper ring-1 ring-line"
             }`}
           >
             {bookingStatusLabel(b.status)}
@@ -76,7 +76,10 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
         </div>
 
         {showTickets ? (
-          <div className="relative mt-10">
+          <div
+            className="relative mt-10"
+            style={{ background: "radial-gradient(ellipse 85% 55% at 50% 45%, rgba(42, 20, 38, 0.8), rgba(42, 20, 38, 0) 75%)" }}
+          >
             <div className="relative text-center">
               <p className="m-0 text-sm text-[#E6E3DA]">{EVENT.longDate}</p>
               <h2 className="font-display m-0 text-[28px] font-semibold">ONE·26 {EVENT.name}</h2>

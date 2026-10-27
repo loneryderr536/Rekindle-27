@@ -4,11 +4,11 @@ const TAGLINE = "One for the Nation, One for the Youth";
 
 const NOTES: { fill: string; shape: "note8" | "note16"; x: number; y: number }[] = [
   { fill: "#F9A90B", shape: "note8", x: 560, y: 700 },
-  { fill: "#0A5470", shape: "note16", x: 1290, y: 640 },
+  { fill: "#1A8AA8", shape: "note16", x: 1290, y: 640 },
   { fill: "#FF4520", shape: "note8", x: 1420, y: 760 },
   { fill: "#FF4520", shape: "note16", x: 420, y: 560 },
   { fill: "#F9A90B", shape: "note8", x: 1500, y: 470 },
-  { fill: "#0A5470", shape: "note8", x: 660, y: 430 },
+  { fill: "#1A8AA8", shape: "note8", x: 660, y: 430 },
   { fill: "#F9A90B", shape: "note16", x: 1180, y: 360 },
   { fill: "#FF4520", shape: "note8", x: 470, y: 820 },
 ];
@@ -96,7 +96,7 @@ export function StoryScene() {
           </g>
           <rect id="flash" x="-3000" y="-3000" width="7920" height="7080" fill="#FDFBF4" opacity="0" />
         </g>
-        <circle id="lightwipe" cx="960" cy="560" r="0" fill="#FDFBF4" />
+        <circle id="lightwipe" cx="960" cy="560" r="0" fill="#141B33" />
       </svg>
 
       <div id="fire" className="o26-layer">
@@ -179,10 +179,10 @@ export function StoryScene() {
           <text id="o26-endtext-k" x="960" y="470" textAnchor="middle" className="o26-ff-poppins" fontWeight="600" fontSize="24" fill="#FF4520" letterSpacing="10">
             REKINDLE · 26 JANUARY 2027
           </text>
-          <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
+          <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#FDFBF4" letterSpacing="1">
             One for the Nation,
           </text>
-          <text id="o26-endtext-u" x="960" y="640" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0A5470" letterSpacing="1">
+          <text id="o26-endtext-u" x="960" y="640" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#1A8AA8" letterSpacing="1">
             One for the Youth
           </text>
         </g>

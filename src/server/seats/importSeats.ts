@@ -40,10 +40,11 @@ export function parseVenueCsv(text: string): VenueRow[] {
   return rows;
 }
 
-/** Starting price and colour for tiers the seed script creates. Gold/Silver keep their old defaults. */
+/** Starting price and colour for tiers the seed script creates. Gold/Silver/Normal keep fixed defaults. */
 const KNOWN_TIERS: Record<string, { pricePaise: number; color: string }> = {
   Gold: { pricePaise: 150000, color: "#d4a017" },
   Silver: { pricePaise: 80000, color: "#9ca3af" },
+  Normal: { pricePaise: 80000, color: "#9ca3af" },
 };
 export const PLACEHOLDER_TIER_PRICE_PAISE = 100000;
 const PALETTE = ["#b45309", "#0f766e", "#7c3aed", "#be123c", "#1d4ed8", "#4d7c0f"];

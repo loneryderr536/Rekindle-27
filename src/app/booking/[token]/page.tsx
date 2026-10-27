@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { TicketCard } from "@/components/TicketCard";
 import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
@@ -70,27 +71,53 @@ export default async function BookingPage({ params }: { params: Promise<{ token:
           </p>
         )}
         {showTickets && (
-          <p className="mt-4 text-muted">Show one code per person at the gate. We&apos;ve also emailed these to {b.email}.</p>
+          <p className="mt-4 text-muted">Show one code per person at the gate. Use Download QR under each ticket to save it. We&apos;ve also emailed these to {b.email}.</p>
         )}
         </div>
 
-        <ul className="mt-6 space-y-5">
-          {b.tickets.map((t, i) => (
-            <li key={t.seatLabel} className="ticket-stub shadow-[0_20px_40px_rgba(11,16,32,0.08)]">
-              <div className="flex items-baseline gap-3 py-3">
-                <span className="font-display text-2xl font-semibold">{t.seatLabel}</span>
-                <span className="text-muted">{t.tierName}</span>
-                <span className="ml-auto tabular-nums">{formatInr(t.pricePaise)}</span>
-              </div>
-              {qrs[i] && (
-                <div className="flex justify-center border-t border-dashed border-line pt-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrs[i]!} alt={`QR code for seat ${t.seatLabel}`} width={240} height={240} />
-                </div>
+        {showTickets ? (
+          <div
+            className="relative mt-6 overflow-hidden rounded-[32px] px-4 pb-10 pt-8 text-[#FDFBF4] shadow-[0_40px_80px_rgba(11,16,32,0.35)]"
+            style={{ background: "radial-gradient(ellipse at 50% 20%, #2A1426 0%, #0B1020 60%)" }}
+          >
+            <div aria-hidden="true" className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(ellipse at 50% 85%, rgba(255, 69, 32, 0.4), rgba(255, 69, 32, 0) 60%)" }} />
+            <div className="relative text-center">
+              <p className="m-0 text-sm text-[#E6E3DA]">{EVENT.longDate}</p>
+              <h2 className="font-display m-0 text-[28px] font-semibold">ONE·26 {EVENT.name}</h2>
+            </div>
+            <div className="relative flex flex-col gap-14">
+              {b.tickets.map((t, i) =>
+                qrs[i] ? (
+                  <TicketCard
+                    key={t.seatLabel}
+                    qr={qrs[i]!}
+                    seatLabel={t.seatLabel}
+                    tierName={t.tierName}
+                    orderCode={b.publicCode}
+                    holder={b.name}
+                    eventName={EVENT.name}
+                    shortDate={EVENT.shortDate}
+                    longDate={EVENT.longDate}
+                    hallLine={`${EVENT.venue} · ${EVENT.hall}`}
+                    gatesOpen={EVENT.gatesOpen}
+                  />
+                ) : null,
               )}
-            </li>
-          ))}
-        </ul>
+            </div>
+          </div>
+        ) : (
+          <ul className="mt-6 space-y-5">
+            {b.tickets.map((t) => (
+              <li key={t.seatLabel} className="ticket-stub shadow-[0_20px_40px_rgba(11,16,32,0.08)]">
+                <div className="flex items-baseline gap-3 py-3">
+                  <span className="font-display text-2xl font-semibold">{t.seatLabel}</span>
+                  <span className="text-muted">{t.tierName}</span>
+                  <span className="ml-auto tabular-nums">{formatInr(t.pricePaise)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </BrandPage>
   );

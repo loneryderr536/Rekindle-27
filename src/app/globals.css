@@ -49,52 +49,27 @@ body {
 }
 
 /* Seat map ----------------------------------------------------------------- */
-.stage-label {
-  font: 600 11px var(--font-display);
-  letter-spacing: 0.2em;
-  fill: var(--plum);
+@keyframes stGlow {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
 }
-.row-label {
-  font: 600 10px var(--font-sans);
-  fill: var(--muted);
+.st-glow {
+  animation: stGlow 3s ease-in-out infinite;
 }
 .seat {
-  outline: none;
+  transition: transform 0.15s, background 0.2s, box-shadow 0.2s;
 }
-.seat-open {
-  cursor: pointer;
+.seat[aria-disabled="false"]:hover {
+  transform: scale(1.25);
 }
-.seat-taken {
-  cursor: not-allowed;
+.seat:focus-visible {
+  outline: 2px solid #fdfbf4;
+  outline-offset: 2px;
 }
-.seat-focus {
-  fill: none;
-  stroke: transparent;
-  stroke-width: 2.5;
-}
-.seat:focus-visible .seat-focus {
-  stroke: var(--plum-soft);
-}
-@media (hover: hover) {
-  .seat-open:hover .seat-focus {
-    stroke: var(--line);
+@media (prefers-reduced-motion: reduce) {
+  .st-glow {
+    animation: none;
   }
-}
-
-.zoom-btn {
-  display: grid;
-  place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 999px;
-  background: #fff;
-  border: 1px solid var(--line);
-  font-size: 1.25rem;
-  line-height: 1;
-  color: var(--ink);
-}
-.zoom-btn:disabled {
-  opacity: 0.4;
 }
 
 /* Forms and buttons ---------------------------------------------------------- */
@@ -202,4 +177,44 @@ body {
   background: #fff;
   border-radius: 28px;
   box-shadow: 0 20px 40px rgba(11, 16, 32, 0.08);
+}
+
+/* Digital ticket ------------------------------------------------------------- */
+@keyframes tkFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+@keyframes tkSheen {
+  0% { transform: translateX(-160%) skewX(-18deg); }
+  55%, 100% { transform: translateX(260%) skewX(-18deg); }
+}
+@keyframes tkGlow {
+  0%, 100% { box-shadow: 0 24px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(253, 251, 244, 0.25), 0 0 36px rgba(255, 90, 20, 0.25); }
+  50% { box-shadow: 0 34px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(253, 251, 244, 0.35), 0 0 60px rgba(249, 169, 11, 0.45); }
+}
+@keyframes tkPulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes tkShadow {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(0.86); opacity: 0.35; }
+}
+@keyframes lgShine {
+  0% { transform: translateX(-140%) skewX(-20deg); }
+  50%, 100% { transform: translateX(240%) skewX(-20deg); }
+}
+@keyframes lgGlow {
+  0%, 100% { filter: drop-shadow(0 6px 10px rgba(11, 16, 32, 0.45)) drop-shadow(0 0 10px rgba(255, 110, 20, 0.45)); }
+  50% { filter: drop-shadow(0 8px 12px rgba(11, 16, 32, 0.5)) drop-shadow(0 0 20px rgba(249, 169, 11, 0.75)); }
+}
+.tk-float { animation: tkFloat 4.2s ease-in-out infinite; }
+.tk-card { animation: tkGlow 4.2s ease-in-out infinite; }
+.tk-sheen { animation: tkSheen 3.6s cubic-bezier(0.4, 0, 0.2, 1) infinite; }
+.tk-pulse { animation: tkPulse 1.6s ease-in-out infinite; }
+.tk-shadow { animation: tkShadow 4.2s ease-in-out infinite; }
+.lg-shine { animation: lgShine 3.6s cubic-bezier(0.4, 0, 0.2, 1) 0.35s infinite; }
+.lg-glow { animation: lgGlow 4.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .tk-float, .tk-card, .tk-sheen, .tk-pulse, .tk-shadow, .lg-shine, .lg-glow { animation: none !important; }
 }

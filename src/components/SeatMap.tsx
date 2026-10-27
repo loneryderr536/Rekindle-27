@@ -1,6 +1,8 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useMemo, useState } from "react";
+import { EVENT } from "@/lib/event";
+import { formatInr } from "@/lib/money";
 import type { SeatView, TierView } from "@/server/seats/listSeats";
 
 type Props = {
@@ -15,47 +17,68 @@ type Props = {
   adminMode?: boolean;
 };
 
-const PAD = 28;
-const STAGE_SPACE = 70;
-const ZOOM_STEPS = [1, 1.5, 2, 3];
+type RowView = { key: string; label: string; gapBefore: boolean; blocks: SeatView[][] };
 
-/** Seat radius: a little under half the tightest horizontal spacing within a row, capped. */
-function seatRadius(seats: SeatView[]): number {
-  const byRow = new Map<number, number[]>();
-  for (const s of seats) byRow.set(s.y, [...(byRow.get(s.y) ?? []), s.x]);
+/** Smallest positive difference between neighbouring values, or Infinity when there is none. */
+function minStep(values: number[]): number {
+  const sorted = [...new Set(values)].sort((a, b) => a - b);
   let min = Infinity;
-  for (const xs of byRow.values()) {
-    xs.sort((a, b) => a - b);
-    for (let i = 1; i < xs.length; i++) if (xs[i] > xs[i - 1]) min = Math.min(min, xs[i] - xs[i - 1]);
+  for (let i = 1; i < sorted.length; i++) min = Math.min(min, sorted[i] - sorted[i - 1]);
+  return min;
+}
+
+/**
+ * Lays the seats out as the theatre plan: rows ordered front to back by `y`, each row split into
+ * blocks wherever the x spacing jumps (the aisles), with extra space before a row that is set apart in y.
+ */
+function buildRows(seats: SeatView[]): RowView[] {
+  const byRow = new Map<string, SeatView[]>();
+  for (const s of seats) {
+    const key = `${s.y}|${s.section}|${s.row}`;
+    byRow.set(key, [...(byRow.get(key) ?? []), s]);
   }
-  return Number.isFinite(min) ? Math.min(12, min * 0.4) : 12;
+  const rowYs = [...byRow.values()].map((r) => r[0].y);
+  const rowStep = minStep(rowYs);
+  let xStep = Infinity;
+  for (const r of byRow.values()) xStep = Math.min(xStep, minStep(r.map((s) => s.x)));
+
+  const ordered = [...byRow.entries()].sort(([, a], [, b]) => a[0].y - b[0].y || a[0].x - b[0].x);
+  let prevY: number | null = null;
+  return ordered.map(([key, row]) => {
+    row.sort((a, b) => a.x - b.x);
+    const blocks: SeatView[][] = [];
+    for (const s of row) {
+      const last = blocks[blocks.length - 1];
+      const prev = last?.[last.length - 1];
+      if (last && prev && s.x - prev.x <= xStep * 1.5) last.push(s);
+      else blocks.push([s]);
+    }
+    const y = row[0].y;
+    const gapBefore = prevY !== null && y - prevY > rowStep * 1.5;
+    prevY = y;
+    return { key, label: row[0].row, gapBefore, blocks };
+  });
+}
+
+const SEAT_BASE = { width: 20, height: 18, padding: 0, border: 0, borderRadius: 4 } as const;
+const GOLD = "#F9A90B";
+
+function Swatch({ style }: { style: React.CSSProperties }) {
+  return <span aria-hidden="true" style={{ width: 18, height: 14, borderRadius: 4, display: "block", ...style }} />;
 }
 
 export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, limitMessage, adminMode = false }: Props) {
-  const [zoom, setZoom] = useState(0);
   const [limitHit, setLimitHit] = useState(false);
   const tierById = useMemo(() => new Map(tiers.map((t) => [t.id, t])), [tiers]);
   const selectedSet = useMemo(() => new Set(selected), [selected]);
+  const rows = useMemo(() => buildRows(seats), [seats]);
+  // With more than one tier the dearest one is the premium (gold) tier and is drawn with a gold rim.
+  const premiumId = useMemo(() => {
+    if (tiers.length < 2) return null;
+    return tiers.reduce((best, t) => (t.pricePaise > best.pricePaise ? t : best)).id;
+  }, [tiers]);
 
-  const layout = useMemo(() => {
-    if (seats.length === 0) return null;
-    const xs = seats.map((s) => s.x);
-    const ys = seats.map((s) => s.y);
-    const r = seatRadius(seats);
-    const minX = Math.min(...xs) - PAD - r;
-    const maxX = Math.max(...xs) + PAD + r;
-    const minY = Math.min(...ys) - STAGE_SPACE - r;
-    const maxY = Math.max(...ys) + PAD + r;
-    const rows = new Map<string, { label: string; x: number; y: number }>();
-    for (const s of seats) {
-      const key = `${s.section}|${s.row}|${s.y}`;
-      const cur = rows.get(key);
-      if (!cur || s.x < cur.x) rows.set(key, { label: s.row, x: s.x, y: s.y });
-    }
-    return { r, minX, minY, w: maxX - minX, h: maxY - minY, rows: [...rows.values()] };
-  }, [seats]);
-
-  if (!layout) return <p className="p-6 text-muted">No seats are on sale yet.</p>;
+  if (seats.length === 0) return <p className="p-6 text-muted">No seats are on sale yet.</p>;
 
   const selectable = (seat: SeatView) =>
     seat.status === "available" || (adminMode && seat.status === "blocked");
@@ -71,95 +94,98 @@ export function SeatMap({ seats, tiers, selected, onToggle, maxSelectable, limit
     onToggle(seat.id);
   }
 
-  function onKey(e: KeyboardEvent, seat: SeatView) {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      toggle(seat);
+  function seatStyle(seat: SeatView, actionable: boolean, isSelected: boolean): React.CSSProperties {
+    const premium = seat.tierId === premiumId;
+    if (isSelected) return { background: GOLD, boxShadow: "0 0 12px rgba(249, 169, 11, 0.9)" };
+    if (adminMode && seat.status === "blocked") {
+      return { background: "#4A5160", boxShadow: `inset 0 0 0 1.5px ${GOLD}`, backgroundClip: "padding-box" };
     }
+    if (!actionable) return { background: "#070B16", boxShadow: "inset 0 0 0 1px rgba(253, 251, 244, 0.16)" };
+    return premium
+      ? { background: "#FFF3D1", boxShadow: `inset 0 0 0 2px ${tierById.get(seat.tierId)?.color ?? GOLD}` }
+      : { background: "#FDFBF4" };
   }
 
-  const { r, minX, minY, w, h } = layout;
-  const scale = ZOOM_STEPS[zoom];
-  const stageY = minY + 18;
-  const cx = minX + w / 2;
-
   return (
-    <div className="relative">
-      <div className="absolute right-2 top-2 z-10 flex gap-1">
-        <button type="button" className="zoom-btn" aria-label="Zoom out" disabled={zoom === 0}
-          onClick={() => setZoom((z) => Math.max(0, z - 1))}>&minus;</button>
-        <button type="button" className="zoom-btn" aria-label="Zoom in" disabled={zoom === ZOOM_STEPS.length - 1}
-          onClick={() => setZoom((z) => Math.min(ZOOM_STEPS.length - 1, z + 1))}>+</button>
+    <div
+      className="relative mx-auto w-full max-w-[420px] overflow-hidden rounded-[32px] pb-8 text-[#FDFBF4] shadow-[0_40px_80px_rgba(11,16,32,0.35)]"
+      style={{ background: "linear-gradient(180deg, #141B33 0%, #10183A 30%, #0B1020 100%)" }}
+    >
+      <div aria-hidden="true" className="st-glow" style={{ position: "absolute", left: -60, top: 150, width: 300, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(255, 69, 32, 0.75), rgba(255, 69, 32, 0) 70%)", filter: "blur(10px)" }} />
+      <div aria-hidden="true" className="st-glow" style={{ position: "absolute", right: -70, top: 140, width: 300, height: 420, borderRadius: "50%", background: "radial-gradient(circle, rgba(26, 138, 168, 0.8), rgba(10, 84, 112, 0) 70%)", filter: "blur(10px)", animationDelay: "-1.5s" }} />
+      <div aria-hidden="true" style={{ position: "absolute", left: 60, top: 190, width: 270, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(249, 169, 11, 0.55), rgba(249, 169, 11, 0) 70%)", filter: "blur(6px)" }} />
+
+      <div className="relative flex flex-col gap-0.5 px-[26px] pt-8">
+        <span className="text-xs text-[#C9CCD8]">{EVENT.weekdayDate}</span>
+        <span className="font-display text-[22px] font-semibold">ONE·26 {EVENT.name}</span>
       </div>
 
-      <div className="max-h-[62vh] overflow-auto overscroll-contain">
-        <div style={{ width: `calc(${scale} * max(100%, ${Math.round(w)}px))` }}>
-          <svg viewBox={`${minX} ${minY} ${w} ${h}`} className="block h-auto w-full" role="group" aria-label="Seat map">
-            <defs>
-              <radialGradient id="stage-glow" cx="50%" cy="0%" r="90%">
-                <stop offset="0%" stopColor="#F9A90B" stopOpacity="0.9" />
-                <stop offset="100%" stopColor="#F9A90B" stopOpacity="0" />
-              </radialGradient>
-            </defs>
-            <ellipse cx={cx} cy={stageY} rx={w * 0.42} ry={34} fill="url(#stage-glow)" aria-hidden="true" />
-            <path
-              d={`M ${minX + w * 0.18} ${stageY} Q ${cx} ${stageY + 26} ${minX + w * 0.82} ${stageY}`}
-              fill="none" stroke="#0B1020" strokeWidth={3} strokeLinecap="round" aria-hidden="true"
-            />
-            <text x={cx} y={stageY + 4} textAnchor="middle" className="stage-label" aria-hidden="true">Stage</text>
+      <ul className="relative mt-6 flex flex-wrap justify-center gap-x-7 gap-y-3 px-4 text-xs text-[#E6E3DA]">
+        {tiers.map((t) => (
+          <li key={t.id} className="flex flex-col items-center gap-1.5">
+            <Swatch style={t.id === premiumId ? { background: "#FFF3D1", boxShadow: `inset 0 0 0 2px ${t.color}` } : { background: "#FDFBF4" }} />
+            <span>{t.name} · <span className="font-semibold tabular-nums">{formatInr(t.pricePaise).replace(/\.00$/, "")}</span></span>
+          </li>
+        ))}
+        <li className="flex flex-col items-center gap-1.5">
+          <Swatch style={{ background: "#070B16", boxShadow: "inset 0 0 0 1px rgba(253, 251, 244, 0.18)" }} />
+          Taken
+        </li>
+        <li className="flex flex-col items-center gap-1.5">
+          <Swatch style={{ background: GOLD, boxShadow: "0 0 10px rgba(249, 169, 11, 0.8)" }} />
+          Selected
+        </li>
+      </ul>
 
-            {layout.rows.map((row) => (
-              <text key={`${row.label}-${row.x}-${row.y}`} x={row.x - r - 8} y={row.y} textAnchor="end"
-                dominantBaseline="central" className="row-label" aria-hidden="true">{row.label}</text>
+      <div aria-hidden="true" className="relative mx-auto mt-6" style={{ width: 300, height: 54 }}>
+        <svg viewBox="0 0 300 54" width="300" height="54" style={{ display: "block" }}>
+          <defs>
+            <linearGradient id="stArc" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#FF4520" /><stop offset="0.5" stopColor="#F9A90B" /><stop offset="1" stopColor="#1A8AA8" />
+            </linearGradient>
+            <linearGradient id="stLight" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="#F9A90B" stopOpacity="0.55" /><stop offset="1" stopColor="#F9A90B" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M6 30 Q150 -6 294 30 L282 40 Q150 10 18 40 Z" fill="url(#stArc)" />
+          <path d="M18 40 Q150 10 282 40 L300 54 L0 54 Z" fill="url(#stLight)" opacity="0.6" />
+        </svg>
+      </div>
+      <div aria-hidden="true" className="relative mt-0.5 text-center text-[11px] font-semibold tracking-[3px] text-[#FDFBF4]/75">STAGE</div>
+
+      <div role="group" aria-label="Seat map" className="relative mt-[22px] flex flex-col items-center overflow-x-auto px-2" style={{ gap: 9 }}>
+        {rows.map((row) => (
+          <div key={row.key} style={{ display: "flex", alignItems: "center", gap: 14, marginTop: row.gapBefore ? 16 : 0 }}>
+            <span aria-hidden="true" style={{ width: 14, fontSize: 10, fontWeight: 600, color: "rgba(253, 251, 244, 0.55)", textAlign: "center" }}>{row.label}</span>
+            {row.blocks.map((block, bi) => (
+              <div key={bi} style={{ display: "flex", gap: 5 }}>
+                {block.map((seat) => {
+                  const tier = tierById.get(seat.tierId);
+                  const isSelected = selectedSet.has(seat.id);
+                  const actionable = selectable(seat) || isSelected;
+                  return (
+                    <button
+                      key={seat.id}
+                      type="button"
+                      className="seat"
+                      aria-label={`${seat.label}, ${tier?.name ?? "Unknown tier"}, ${seat.status}`}
+                      aria-pressed={isSelected}
+                      aria-disabled={!actionable}
+                      tabIndex={actionable ? 0 : -1}
+                      title={`${seat.label} · ${tier?.name ?? ""}`}
+                      onClick={() => toggle(seat)}
+                      style={{ ...SEAT_BASE, cursor: actionable ? "pointer" : "not-allowed", ...seatStyle(seat, actionable, isSelected) }}
+                    />
+                  );
+                })}
+              </div>
             ))}
-
-            {seats.map((seat) => {
-              const tier = tierById.get(seat.tierId);
-              const isSelected = selectedSet.has(seat.id);
-              const open = selectable(seat);
-              const blockedView = adminMode && seat.status === "blocked";
-              const actionable = open || isSelected;
-              const label = `${seat.label}, ${tier?.name ?? "Unknown tier"}, ${seat.status}`;
-              const k = r * 0.45;
-              return (
-                <g
-                  key={seat.id}
-                  role="button"
-                  tabIndex={actionable ? 0 : -1}
-                  aria-label={label}
-                  aria-pressed={isSelected}
-                  aria-disabled={!actionable}
-                  className={`seat ${actionable ? "seat-open" : "seat-taken"}`}
-                  onClick={() => toggle(seat)}
-                  onKeyDown={(e) => onKey(e, seat)}
-                >
-                  <title>{label}</title>
-                  <circle className="seat-focus" cx={seat.x} cy={seat.y} r={r + 4} />
-                  {isSelected ? (
-                    <>
-                      <circle cx={seat.x} cy={seat.y} r={r} fill="#0B1020" stroke={tier?.color ?? "#888"} strokeWidth={3} />
-                      <path d={`M ${seat.x - k} ${seat.y} l ${k * 0.7} ${k * 0.7} l ${k * 1.3} ${-k * 1.4}`}
-                        fill="none" stroke="#fff" strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" />
-                    </>
-                  ) : blockedView ? (
-                    <circle cx={seat.x} cy={seat.y} r={r} fill="#4A5160" stroke={tier?.color ?? "#888"} strokeWidth={2.5} strokeDasharray="3 2" />
-                  ) : open ? (
-                    <circle cx={seat.x} cy={seat.y} r={r} fill={tier?.color ?? "#888"} stroke="#ffffff" strokeWidth={1.5} />
-                  ) : (
-                    <>
-                      <circle cx={seat.x} cy={seat.y} r={r} fill="#E6DFCC" stroke="#D8D2C2" strokeWidth={1} />
-                      <path d={`M ${seat.x - k} ${seat.y - k} L ${seat.x + k} ${seat.y + k} M ${seat.x + k} ${seat.y - k} L ${seat.x - k} ${seat.y + k}`}
-                        stroke="#8F887A" strokeWidth={1.6} strokeLinecap="round" />
-                    </>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-        </div>
+            <span aria-hidden="true" style={{ width: 14, fontSize: 10, fontWeight: 600, color: "rgba(253, 251, 244, 0.55)", textAlign: "center" }}>{row.label}</span>
+          </div>
+        ))}
       </div>
 
-      <p role="status" aria-live="polite" className="min-h-0 px-4 text-sm font-medium text-danger empty:hidden">
+      <p role="status" aria-live="polite" className="relative min-h-0 px-6 pt-4 text-center text-sm font-medium text-[#FFB4A8] empty:hidden">
         {limitHit ? (limitMessage ?? `Maximum ${maxSelectable} seats per booking`) : ""}
       </p>
     </div>

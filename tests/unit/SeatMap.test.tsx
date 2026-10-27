@@ -125,3 +125,19 @@ test("an applied discount code lowers the checkout total", async () => {
   expect(screen.getByTestId("checkout-total").textContent).toBe("₹1,840.00");
   vi.unstubAllGlobals();
 });
+
+test("rows are laid out front to back with aisles, and the dearest tier gets the gold rim", () => {
+  const at = (row: string, n: number, y: number, tierId: string): SeatView => ({
+    id: `${row}${n}`, label: `${row}${n}`, section: "M", row, number: n, x: n * 30 + (n > 2 ? 30 : 0), y, tierId, status: "available",
+  });
+  const seats = [at("B", 1, 140, "t-silver"), at("B", 2, 140, "t-silver"), at("B", 3, 140, "t-silver"),
+    at("A", 1, 20, "t-gold"), at("A", 2, 20, "t-gold"), at("A", 3, 20, "t-gold")];
+  render(<SeatMap seats={seats} tiers={tiers} selected={[]} maxSelectable={2} onToggle={() => {}} />);
+  const labels = screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"));
+  expect(labels.slice(0, 3)).toEqual(["A1, Gold, available", "A2, Gold, available", "A3, Gold, available"]);
+  const map = screen.getByRole("group", { name: "Seat map" });
+  const firstRow = map.firstElementChild!;
+  expect(firstRow.querySelectorAll(":scope > div").length).toBe(2); // two blocks split by the aisle
+  expect(screen.getByText(/Gold ·/)).toBeTruthy();
+  expect(screen.getByText(/Silver ·/)).toBeTruthy();
+});

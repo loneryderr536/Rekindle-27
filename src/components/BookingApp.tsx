@@ -6,7 +6,6 @@ import Link from "next/link";
 import { CheckoutForm, type CheckoutDetails } from "@/components/CheckoutForm";
 import { PageIntro, RegisterSteps } from "@/components/landing/BrandPage";
 import { SeatMap } from "@/components/SeatMap";
-import { TierLegend } from "@/components/TierLegend";
 import { clearHoldToken, readHoldToken, saveHoldToken } from "@/lib/activeHold";
 import { clearAttendee, type Attendee } from "@/lib/attendee";
 import { checkoutTimeoutSeconds, clockOffsetMs, formatCountdown, remainingMs } from "@/lib/countdown";
@@ -342,13 +341,10 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
     <>
       <section className="o26-wrap w-full flex-1 px-6 pb-48 pt-[clamp(40px,6vw,72px)]">
         {intro}
-        <div className="mt-8">
-          <TierLegend tiers={tiers} />
-        </div>
         {loadFailed && (
           <p className="mt-3 text-sm text-muted" role="status">Seat availability may be out of date. Reconnecting…</p>
         )}
-        <div className="o26-card mt-5 overflow-hidden p-2 sm:p-4">
+        <div className="mt-8">
           <SeatMap
             seats={seats}
             tiers={tiers}

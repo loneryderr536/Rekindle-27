@@ -1,4 +1,4 @@
-import { LOGO } from "@/components/landing/links";
+import { FlameLogo } from "@/components/landing/FlameLogo";
 
 const TAGLINE = "One for the Nation, One for the Youth";
 
@@ -107,9 +107,10 @@ export function StoryScene() {
           <img id="i-fire" alt="" src="/landing/fire.webp" />
         </div>
         <div id="logo">
-          {/* Static logo until the layered flame artwork arrives (see FlameLogo in the design export). */}
-          {/* eslint-disable-next-line @next/next/no-img-element -- masked every frame by the burn-in */}
-          <img className="o26-logo-art" alt="" src={LOGO.src} />
+          {/* The burn-in mask from StoryIntro is applied to this wrapper every frame, so the canvas skips its own ignite. */}
+          <div className="o26-logo-art">
+            <FlameLogo ignite={false} glow={false} />
+          </div>
         </div>
       </div>
 

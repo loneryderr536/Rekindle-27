@@ -239,14 +239,13 @@ html:has(#o26-root) body {
   height: 587.96px;
   opacity: 0;
 }
-/* The logo art sits inside the 1093×1237 flame canvas with 30px of padding for swinging tongues. */
+/* The flame canvas is 1093×1237 (logo plus 30px of padding for swinging tongues) and fills the #logo box. */
 #logo .o26-logo-art {
   position: absolute;
-  left: 14.26px;
-  top: 14.26px;
-  width: 491px;
-  height: 559.44px;
-  max-width: none;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
 }
 #o26-root .o26-skip {
   position: absolute;

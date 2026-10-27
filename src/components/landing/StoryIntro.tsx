@@ -159,7 +159,7 @@ export function StoryIntro() {
     const world = $<HTMLDivElement>("#o26-world");
     const vid = $<HTMLVideoElement>("#v-fire");
     const img = $<HTMLImageElement>("#i-fire");
-    const logoArt = $<HTMLImageElement>("#logo .o26-logo-art");
+    const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
     const edgeTop = $<SVGRectElement>("#o26-edge-top");
     const edgeBot = $<SVGRectElement>("#o26-edge-bot");

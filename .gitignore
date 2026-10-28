@@ -14,4 +14,4 @@ next-env.d.ts
 # env files: only the example and the dummy test values are committed
 .env*
 !.env.example
-!.env.test
+.env.test

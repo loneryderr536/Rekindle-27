@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { FlameLogo } from "@/components/landing/FlameLogo";
 import { LINKS } from "@/components/landing/links";
 
 function FlameIcon({ width = 14, height = 18, fill = "#FF4520" }: { width?: number; height?: number; fill?: string }) {
@@ -59,7 +58,7 @@ const PLAN = [
   },
   {
     href: LINKS.register, bg: "#F9A90B", fg: "#0B1020", kColor: "#0B1020", k: "03 · REGISTRATION", title: "Save your seat",
-    body: "Four quick details. Your pass arrives on WhatsApp.", go: "Register now",
+    body: "Your details, your seats, then pay. Your tickets arrive by email.", go: "Register now",
   },
 ];
 
@@ -89,7 +88,7 @@ export function RekindleSection() {
           </blockquote>
           <div className="o26-ctas">
             <Link href={LINKS.register} className="o26-cta o26-ff-fredoka">Save my seat</Link>
-            <a href={LINKS.lineup} className="o26-cta-ghost">See the line-up</a>
+            <Link href={LINKS.lineup} className="o26-cta-ghost">See the line-up</Link>
           </div>
         </div>
         <div className="o26-col" style={{ gap: 16 }}>
@@ -188,16 +187,22 @@ export function LandingFooter() {
   return (
     <footer className="o26-footer">
       <div className="o26-wrap">
-        <div className="o26-foot-brand">
-          <div className="o26-foot-logo"><FlameLogo glow={false} /></div>
-          <div className="o26-foot-name">
-            <span className="o26-foot-title o26-ff-fredoka">ONE·26</span>
-            <span className="o26-foot-org">Christos Marthoma Yuvajana Sakyam &amp; Young Family Fellowship</span>
-          </div>
+        <a href={LINKS.home} className="o26-ft-logo" aria-label="ONE·26 Rekindle — back to top">
+          {/* eslint-disable-next-line @next/next/no-img-element -- the footer flame wobbles in CSS */}
+          <img src="/landing/logo.png" alt="ONE·26 Rekindle logo" width={84} height={96} />
+          <span className="o26-ft-spark" aria-hidden="true" />
+          <span className="o26-ft-spark" aria-hidden="true" />
+          <span className="o26-ft-spark" aria-hidden="true" />
+        </a>
+        <div className="o26-foot-name">
+          <span className="o26-foot-title o26-ff-fredoka">ONE·26</span>
+          <span className="o26-foot-org">Christos Marthoma Yuvajana Sakyam &amp; Young Family Fellowship</span>
         </div>
+        <div className="o26-foot-rule" aria-hidden="true" />
         <div className="o26-foot-links">
-          <a href={LINKS.lineup}>Line-up</a>
-          <a href={LINKS.dates}>Key dates</a>
+          <a href={LINKS.home}>Home</a>
+          <Link href={LINKS.lineup}>Line-up</Link>
+          <Link href={LINKS.dates}>Key dates</Link>
           <Link href={LINKS.register}>Register</Link>
           <a href={LINKS.faq}>FAQ</a>
           <span>[INSTAGRAM]</span>

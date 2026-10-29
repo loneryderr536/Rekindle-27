@@ -4,14 +4,17 @@ const TAGLINE = "One for the Nation, One for the Youth";
 
 const NOTES: { fill: string; shape: "note8" | "note16"; x: number; y: number }[] = [
   { fill: "#F9A90B", shape: "note8", x: 560, y: 700 },
-  { fill: "#1A8AA8", shape: "note16", x: 1290, y: 640 },
+  { fill: "#0A5470", shape: "note16", x: 1290, y: 640 },
   { fill: "#FF4520", shape: "note8", x: 1420, y: 760 },
   { fill: "#FF4520", shape: "note16", x: 420, y: 560 },
   { fill: "#F9A90B", shape: "note8", x: 1500, y: 470 },
-  { fill: "#1A8AA8", shape: "note8", x: 660, y: 430 },
+  { fill: "#0A5470", shape: "note8", x: 660, y: 430 },
   { fill: "#F9A90B", shape: "note16", x: 1180, y: 360 },
   { fill: "#FF4520", shape: "note8", x: 470, y: 820 },
 ];
+
+/** The night sky behind the opening; twinkles until the cream day spreads over it. */
+const STARS: [number, number, number][] = [[726, -392, 3], [2066, -602, 1.6], [1594, -508, 2.4], [1787, -582, 2], [-447, -524, 3], [1112, -557, 2], [-229, 428, 3], [-358, 458, 1.6], [314, 591, 1.6], [1763, 499, 3], [-397, -248, 1.6], [1680, -428, 2.4], [1116, -405, 1.6], [1738, -69, 2], [-178, 491, 2], [925, -501, 1.6], [1711, -578, 2], [1433, 693, 3], [686, 253, 3], [881, -87, 2], [136, -201, 1.6], [1752, -86, 3], [806, 219, 2.4], [1894, -551, 1.6], [1496, 156, 2], [2501, 0, 2], [1402, 163, 1.6], [2137, -542, 2.4], [793, 17, 3], [1775, 234, 1.6], [-217, -148, 3], [2255, 660, 1.6], [-352, -66, 3], [565, 90, 2.4], [-508, 245, 2.4], [88, 551, 1.6], [1422, -580, 2], [577, -436, 2], [1029, 100, 3], [-270, -360, 3], [1045, 425, 2.4], [-40, 181, 2.4], [2293, 150, 2.4], [2196, 79, 2], [18, -531, 2], [19, -225, 2]];
 
 const SNAP_LINES = [
   [960, 640, 960, 560],
@@ -32,13 +35,18 @@ export function StoryScene() {
     <div id="o26-world" aria-hidden="true">
       <svg viewBox="0 0 1920 1080" width="1920" height="1080">
         <g id="shake">
-          <rect x="-3000" y="-3000" width="7920" height="7080" fill="#0B1020" />
+          <rect x="-3000" y="-3000" width="7920" height="7080" fill="none" />
+          <g fill="#FDFBF4">
+            {STARS.map(([cx, cy, r], i) => (
+              <circle key={i} className="o26-star" cx={cx} cy={cy} r={r} />
+            ))}
+          </g>
           <g id="camera">
             <g id="boy">
-              <path d="M570 1100 C570 860 610 700 710 660 Q830 620 950 660 C1050 700 1090 860 1090 1100 Z" fill="#F9A90B" transform="translate(10,-8)" />
+              <path d="M570 2600 L570 1100 C570 860 610 700 710 660 Q830 620 950 660 C1050 700 1090 860 1090 1100 L1090 2600 Z" fill="#F9A90B" transform="translate(10,-8)" />
               <path d="M1000 790 L1222 420" stroke="#F9A90B" strokeWidth="132" strokeLinecap="round" transform="translate(9,-7)" />
               <ellipse cx="831" cy="473" rx="105" ry="125" fill="#F9A90B" />
-              <path d="M560 1100 C560 860 600 700 700 660 Q820 620 940 660 C1040 700 1080 860 1080 1100 Z" fill="#0A5470" />
+              <path d="M560 2600 L560 1100 C560 860 600 700 700 660 Q820 620 940 660 C1040 700 1080 860 1080 1100 L1080 2600 Z" fill="#0A5470" />
               <path d="M690 965 Q820 935 950 965 L972 1100 L668 1100 Z" fill="#08465D" />
               <path d="M700 668 Q820 742 940 668 Q935 606 820 598 Q705 606 700 668 Z" fill="#083F54" />
               <line x1="795" y1="690" x2="785" y2="822" stroke="#F9A90B" strokeWidth="9" strokeLinecap="round" />
@@ -87,16 +95,15 @@ export function StoryScene() {
             </g>
           </g>
           <g id="snapfx" opacity="0">
-            <circle id="snapring" cx="960" cy="760" r="40" fill="none" stroke="#FDFBF4" strokeWidth="14" />
-            <g id="snaplines" stroke="#FDFBF4" strokeWidth="12" strokeLinecap="round">
+            <circle id="snapring" cx="960" cy="760" r="40" fill="none" stroke="#FF4520" strokeWidth="14" />
+            <g id="snaplines" stroke="#F9A90B" strokeWidth="12" strokeLinecap="round">
               {SNAP_LINES.map(([x1, y1, x2, y2]) => (
                 <line key={`${x1}-${y1}`} x1={x1} y1={y1} x2={x2} y2={y2} />
               ))}
             </g>
           </g>
-          <rect id="flash" x="-3000" y="-3000" width="7920" height="7080" fill="#FDFBF4" opacity="0" />
+          <rect id="flash" x="-3000" y="-3000" width="7920" height="7080" fill="#FFB347" opacity="0" />
         </g>
-        <circle id="lightwipe" cx="960" cy="560" r="0" fill="#141B33" />
       </svg>
 
       <div id="fire" className="o26-layer">
@@ -128,24 +135,17 @@ export function StoryScene() {
             <rect x="89" y="-118" width="8" height="102" rx="3" />
             <path d="M15 -106 L97 -120 L97 -102 L15 -88 Z" />
           </g>
-          <linearGradient id="fadeTop" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#0B1020" />
-            <stop offset="1" stopColor="#0B1020" stopOpacity="0" />
-          </linearGradient>
-          <linearGradient id="fadeBottom" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stopColor="#0B1020" stopOpacity="0" />
-            <stop offset="1" stopColor="#0B1020" />
-          </linearGradient>
         </defs>
         <g id="o26-title">
           <g id="presenters" opacity="0">
-            <text x="960" y="168" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
+            <image href="/landing/logo-presenter.png" x="902" y="14" width="116" height="141" preserveAspectRatio="xMidYMid meet" />
+            <text x="960" y="200" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
               Christos Marthoma Yuvajana Sakyam
             </text>
-            <text x="960" y="218" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
+            <text x="960" y="244" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
               <tspan fill="#F9A90B" className="o26-ff-fredoka" fontWeight="600">&amp;</tspan> Young Family Fellowship
             </text>
-            <text x="960" y="272" textAnchor="middle" className="o26-ff-poppins" fontWeight="400" fontSize="20" fill="#F9A90B" letterSpacing="10">
+            <text x="960" y="288" textAnchor="middle" className="o26-ff-poppins" fontWeight="400" fontSize="20" fill="#F9A90B" letterSpacing="10">
               PRESENTS
             </text>
           </g>
@@ -164,10 +164,6 @@ export function StoryScene() {
             <path d="M940 955 L960 975 L980 955" stroke="#F9A90B" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
           </g>
         </g>
-        <g id="edgefade" pointerEvents="none">
-          <rect id="o26-edge-top" x="0" y="0" width="1920" height="170" fill="url(#fadeTop)" />
-          <rect id="o26-edge-bot" x="0" y="880" width="1920" height="200" fill="url(#fadeBottom)" />
-        </g>
         <g id="notes">
           {NOTES.map((n, i) => (
             <g key={i} className="note" fill={n.fill} opacity="0">
@@ -176,19 +172,19 @@ export function StoryScene() {
           ))}
         </g>
         <g id="holdhint" opacity="0" style={{ transition: "opacity 0.4s" }}>
-          <text x="960" y="140" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="22" fill="#FDFBF4" letterSpacing="6" opacity="0.8">
+          <text x="960" y="140" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="22" fill="#0B1020" letterSpacing="6" opacity="0.8">
             KEEP SCROLLING
           </text>
-          <path d="M940 162 L960 182 L980 162" stroke="#F9A90B" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M940 162 L960 182 L980 162" stroke="#FF4520" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
         </g>
         <g id="endtext" opacity="0">
           <text id="o26-endtext-k" x="960" y="470" textAnchor="middle" className="o26-ff-poppins" fontWeight="600" fontSize="24" fill="#FF4520" letterSpacing="10">
             REKINDLE · 26 JANUARY 2027
           </text>
-          <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#FDFBF4" letterSpacing="1">
+          <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
             One for the Nation,
           </text>
-          <text id="o26-endtext-u" x="960" y="640" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#1A8AA8" letterSpacing="1">
+          <text id="o26-endtext-u" x="960" y="640" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0A5470" letterSpacing="1">
             One for the Youth
           </text>
         </g>

@@ -29,6 +29,7 @@ export default async function Home() {
   const days = daysToGo();
   return (
     <div id="o26-root">
+      <div className="o26-glass" aria-hidden="true" />
       <LandingHeader />
       <main>
         <StoryIntro />

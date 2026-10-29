@@ -1,3 +1,5 @@
+> **Superseded 2026-10-29** by the paper-texture redesign (cream pages, navy textured header and footer, glass sheen). The dark stage now only backs the seat map and ticket pages.
+
 # One dark glossy stage for the whole site
 
 ## Intent

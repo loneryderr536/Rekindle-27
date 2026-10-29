@@ -2,11 +2,25 @@ import type { ReactNode } from "react";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { LandingFooter } from "@/components/landing/Sections";
 
-/** Guest pages outside the landing page: the site header, the page content on the shared stage, and the footer. */
-export function BrandPage({ children, footer = true }: { children: ReactNode; footer?: boolean }) {
+/**
+ * Guest pages outside the landing page: the site header, the paper page and the footer.
+ * `dark` makes the whole page the night-navy stage of the seat map ("seats") or the digital ticket ("ticket").
+ */
+export function BrandPage({
+  children,
+  footer = true,
+  dark,
+  current,
+}: {
+  children: ReactNode;
+  footer?: boolean;
+  dark?: "seats" | "ticket";
+  current?: "lineup" | "dates" | "register";
+}) {
   return (
-    <div id="o26-root" className="flex flex-1 flex-col">
-      <LandingHeader solid />
+    <div id="o26-root" className={`flex flex-1 flex-col${dark ? ` o26-dark o26-dark-${dark}` : ""}`}>
+      <div className="o26-glass" aria-hidden="true" />
+      <LandingHeader solid current={current} />
       <main className="flex flex-1 flex-col">{children}</main>
       {footer && <LandingFooter />}
     </div>
@@ -43,7 +57,7 @@ export function RegisterSteps({ current }: { current: 1 | 2 | 3 }) {
             key={label}
             aria-current={state === "now" ? "step" : undefined}
             className={`flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold ${
-              state === "now" ? "bg-ink text-paper" : state === "done" ? "bg-marigold text-ink" : "bg-white text-muted ring-1 ring-line"
+              state === "now" ? "bg-marigold text-ink" : state === "done" ? "bg-paper text-ink" : "bg-paper/10 text-paper/80 ring-1 ring-paper/25"
             }`}
           >
             <span className="font-display">{String(n).padStart(2, "0")}</span>

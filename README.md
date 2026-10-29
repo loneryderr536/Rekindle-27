@@ -22,7 +22,7 @@ npm run admin:create -- you@example.com admin
 npm run dev
 ```
 
-Open http://localhost:3000 for the landing page, http://localhost:3000/register for seat booking, and http://localhost:3000/admin/login for the admin area. Guests who lost their email can get their tickets back at http://localhost:3000/booking/find. To cancel a paid booking, open it in Admin > Bookings and use **Cancel & refund** (frees the seats, voids the QR codes, refunds in full); complimentary bookings have **Cancel comp** instead (no refund, the guest is emailed). Full refunds made in the Razorpay dashboard cancel the booking too, via the webhook or, if that is lost, the reconcile job.
+Open http://localhost:3000 for the landing page, http://localhost:3000/lineup and http://localhost:3000/dates for the line-up and key dates, http://localhost:3000/register for seat booking, and http://localhost:3000/admin/login for the admin area. Guests who lost their email can get their tickets back at http://localhost:3000/booking/find. To cancel a paid booking, open it in Admin > Bookings and use **Cancel & refund** (frees the seats, voids the QR codes, refunds in full); complimentary bookings have **Cancel comp** instead (no refund, the guest is emailed). Full refunds made in the Razorpay dashboard cancel the booking too, via the webhook or, if that is lost, the reconcile job.
 
 Notes:
 

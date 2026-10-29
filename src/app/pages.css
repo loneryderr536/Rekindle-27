@@ -1,0 +1,192 @@
+/*
+ * Shared styles for the pages that sit under the header (Line-up, Key dates, Register): a navy hero
+ * with rounded corners, entrance animations, and the Line-up card carousel. Ported from the design export.
+ */
+.o26-navy {
+  background: #0b1020 url("/landing/tex-navy.webp") repeat center top / 760px 760px;
+}
+@media (max-width: 760px) {
+  .o26-navy { background-size: 540px 540px; }
+}
+/* Tuck the navy hero under the header so its rounded corners sit on navy, not cream. */
+main > section.o26-navy:first-child {
+  margin-top: -28px;
+  border-top: 28px solid #0b1020;
+}
+
+@keyframes pUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pFloat {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-18px) rotate(6deg); }
+}
+.p-in { opacity: 0; animation: pUp 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
+.p-d1 { animation-delay: 0.1s; }
+.p-d2 { animation-delay: 0.22s; }
+.p-d3 { animation-delay: 0.34s; }
+.p-d4 { animation-delay: 0.5s; }
+.p-d5 { animation-delay: 0.65s; }
+.p-note { animation: pFloat 6s ease-in-out infinite; }
+.p-note:nth-child(2n) { animation-duration: 7.5s; animation-delay: -2s; }
+
+.p-eyebrow {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #f9a90b;
+}
+.p-h1 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 0.98;
+}
+.p-lead {
+  margin: 0;
+  font-size: clamp(17px, 1.7vw, 20px);
+  line-height: 1.6;
+  color: #e6e3da;
+  max-width: 560px;
+}
+
+/* Key dates ---------------------------------------------------------------- */
+.o26-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  padding: 20px 24px;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgba(11, 16, 32, 0.06);
+}
+.o26-date-badge {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  background: #f4efe2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1.1;
+}
+.o26-date-badge b { font-size: 22px; }
+#o26-root .o26-date-cta {
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 26px;
+  border-radius: 24px;
+  border: 1.5px solid #0b1020;
+  color: #0b1020;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+#o26-root .o26-date-cta-solid {
+  background: #0b1020;
+  color: #fdfbf4;
+}
+@media (max-width: 480px) {
+  .o26-date-cta { flex-basis: 100%; justify-content: center; }
+}
+
+/* Line-up carousel ------------------------------------------------------------- */
+@keyframes lnBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes lnFloat { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
+@keyframes lnTwinkle { 0%, 100% { transform: scale(0.35); opacity: 0.35; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes lnHalo { 0%, 100% { transform: scale(0.94); opacity: 0.8; } 50% { transform: scale(1.04); opacity: 1; } }
+@keyframes lnStar { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.9; } }
+.ln-bob { animation: lnBob 3.2s ease-in-out infinite; }
+.ln-float { animation: lnFloat 4.2s ease-in-out infinite; }
+.ln-float2 { animation-duration: 5.4s; animation-delay: -2s; }
+.ln-spark { transform-box: fill-box; transform-origin: center; animation: lnTwinkle 2.4s ease-in-out infinite; }
+.ln-s2 { animation-delay: -0.6s; }
+.ln-s3 { animation-delay: -1.2s; animation-duration: 2.9s; }
+.ln-s4 { animation-delay: -1.8s; animation-duration: 2s; }
+.ln-halo { transform-box: fill-box; transform-origin: center; animation: lnHalo 4s ease-in-out infinite; }
+.ln-star { animation: lnStar 3s ease-in-out infinite; }
+.ln-star:nth-child(2n) { animation-delay: -1.5s; }
+.ln-star:nth-child(3n) { animation-duration: 4.2s; }
+.ln-arrow { transition: transform 0.2s, background 0.2s, color 0.2s; }
+.ln-arrow:hover { background: rgba(249, 169, 11, 0.12); }
+.ln-arrow:active { transform: scale(0.9); }
+.ln-flipbtn:hover { background: rgba(249, 169, 11, 0.25) !important; border-color: #f9a90b !important; }
+.ln-stage:active { cursor: grabbing; }
+@media (max-width: 520px) {
+  .ln-stage { width: calc(100vw - 48px) !important; }
+  .ln-arrow {
+    position: absolute;
+    z-index: 4;
+    top: 50%;
+    margin-top: -22px;
+    width: 44px !important;
+    height: 44px !important;
+    background: rgba(11, 16, 32, 0.7) !important;
+    border: 1px solid rgba(249, 169, 11, 0.5) !important;
+  }
+  .ln-prev { left: -8px; }
+  .ln-next { right: -8px; }
+}
+@media (max-width: 680px) {
+  .o26-lineup-cta { border-radius: 28px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .p-in, .p-note, .ln-bob, .ln-float, .ln-spark, .ln-halo, .ln-star {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .ln-flip { transition: none !important; }
+}
+
+/* Register: a teal "the night" panel beside the white details form, lifted over the navy hero. */
+.o26-reg-card {
+  display: flex;
+  flex-wrap: wrap;
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: 0 30px 60px rgba(11, 16, 32, 0.18);
+}
+.o26-reg-night {
+  flex: 1 1 340px;
+  min-width: 0;
+  background: #0a5470;
+  color: #fdfbf4;
+  padding: clamp(28px, 4vw, 52px);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.o26-reg-form {
+  flex: 1 1 460px;
+  min-width: 0;
+  background: #fff;
+  color: #0b1020;
+  padding: clamp(28px, 4vw, 52px);
+  box-sizing: border-box;
+}
+@media (max-width: 680px) {
+  .o26-reg-card { border-radius: 24px; }
+}
+
+/* Loading screen (payment confirmation): twinkling stars and a sliding bar. */
+@keyframes ldBar { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+@keyframes ldStar { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.85; } }
+.ld-bar { animation: ldBar 1.6s cubic-bezier(0.45, 0, 0.2, 1) infinite; }
+.ld-star { animation: ldStar 3s ease-in-out infinite; }
+.ld-star:nth-child(2n) { animation-delay: -1.4s; }
+.ld-star:nth-child(3n) { animation-duration: 4.4s; }
+@media (prefers-reduced-motion: reduce) {
+  .ld-bar, .ld-star { animation: none !important; }
+}

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { LogoShine } from "@/components/landing/LogoShine";
-import { LINKS, LOGO } from "@/components/landing/links";
+import { FlameLogo } from "@/components/landing/FlameLogo";
+import { LINKS } from "@/components/landing/links";
 
 const MENU = [
   { href: LINKS.home, label: "Home" },
@@ -14,13 +14,20 @@ const MENU = [
   { href: LINKS.register, label: "Register" },
 ];
 
+type Props = {
+  solid?: boolean;
+  /** The page this header is on, so its link reads as current. */
+  current?: "lineup" | "dates" | "register";
+};
+
 /**
  * The site header. On the landing page (`solid` off) it starts hidden and the scroll story fades it
  * in once the burning logo has risen into the logo slot; every other page shows it from the start.
  */
-export function LandingHeader({ solid = false }: { solid?: boolean }) {
+export function LandingHeader({ solid = false, current }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+  const cur = (key: Props["current"]) => (current === key ? ("page" as const) : undefined);
 
   return (
     <header id="o26-header" className={solid ? "o26-header-solid" : undefined}>
@@ -48,11 +55,13 @@ export function LandingHeader({ solid = false }: { solid?: boolean }) {
           </button>
         </div>
         <a href={LINKS.home} aria-label="ONE·26 Rekindle — back to top" className="o26-logo-link">
-          <LogoShine id="o26-hlogo" src={LOGO.src} width={LOGO.width} height={LOGO.height} alt="ONE·26 Rekindle" />
+          <span id="o26-hlogo" className="o26-logo-glow">
+            <FlameLogo ignite={false} glow={false} />
+          </span>
         </a>
         <div className="o26-hr">
-          <a className="o26-hlink o26-hdesk" href={LINKS.lineup}>Line-up</a>
-          <Link className="o26-hlink o26-hdesk" href={LINKS.register}>Register</Link>
+          <Link className="o26-hlink o26-hdesk" href={LINKS.lineup} aria-current={cur("lineup")}>Line-up</Link>
+          <Link className="o26-hlink o26-hdesk" href={LINKS.register} aria-current={cur("register")}>Register</Link>
           <Link className="o26-hmob o26-mob-cta" href={LINKS.register}>Register</Link>
         </div>
         {menuOpen && (

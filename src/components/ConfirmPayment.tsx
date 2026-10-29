@@ -8,6 +8,7 @@ import { clearPendingPayment, readPendingPayment } from "@/lib/pendingPayment";
 const LOOP_MS = 5200;
 /** Navy as the browser decodes the loader video (brand navy #0B1020 after H.264 rounding), so the clip blends into the panel. */
 const LOADER_NAVY = "#0b1021";
+const LOADER_STARS: [number, number, number][] = [[140, 120, 2], [420, 70, 1.5], [1020, 110, 2], [1310, 210, 1.5], [1220, 760, 2], [260, 700, 1.5], [90, 420, 1.5], [1380, 480, 2]];
 
 /**
  * Verifies the Checkout result with the server, then shows the booking page (for confirmed and pending alike).
@@ -104,6 +105,13 @@ export function ConfirmPayment() {
       style={{ background: LOADER_NAVY }}
       aria-live="polite"
     >
+      <svg aria-hidden="true" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" className="pointer-events-none absolute inset-0 h-full w-full">
+        <g fill="#FDFBF4">
+          {LOADER_STARS.map(([cx, cy, r]) => (
+            <circle key={`${cx}-${cy}`} className="ld-star" cx={cx} cy={cy} r={r} />
+          ))}
+        </g>
+      </svg>
       <video
         ref={videoRef}
         className="aspect-square w-[min(80vw,52vh,520px)] motion-reduce:hidden"
@@ -117,8 +125,12 @@ export function ConfirmPayment() {
       />
       {/* eslint-disable-next-line @next/next/no-img-element -- still frame for reduced motion */}
       <img className="hidden aspect-square w-[min(80vw,52vh,520px)] motion-reduce:block" src="/landing/loader-poster.jpg" alt="" />
-      <h1 className="font-display m-0 text-4xl font-semibold text-[#fdfbf4]">Confirming your <span className="text-flame">payment</span></h1>
-      <p className="m-0 text-[#c9ccd8]">Keep this page open. Your tickets appear in a moment.</p>
+      <span className="relative text-[13px] font-semibold tracking-[4px] text-marigold">ONE·26 · REKINDLE</span>
+      <h1 className="font-display relative m-0 text-4xl font-semibold text-[#fdfbf4]">Confirming your <span className="text-flame">payment</span></h1>
+      <p className="relative m-0 text-[#c9ccd8]">Keep this page open. Your tickets appear in a moment.</p>
+      <div aria-hidden="true" className="relative mt-2 h-1 w-[180px] overflow-hidden rounded-sm bg-[#fdfbf4]/15">
+        <div className="ld-bar h-full w-2/5 rounded-sm" style={{ background: "linear-gradient(90deg, #FF4520, #F9A90B)" }} />
+      </div>
     </div>
   );
 }

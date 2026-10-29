@@ -2,7 +2,6 @@
 
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
-import { LINKS } from "@/components/landing/links";
 import { StoryScene } from "@/components/landing/StoryScene";
 
 /** px of scrolling that plays the story. */
@@ -14,10 +13,10 @@ const LEN = 5000;
 const SEG: [number, number, number][] = [[2.7, 4.15, 1.4], [4.15, 6.9, 1.3], [6.9, 7.7, 3.2], [7.7, 10.0, 1.1], [10.0, 11.6, 1.4], [11.6, 14.6, 0.8]];
 const SEGTOT = SEG.reduce((sum, [a, b, w]) => sum + (b - a) * w, 0);
 /**
- * Story times where the story waits GATE_WAIT_MS: on the finished Rekindle logo, and once the logo has
+ * Story times where the story waits GATE_WAIT_MS: on the burning Rekindle logo (the boy has gone), and once the logo has
  * landed in the header with the closing line. A hard flick cannot carry past a gate; the wait runs from arrival.
  */
-export const GATES = [9.7, 13.9];
+export const GATES = [11.0, 13.9];
 export const GATE_WAIT_MS = 3000;
 /** Story time reached at the end of the scroll. */
 const END = 14.6;
@@ -105,7 +104,7 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
 
   g.set("#shake", { x: 0, y: 0 });
   g.set("#camera", { svgOrigin: "0 0", scale: 1, x: 0, y: 0 });
-  g.set("#boy", { y: 760 + E });
+  g.set("#boy", { y: 1080 + E, opacity: 1, visibility: "visible" });
   g.set("#o26-title", { y: 0 });
   g.set("#presenters", { opacity: 0, y: 16 });
   g.set("#title-main", { opacity: 0, scale: 0.9, transformOrigin: "50% 50%" });
@@ -118,10 +117,9 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   g.set("#snapring", { scale: 0.4, opacity: 1, transformOrigin: "50% 50%" });
   g.set("#snaplines", { scale: 0.4, opacity: 1, svgOrigin: "960 760" });
   g.set("#flash", { opacity: 0 });
+  g.set("#o26-day", { opacity: 1, clipPath: "circle(0% at 50% 52%)" });
   g.set("#firevid", { opacity: 0, scale: 0.12, transformOrigin: "550px 858px" });
   g.set("#logo", { opacity: 0, scale: 0.88, transformOrigin: "50% 85%", filter: GLOW_HOT });
-  g.set("#lightwipe", { attr: { r: 0 } });
-  g.set("#edgefade", { opacity: 1 });
   g.set("#fire", { x: 0, y: 0, scale: 1, transformOrigin: "960px 240px" });
   g.set("#endtext", { opacity: 0, y: 40 });
   g.set(".note", { opacity: 0, y: 40, rotation: -8, transformOrigin: "50% 50%" });
@@ -129,7 +127,7 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   g.set(".o26-hl", { x: mobile ? 0 : 40, opacity: 0 });
   g.set(".o26-hr", { x: mobile ? 0 : -40, opacity: 0 });
   g.set("#o26-hlogo", { opacity: 0 });
-  g.set(["#o26-skip", "#o26-scrub"], { autoAlpha: 1 });
+  g.set("#o26-scrub", { autoAlpha: 1 });
 
   const tl = g.timeline({ paused: true, defaults: { ease: "power2.out" } });
   // 1. Presenters, then the title
@@ -155,6 +153,7 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to("#snaplines", { scale: 1.25, opacity: 0, duration: 0.35, ease: "power3.out" }, 7.0)
     .to("#flash", { opacity: 0.18, duration: 0.05, ease: "none" }, 7.0)
     .to("#flash", { opacity: 0, duration: 0.25 }, 7.05)
+    .to("#o26-day", { clipPath: "circle(80% at 50% 52%)", duration: 1.9, ease: "power2.inOut" }, 7.35)
     .to("#shake", { x: 6, y: -4, duration: 0.04, ease: "none" }, 7.02)
     .to("#shake", { x: -6, y: 3, duration: 0.05, ease: "none" }, 7.06)
     .to("#shake", { x: 3, y: -2, duration: 0.05, ease: "none" }, 7.11)
@@ -167,11 +166,11 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to("#logo", { filter: GLOW_LOW, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: 5 }, 8.8)
     .to("#logo", { scale: 1.015, duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 3 }, 8.85)
     .to("#firevid", { opacity: 0, duration: 0.7, ease: "power1.inOut" }, 8.6);
-  // 6. Dark to light: cream light spreads out from behind the logo
+  // 6. The boy steps out of frame; the flaming logo is left alone on the cream
   tl.to("#logo", { filter: GLOW_OFF, duration: 0.9, ease: "power1.out" }, 10.2)
-    .to("#edgefade", { opacity: 0, duration: 0.7, ease: "power1.in" }, 10.7)
-    .to("#lightwipe", { attr: { r: 3200 }, duration: 1.5, ease: "power2.in" }, 10.0)
-    .to(["#o26-skip", "#o26-scrub"], { autoAlpha: 0, duration: 0.4 }, 11.6);
+    .to("#boy", { opacity: 0, y: 220, duration: 1.1, ease: "power2.in" }, 9.9)
+    .set("#boy", { visibility: "hidden" }, 11.0)
+    .to("#o26-scrub", { autoAlpha: 0, duration: 0.4 }, 11.6);
   // 7. The logo rises into the header, the menu opens out on both sides
   tl.to("#fire", { y: landY, scale: k, duration: 1.2, ease: "power3.inOut" }, 11.6)
     .to("#endtext", { opacity: 1, y: 0, duration: 0.9 }, 12.3)
@@ -205,8 +204,7 @@ export function StoryIntro() {
     const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
     const hint = $<SVGGElement>("#holdhint");
-    const edgeTop = $<SVGRectElement>("#o26-edge-top");
-    const edgeBot = $<SVGRectElement>("#o26-edge-bot");
+    const day = $<HTMLDivElement>("#o26-day");
     const endK = $<SVGTextElement>("#o26-endtext-k");
     const endT = $<SVGTextElement>("#o26-endtext-t");
     const endU = $<SVGTextElement>("#o26-endtext-u");
@@ -230,6 +228,7 @@ export function StoryIntro() {
     let last = 0;
     let fireOn = false;
     let lastReveal = -1;
+    let lastBgY = NaN;
     let raf = 0;
     const introStart = performance.now();
 
@@ -244,12 +243,6 @@ export function StoryIntro() {
       const x0 = 960 - W / 2, y0 = 540 - H / 2;
       const s = w / W;
       world.style.transform = `scale(${s}) translate(${-x0}px, ${-y0}px)`;
-      edgeTop.setAttribute("x", String(x0));
-      edgeTop.setAttribute("y", String(y0));
-      edgeTop.setAttribute("width", String(W));
-      edgeBot.setAttribute("x", String(x0));
-      edgeBot.setAttribute("y", String(y0 + H - 200));
-      edgeBot.setAttribute("width", String(W));
       const narrow = W < 1300;
       endK.setAttribute("font-size", narrow ? "30" : "24");
       endK.setAttribute("letter-spacing", narrow ? "6" : "10");
@@ -274,6 +267,13 @@ export function StoryIntro() {
       if (`${stage.clientWidth}x${stage.clientHeight}` !== layoutKey) layout(false);
       const into = window.scrollY - section.offsetTop;
       const p = Math.min(1, Math.max(0, into / LEN));
+      // The paper pattern travels with the scroll, exactly like the page beneath the pinned stage.
+      const bgY = -Math.round(Math.min(LEN, Math.max(0, into)));
+      if (bgY !== lastBgY) {
+        lastBgY = bgY;
+        stage.style.backgroundPosition = `center ${bgY}px`;
+        day.style.backgroundPosition = `center ${bgY}px`;
+      }
       // The opening (presenters + title) plays on its own; scrolling then moves the playhead.
       const intro = Math.min(2.65, (now - introStart) / 1000);
       const scrollT = p > 0.0005 ? storyAt(Math.min(1, p / 0.94)) : 0;
@@ -334,7 +334,7 @@ export function StoryIntro() {
       }
     };
 
-    // Jumps (anchor links, the skip button, a #hash on load) skip the gates; scrolling back re-arms them.
+    // Jumps (anchor links, a #hash on load) skip the gates; scrolling back re-arms them.
     // Opened (or reloaded) already below the story: nothing to wait for.
     let gates: GateState = { idx: window.scrollY - section.offsetTop > LEN * 0.94 ? GATES.length : 0, arrivedAt: null };
     let skipGatesUntil = 0;
@@ -362,13 +362,8 @@ export function StoryIntro() {
   return (
     <section id="o26-story" ref={sectionRef} aria-label="ONE·26 Rekindle — the story">
       <div id="o26-stage">
+        <div id="o26-day" aria-hidden="true" />
         <StoryScene />
-        <a href={LINKS.about} id="o26-skip" className="o26-skip">
-          Skip intro
-          <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M6 13l6 6 6-6" />
-          </svg>
-        </a>
         <div id="o26-scrub" aria-hidden="true">
           <div id="o26-scrub-fill" />
         </div>

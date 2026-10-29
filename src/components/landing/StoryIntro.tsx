@@ -13,6 +13,12 @@ const LEN = 5000;
  */
 const SEG: [number, number, number][] = [[2.7, 4.15, 1.4], [4.15, 6.9, 1.3], [6.9, 7.7, 3.2], [7.7, 10.0, 1.1], [10.0, 11.6, 1.4], [11.6, 14.6, 0.8]];
 const SEGTOT = SEG.reduce((sum, [a, b, w]) => sum + (b - a) * w, 0);
+/**
+ * Story times where the story waits GATE_WAIT_MS: on the finished Rekindle logo, and once the logo has
+ * landed in the header with the closing line. A hard flick cannot carry past a gate; the wait runs from arrival.
+ */
+export const GATES = [9.7, 13.9];
+export const GATE_WAIT_MS = 3000;
 /** Story time reached at the end of the scroll. */
 const END = 14.6;
 const IGNITE = 7.55;
@@ -24,7 +30,7 @@ const GLOW_OFF = "drop-shadow(0px 0px 0px rgba(255,90,20,0)) brightness(1)";
 type Geo = { s: number; y0: number; ext: number; mobile: boolean };
 
 /** Scroll progress (0–1) → story time, using the weights in SEG. */
-function storyAt(q: number): number {
+export function storyAt(q: number): number {
   let need = q * SEGTOT;
   for (const [a, b, w] of SEG) {
     const len = (b - a) * w;
@@ -32,6 +38,43 @@ function storyAt(q: number): number {
     need -= len;
   }
   return END;
+}
+
+/** Story time → scroll progress (0–1): the inverse of storyAt. */
+export function scrollQ(t: number): number {
+  let used = 0;
+  for (const [a, b, w] of SEG) {
+    if (t <= b) return (used + (Math.max(t, a) - a) * w) / SEGTOT;
+    used += (b - a) * w;
+  }
+  return 1;
+}
+
+export type GateState = { idx: number; arrivedAt: number | null };
+
+/** Advances the gates one frame: `cur` is the story time on screen, `target` where the scroll wants it, `now` in ms. */
+export function stepGates(st: GateState, cur: number, target: number, now: number): GateState {
+  let { idx, arrivedAt } = st;
+  // Scrolling back to before a gate puts it back in force.
+  const ahead = GATES.findIndex((g) => g > target + 0.3);
+  const rearm = ahead < 0 ? GATES.length : ahead;
+  if (idx > rearm) {
+    idx = rearm;
+    arrivedAt = null;
+  }
+  if (idx < GATES.length && cur >= GATES[idx] - 0.005) {
+    arrivedAt ??= now;
+    if (now - arrivedAt >= GATE_WAIT_MS) {
+      idx++;
+      arrivedAt = null;
+    }
+  }
+  return { idx, arrivedAt };
+}
+
+/** The furthest story time the story may reach while the gates are in force. */
+export function limitFor(st: GateState): number {
+  return st.idx < GATES.length ? GATES[st.idx] : Infinity;
 }
 
 /** Height of the logo's burn-in front (0 = not lit, 1 = fully alight), eased like the flame canvas. */
@@ -161,6 +204,7 @@ export function StoryIntro() {
     const img = $<HTMLImageElement>("#i-fire");
     const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
+    const hint = $<SVGGElement>("#holdhint");
     const edgeTop = $<SVGRectElement>("#o26-edge-top");
     const edgeBot = $<SVGRectElement>("#o26-edge-bot");
     const endK = $<SVGTextElement>("#o26-endtext-k");
@@ -233,7 +277,16 @@ export function StoryIntro() {
       // The opening (presenters + title) plays on its own; scrolling then moves the playhead.
       const intro = Math.min(2.65, (now - introStart) / 1000);
       const scrollT = p > 0.0005 ? storyAt(Math.min(1, p / 0.94)) : 0;
-      const target = Math.max(intro, scrollT);
+      let target = Math.max(intro, scrollT);
+      if (reduce || now < skipGatesUntil) gates = { idx: GATES.length, arrivedAt: null };
+      else gates = stepGates(gates, cur, target, now);
+      const limit = limitFor(gates);
+      if (target > limit) {
+        // Hold the page where the gate is, so a flick cannot scroll the story out of view during the wait.
+        target = limit;
+        const maxInto = scrollQ(limit) * 0.94 * LEN;
+        if (into > maxInto + 2) window.scrollTo({ top: section.offsetTop + maxInto, behavior: "instant" });
+      }
       const dt = Math.min(0.1, (now - (last || now)) / 1000);
       last = now;
       if (reduce || into > LEN + stage.clientHeight) cur = target;
@@ -247,6 +300,7 @@ export function StoryIntro() {
       }
       const t = cur;
       if (tl && Math.abs(tl.time() - t) > 0.0004) tl.time(t);
+      hint.style.opacity = gates.idx === 1 && Math.abs(t - GATES[0]) < 0.05 ? "1" : "0";
       fill.style.width = `${(Math.min(1, t / END) * 100).toFixed(2)}%`;
       if (into > LEN + stage.clientHeight) return; // story is off screen
 
@@ -280,11 +334,26 @@ export function StoryIntro() {
       }
     };
 
+    // Jumps (anchor links, the skip button, a #hash on load) skip the gates; scrolling back re-arms them.
+    // Opened (or reloaded) already below the story: nothing to wait for.
+    let gates: GateState = { idx: window.scrollY - section.offsetTop > LEN * 0.94 ? GATES.length : 0, arrivedAt: null };
+    let skipGatesUntil = 0;
+    const allowJump = (e: Event) => {
+      if ((e.target as Element | null)?.closest?.('a[href*="#"]')) skipGatesUntil = performance.now() + 3000;
+    };
+    const allowHashJump = () => {
+      skipGatesUntil = performance.now() + 3000;
+    };
+    document.addEventListener("click", allowJump, true);
+    window.addEventListener("hashchange", allowHashJump);
+
     layout(true);
     raf = requestAnimationFrame(loop);
 
     return () => {
       cancelAnimationFrame(raf);
+      document.removeEventListener("click", allowJump, true);
+      window.removeEventListener("hashchange", allowHashJump);
       vid.pause();
       ctx.revert();
     };

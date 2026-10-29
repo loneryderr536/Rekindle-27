@@ -56,7 +56,7 @@ export function LandingHeader({ solid = false, current }: Props) {
         </div>
         <a href={LINKS.home} aria-label="ONE·26 Rekindle — back to top" className="o26-logo-link">
           <span id="o26-hlogo" className="o26-logo-glow">
-            <FlameLogo ignite={false} glow={false} />
+            <FlameLogo ignite={false} glow={false} small />
           </span>
         </a>
         <div className="o26-hr">

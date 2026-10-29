@@ -190,3 +190,39 @@ main > section.o26-navy:first-child {
 @media (prefers-reduced-motion: reduce) {
   .ld-bar, .ld-star { animation: none !important; }
 }
+
+/* Loading screen: the design's textured night with the fire vortex in the middle. */
+@keyframes ldDot { 0%, 80%, 100% { opacity: 0.25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-4px); } }
+@keyframes ldIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.ld-dot { display: inline-block; animation: ldDot 1.2s ease-in-out infinite; }
+.ld-dot:nth-child(2) { animation-delay: 0.15s; }
+.ld-dot:nth-child(3) { animation-delay: 0.3s; }
+.ld-in { opacity: 0; animation: ldIn 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s forwards; }
+.o26-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  min-height: 560px;
+  padding: 24px;
+  box-sizing: border-box;
+  background: radial-gradient(ellipse at 50% 42%, rgba(26, 21, 48, 0.92) 0%, rgba(11, 16, 32, 0.5) 64%), #0b1020 url("/landing/tex-navy.webp") repeat center / 760px 760px;
+  color: #fdfbf4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.o26-loading-sky { position: absolute; inset: 0; width: 100%; height: 100%; }
+.o26-loading-canvas { position: relative; display: block; width: min(96vw, 74vh, 720px); aspect-ratio: 70 / 69; }
+.o26-loading-text { position: relative; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: -2vh; }
+.o26-loading-eyebrow { font-size: 13px; font-weight: 600; letter-spacing: 4px; color: #f9a90b; }
+.o26-loading-line { font-weight: 500; font-size: 20px; letter-spacing: 1px; }
+.o26-loading-track { width: 180px; height: 4px; border-radius: 2px; background: rgba(253, 251, 244, 0.14); overflow: hidden; }
+.o26-loading-track .ld-bar { width: 40%; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #ff4520, #f9a90b); }
+@media (prefers-reduced-motion: reduce) {
+  .ld-dot { animation: none !important; }
+  .ld-in { animation: none !important; opacity: 1 !important; }
+}
+.o26-loading-note { font-size: 14px; color: #c9ccd8; }

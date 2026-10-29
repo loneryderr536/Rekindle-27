@@ -92,16 +92,48 @@ type Props = {
   replayKey?: number;
   /** Soft orange glow behind the logo, as in the pack's demo page. */
   glow?: boolean;
+  /**
+   * For a logo shown tiny (the header): draw at full size off screen, then scale down in halving steps
+   * into a canvas the size of its box, so the edges stay smooth with no light fringe.
+   */
+  small?: boolean;
 };
 
-export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true }: Props) {
+export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true, small = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    const shown = canvasRef.current;
+    const shownCtx = shown?.getContext("2d");
+    if (!shown || !shownCtx) return;
+    // Small mode draws on an off-screen full-size canvas and blits it down; otherwise it draws straight on screen.
+    const canvas = small ? Object.assign(document.createElement("canvas"), { width: CANVAS.width + PAD * 2, height: CANVAS.height + PAD * 2 }) : shown;
+    const ctx = canvas.getContext("2d")!;
     ctx.imageSmoothingEnabled = true;
+
+    const blit = () => {
+      if (!small) return;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const r = shown.getBoundingClientRect();
+      const tw = Math.max(1, Math.round(r.width * dpr)), th = Math.max(1, Math.round(r.height * dpr));
+      if (shown.width !== tw || shown.height !== th) {
+        shown.width = tw;
+        shown.height = th;
+      }
+      let src: HTMLCanvasElement = canvas;
+      while (src.width / 2 >= tw && src.height / 2 >= th) {
+        const half = document.createElement("canvas");
+        half.width = Math.floor(src.width / 2);
+        half.height = Math.floor(src.height / 2);
+        const hc = half.getContext("2d")!;
+        hc.imageSmoothingQuality = "high";
+        hc.drawImage(src, 0, 0, half.width, half.height);
+        src = half;
+      }
+      shownCtx.clearRect(0, 0, tw, th);
+      shownCtx.imageSmoothingQuality = "high";
+      shownCtx.drawImage(src, 0, 0, tw, th);
+    };
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let raf = 0;
@@ -113,7 +145,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       visible = entry.isIntersecting;
       if (visible && !raf && images) raf = requestAnimationFrame(frame);
     });
-    io.observe(canvas);
+    io.observe(shown);
 
     let images: HTMLImageElement[] | null = null;
     const staticImg = () => images![0];
@@ -135,6 +167,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       const reveal = r * r * (3 - 2 * r);
       const energy = reduceMotion ? 0 : Math.min(1, t / RAMP_SECONDS);
       draw(now / 1000, energy, reveal);
+      blit();
       // Reduced motion: one still frame once lit, no loop.
       if (reduceMotion && reveal >= 1) return;
       raf = requestAnimationFrame(frame);
@@ -154,7 +187,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       cancelAnimationFrame(raf);
       io.disconnect();
     };
-  }, [ignite, replayKey]);
+  }, [ignite, replayKey, small]);
 
   return (
     <canvas

@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { unstable_rethrow } from "next/navigation";
 import { env } from "@/lib/env";
 import { FAKE_GUEST_COOKIE, readFakeGuest } from "./fakeGuest";
 import { createSupabaseServer } from "./supabaseServer";
@@ -31,6 +32,7 @@ export async function getGuest(): Promise<Guest | null> {
     const supabase = await createSupabaseServer();
     return guestFromUser((await supabase.auth.getUser()).data.user);
   } catch (e) {
+    unstable_rethrow(e);
     console.error("getGuest failed", e);
     return null;
   }

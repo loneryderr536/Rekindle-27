@@ -33,7 +33,7 @@ describe("parseEnv", () => {
 });
 
 describe("Supabase guest auth env", () => {
-  const { NEXT_PUBLIC_SUPABASE_URL: _url, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: _key, ...base } = fullEnvFixture;
+  const base = { ...fullEnvFixture, NEXT_PUBLIC_SUPABASE_URL: undefined, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: undefined };
   test("requires the Supabase URL and publishable key", () => {
     expect(() => parseEnv({ ...base, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "k" })).toThrow(/NEXT_PUBLIC_SUPABASE_URL/);
     expect(() => parseEnv({ ...base, NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co" })).toThrow(

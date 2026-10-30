@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Attendee } from "@/lib/attendee";
 import { discountAmountPaise } from "@/lib/discount";
 import { formatInr } from "@/lib/money";
+import { loadTurnstile } from "@/lib/turnstile";
 import type { SeatView, TierView } from "@/server/seats/listSeats";
 
 export type CheckoutDetails = { name: string; email: string; phone: string; turnstileToken: string; discountCode?: string };
@@ -18,38 +19,8 @@ type Props = {
   onCancel?: () => void;
 };
 
-type TurnstileApi = {
-  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
-  reset: (id: string) => void;
-  remove: (id: string) => void;
-};
-
-declare global {
-  interface Window {
-    turnstile?: TurnstileApi;
-  }
-}
-
-const TURNSTILE_SRC = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 /** With the dev/test site key no widget is rendered; the server's test secret accepts this token. */
 const TEST_TOKEN = "test-pass";
-
-let turnstileScript: Promise<TurnstileApi> | null = null;
-
-function loadTurnstile(): Promise<TurnstileApi> {
-  turnstileScript ??= new Promise<TurnstileApi>((resolve, reject) => {
-    const s = document.createElement("script");
-    s.src = TURNSTILE_SRC;
-    s.async = true;
-    s.onload = () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("Turnstile missing")));
-    s.onerror = () => {
-      turnstileScript = null;
-      reject(new Error("Turnstile failed to load"));
-    };
-    document.head.appendChild(s);
-  });
-  return turnstileScript;
-}
 
 /** The last step before Razorpay: the attendee's details, the picked seats and total, and the bot check. */
 export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: Props) {

@@ -7,11 +7,11 @@ import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
 import { formatInr } from "@/lib/money";
-import { getGuest } from "@/server/guestAuth/getGuest";
 import { getBookingByAccessToken } from "@/server/tickets/loadBooking";
 import { qrDataUrl } from "@/server/tickets/qr";
 import { qrPayload } from "@/server/tickets/tokens";
 import { ticketsVisible } from "@/server/tickets/visibility";
+import { postPaymentRedirect } from "./postPaymentRedirect";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Your booking", robots: { index: false } };
@@ -29,14 +29,10 @@ export default async function BookingPage({
   const b = await getBookingByAccessToken(token);
   if (!b) notFound();
 
-  // Straight after paying, a signed-in guest who owns this booking lands on My bookings.
+  // Straight after paying, a signed-in owner of a paid booking lands on My bookings (never a pending one).
   const { paid } = await searchParams;
-  if (paid === "1") {
-    const guest = await getGuest();
-    if (guest && b.email.trim().toLowerCase() === guest.email) {
-      redirect(`/my-bookings?new=${encodeURIComponent(b.publicCode)}`);
-    }
-  }
+  const to = await postPaymentRedirect(b, paid);
+  if (to) redirect(to);
 
   const showTickets = ticketsVisible(b.status);
   const qrs = showTickets

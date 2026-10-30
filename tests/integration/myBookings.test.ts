@@ -130,5 +130,6 @@ test("resend: 4th call within the hour gets 429; failures and non-owners do not 
   for (let i = 0; i < 3; i++) expect((await resend(id)).status).toBe(200);
   const res = await resend(id);
   expect(res.status).toBe(429);
+  expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);
   expect(await outboxCount(id)).toBe(3);
 });

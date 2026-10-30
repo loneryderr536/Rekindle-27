@@ -29,6 +29,10 @@ export async function POST(req: Request, ctx: RouteContext<"/api/my-bookings/[id
     kickOutbox();
     return Response.json({ ok: true });
   } catch (e) {
-    return jsonError(e);
+    const res = jsonError(e);
+    if (e instanceof AppError && e.status === 429 && typeof e.details?.retryAfter === "number") {
+      res.headers.set("Retry-After", String(e.details.retryAfter));
+    }
+    return res;
   }
 }

@@ -41,6 +41,9 @@ Two Supabase projects: **rekindle-dev** (localhost and Vercel previews) and **re
 - [ ] **Auth > Providers > Google:** on, with a Google Cloud OAuth client (type web). Consent screen: app name ONE·26 Rekindle, scopes email and profile. Authorised redirect URI: `https://<project>.supabase.co/auth/v1/callback` (one per project).
 - [ ] **Auth > URL configuration:** site URL = `APP_URL`; redirect allow-list has `http://localhost:3000/auth/callback`, the Vercel preview pattern, and the production URL `/auth/callback`.
 - [ ] **Auth > Bot and abuse protection:** CAPTCHA on, provider Cloudflare Turnstile, with the existing Turnstile secret. The sign-in form passes the Turnstile token to Supabase.
+- [ ] **rekindle-prod, Auth > Rate Limits:** raise "Rate limit for sending emails" well above the expected sign-up rush (about 1,000 guests arriving close together), and review the sign-in / OTP-verification limits so a busy hour does not lock real guests out.
+- [ ] **Merge gate:** create both Supabase projects and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in Vercel **Production and Preview** BEFORE merging or deploying this branch. Env parsing is all-or-nothing, so missing keys break every route, payments included.
+- [ ] The email-code sign-in and resend Origin checks compare against `APP_URL`, so on a Vercel preview `APP_URL` must be that preview's URL.
 - [ ] A real sign-in on the production site works both ways (Google, and an emailed 6-digit code), and the booking then shows under `/my-bookings`.
 
 ## 4. Razorpay

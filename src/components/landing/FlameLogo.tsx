@@ -18,6 +18,9 @@ const RAMP_SECONDS = 0.6;
 
 const BASE_URL = "/landing/logo";
 
+/** The story scrubs the burn-in front through this (0 = unlit, 1 = fully alight) when `externalReveal` is on. */
+export const flameReveal = { value: 1 };
+
 type Part = { x: number; y: number; w: number; h: number; file: string };
 type Tongue = Part & { amp: number; freq: number; k: number; phase: number; stretch: number; tip: number; base: number };
 
@@ -43,13 +46,13 @@ function loadImage(file: string): Promise<HTMLImageElement> {
   });
 }
 
-function drawTongue(ctx: CanvasRenderingContext2D, p: Tongue, img: HTMLImageElement, t: number, energy: number) {
+function drawTongue(ctx: CanvasRenderingContext2D, p: Tongue, img: HTMLImageElement, t: number, energy: number, step = 1) {
   // Walk from the base upward so each row's height spans exactly to the row below it.
   const H = p.base - p.tip;
   const lickPhase = Math.sin(TAU * 0.8 * p.freq * t + p.phase);
   const lick = p.stretch * H * (0.55 + 0.45 * lickPhase) * energy;
   let below: number | null = null;
-  for (let r = p.h - 1; r >= 0; r--) {
+  for (let r = p.h - 1; r >= 0; r -= step) {
     const y = p.y + r;
     const h = Math.min(1, Math.max(0, (p.base - y) / H));
     const f = Math.pow(h, 1.6);
@@ -59,7 +62,8 @@ function drawTongue(ctx: CanvasRenderingContext2D, p: Tongue, img: HTMLImageElem
         0.35 * Math.sin(TAU * (1.7 * p.k * h - 2.3 * p.freq * t) + 1.9 * p.phase));
     const top = Math.round(PAD + y - lick * h);
     const bottom = below === null ? top + 1 : below;
-    if (bottom > top) ctx.drawImage(img, 0, r, p.w, 1, PAD + p.x + dx, top, p.w, bottom - top);
+    const sy = Math.max(0, r - step + 1);
+    if (bottom > top) ctx.drawImage(img, 0, sy, p.w, r - sy + 1, PAD + p.x + dx, top, p.w, bottom - top);
     below = top;
   }
 }
@@ -97,9 +101,13 @@ type Props = {
    * into a canvas the size of its box, so the edges stay smooth with no light fringe.
    */
   small?: boolean;
+  /** Draw at this fraction of full size (the browser scales it up); also halves the strips drawn per flame. */
+  scale?: number;
+  /** Take the burn-in front from `flameReveal` instead of the clock (the story scrubs it with scrolling). */
+  externalReveal?: boolean;
 };
 
-export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true, small = false }: Props) {
+export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true, small = false, scale = 1, externalReveal = false }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -107,9 +115,13 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
     const shownCtx = shown?.getContext("2d");
     if (!shown || !shownCtx) return;
     // Small mode draws on an off-screen full-size canvas and blits it down; otherwise it draws straight on screen.
-    const canvas = small ? Object.assign(document.createElement("canvas"), { width: CANVAS.width + PAD * 2, height: CANVAS.height + PAD * 2 }) : shown;
+    const W = CANVAS.width + PAD * 2, H = CANVAS.height + PAD * 2;
+    const sc = small ? 1 : scale;
+    const rowStep = sc < 0.8 ? 2 : 1;
+    const canvas = small ? Object.assign(document.createElement("canvas"), { width: W, height: H }) : shown;
     const ctx = canvas.getContext("2d")!;
     ctx.imageSmoothingEnabled = true;
+    ctx.setTransform(sc, 0, 0, sc, 0, 0); // draw in full-size logo coordinates whatever the canvas size
 
     const blit = () => {
       if (!small) return;
@@ -151,12 +163,11 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
     const staticImg = () => images![0];
 
     function draw(t: number, energy: number, reveal: number) {
-      const { width, height } = canvas!;
-      ctx!.clearRect(0, 0, width, height);
+      ctx!.clearRect(0, 0, W, H);
       if (reveal <= 0) return;
-      TONGUES.forEach((p, i) => drawTongue(ctx!, p, images![i + 1], t, energy));
+      TONGUES.forEach((p, i) => drawTongue(ctx!, p, images![i + 1], t, energy, rowStep));
       ctx!.drawImage(staticImg(), PAD + STATIC.x, PAD + STATIC.y);
-      if (reveal < 1) burnIn(ctx!, width, height, reveal);
+      if (reveal < 1) burnIn(ctx!, W, H, reveal);
     }
 
     // Nothing to draw while the logo is faded out or hidden (the story hides the header logo and the big
@@ -181,7 +192,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       lastDraw = now;
       const t = (now - start) / 1000;
       const r = ignite ? Math.min(1, t / IGNITE_SECONDS) : 1;
-      const reveal = r * r * (3 - 2 * r);
+      const reveal = externalReveal ? flameReveal.value : r * r * (3 - 2 * r);
       const energy = reduceMotion ? 0 : Math.min(1, t / RAMP_SECONDS);
       draw(now / 1000, energy, reveal);
       blit();
@@ -204,7 +215,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       cancelAnimationFrame(raf);
       io.disconnect();
     };
-  }, [ignite, replayKey, small]);
+  }, [ignite, replayKey, small, scale, externalReveal]);
 
   return (
     <canvas
@@ -212,8 +223,8 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       role="img"
       aria-label="ONE·26 Rekindle logo, burning"
       className={className}
-      width={CANVAS.width + PAD * 2}
-      height={CANVAS.height + PAD * 2}
+      width={Math.round((CANVAS.width + PAD * 2) * (small ? 1 : scale))}
+      height={Math.round((CANVAS.height + PAD * 2) * (small ? 1 : scale))}
       style={{
         display: "block",
         width: "100%",

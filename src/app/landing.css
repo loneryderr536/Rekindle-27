@@ -224,8 +224,32 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
 #o26-day {
   position: absolute;
   inset: 0;
-  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* A flat cream circle that grows from the middle (scale only, so the browser never repaints it). */
+#o26-day-disc {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 260vmax;
+  height: 260vmax;
+  margin: -130vmax 0 0 -130vmax;
+  border-radius: 50%;
   background: #fdfbf4;
+  will-change: transform;
+}
+/* The warm glow behind the burning logo. */
+#logoglow {
+  position: absolute;
+  left: 460px;
+  top: -20px;
+  width: 1000px;
+  height: 1100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 110, 20, 0.55) 0%, rgba(255, 90, 20, 0.22) 42%, rgba(255, 90, 20, 0) 68%);
+  opacity: 0;
+  pointer-events: none;
 }
 /*
  * The paper pattern behind the story. It is its own layer moved with a transform (cheap, on the GPU) as

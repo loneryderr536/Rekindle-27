@@ -2,6 +2,7 @@
 
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
+import { flameReveal } from "@/components/landing/FlameLogo";
 import { StoryScene } from "@/components/landing/StoryScene";
 
 /** px of scrolling that plays the story. */
@@ -16,10 +17,6 @@ const SEGTOT = SEG.reduce((sum, [a, b, w]) => sum + (b - a) * w, 0);
 /** Story time reached at the end of the scroll. */
 const END = 14.6;
 const IGNITE = 7.55;
-
-const GLOW_HOT = "drop-shadow(0px 0px 46px rgba(255,110,20,0.95)) brightness(1.06)";
-const GLOW_LOW = "drop-shadow(0px 0px 26px rgba(255,90,20,0.7)) brightness(1.02)";
-const GLOW_OFF = "drop-shadow(0px 0px 0px rgba(255,90,20,0)) brightness(1)";
 
 type Geo = { s: number; y0: number; ext: number; mobile: boolean };
 
@@ -50,18 +47,6 @@ function revealAt(t: number): number {
   return x * x * (3 - 2 * x);
 }
 
-/**
- * Everything below the fire front is alight and a soft band above it fades to nothing, as in the
- * design's FlameLogo canvas (1237px tall with a 240px soft edge).
- */
-function burnMask(reveal: number): string {
-  if (reveal >= 1) return "none";
-  const H = 1237, SOFT = 240;
-  const lit = (reveal * (H + SOFT) - SOFT) / H * 100;
-  const fade = (reveal * (H + SOFT)) / H * 100;
-  return `linear-gradient(to top, #000 ${lit.toFixed(2)}%, transparent ${fade.toFixed(2)}%)`;
-}
-
 function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   const g = gsap;
   // Where the burning logo lands: the header's logo slot, top centre.
@@ -85,9 +70,11 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   g.set("#snapring", { scale: 0.4, opacity: 1, transformOrigin: "50% 50%" });
   g.set("#snaplines", { scale: 0.4, opacity: 1, svgOrigin: "960 760" });
   g.set("#flash", { opacity: 0 });
-  g.set("#o26-day", { opacity: 1, clipPath: "circle(0% at 50% 52%)" });
+  g.set("#o26-day-disc", { scale: 0, transformOrigin: "50% 50%" });
+  g.set("#o26-tex-cream", { opacity: 0 });
+  g.set("#logoglow", { opacity: 0 });
   g.set("#firevid", { opacity: 0, scale: 0.12, transformOrigin: "550px 858px" });
-  g.set("#logo", { opacity: 0, scale: 0.88, transformOrigin: "50% 85%", filter: GLOW_HOT });
+  g.set("#logo", { opacity: 0, scale: 0.88, transformOrigin: "50% 85%" });
   g.set("#fire", { x: 0, y: 0, scale: 1, transformOrigin: "960px 240px" });
   g.set("#endtext", { opacity: 0, y: 40 });
   g.set(".note", { opacity: 0, y: 40, rotation: -8, transformOrigin: "50% 50%" });
@@ -121,7 +108,8 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to("#snaplines", { scale: 1.25, opacity: 0, duration: 0.35, ease: "power3.out" }, 7.0)
     .to("#flash", { opacity: 0.18, duration: 0.05, ease: "none" }, 7.0)
     .to("#flash", { opacity: 0, duration: 0.25 }, 7.05)
-    .to("#o26-day", { clipPath: "circle(80% at 50% 52%)", duration: 1.9, ease: "power2.inOut" }, 7.35)
+    .to("#o26-day-disc", { scale: 1, duration: 1.9, ease: "power2.inOut" }, 7.35)
+    .to("#o26-tex-cream", { opacity: 1, duration: 1.0, ease: "power1.inOut" }, 8.3)
     .to("#shake", { x: 6, y: -4, duration: 0.04, ease: "none" }, 7.02)
     .to("#shake", { x: -6, y: 3, duration: 0.05, ease: "none" }, 7.06)
     .to("#shake", { x: 3, y: -2, duration: 0.05, ease: "none" }, 7.11)
@@ -131,11 +119,12 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to("#firevid", { scale: 1, duration: 0.7, ease: "power3.out" }, 7.45)
     .set("#logo", { opacity: 1 }, IGNITE)
     .to("#logo", { scale: 1, duration: 1.3, ease: "power2.out" }, IGNITE)
-    .to("#logo", { filter: GLOW_LOW, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: 5 }, 8.8)
+    .to("#logoglow", { opacity: 0.95, duration: 0.9, ease: "power1.out" }, 7.55)
+    .to("#logoglow", { opacity: 0.6, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: 5 }, 8.8)
     .to("#logo", { scale: 1.015, duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 3 }, 8.85)
     .to("#firevid", { opacity: 0, duration: 0.7, ease: "power1.inOut" }, 8.6);
   // 6. The boy steps out of frame; the flaming logo is left alone on the cream
-  tl.to("#logo", { filter: GLOW_OFF, duration: 0.9, ease: "power1.out" }, 10.2)
+  tl.to("#logoglow", { opacity: 0, duration: 0.9, ease: "power1.out" }, 10.2)
     .to("#boy", { opacity: 0, y: 220, duration: 1.1, ease: "power2.in" }, 9.9)
     .set("#boy", { visibility: "hidden" }, 11.0)
     .to("#o26-scrub", { autoAlpha: 0, duration: 0.4 }, 11.6);
@@ -169,7 +158,6 @@ export function StoryIntro() {
     const world = $<HTMLDivElement>("#o26-world");
     const vid = $<HTMLVideoElement>("#v-fire");
     const img = $<HTMLImageElement>("#i-fire");
-    const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
     const texNavy = $<HTMLDivElement>("#o26-tex-navy");
     const texCream = $<HTMLDivElement>("#o26-tex-cream");
@@ -195,7 +183,6 @@ export function StoryIntro() {
     let cur = 0;
     let last = 0;
     let fireOn = false;
-    let lastReveal = -1;
     let lastBgY = NaN;
     let raf = 0;
     const introStart = performance.now();
@@ -285,18 +272,10 @@ export function StoryIntro() {
       }
       fireOn = nowOn;
 
-      // The logo burns in from the bottom, following the playhead.
-      const reveal = revealAt(t);
-      if (reveal !== lastReveal) {
-        lastReveal = reveal;
-        const mask = burnMask(reveal);
-        logoArt.style.maskImage = mask;
-        logoArt.style.webkitMaskImage = mask;
-      }
+      // The logo burns in from the bottom, following the playhead (the flame canvas draws the front itself).
+      flameReveal.value = revealAt(t);
     };
 
-    // Jumps (anchor links, a #hash on load) skip the gates; scrolling back re-arms them.
-    // Opened (or reloaded) already below the story: nothing to wait for.
     layout(true);
     raf = requestAnimationFrame(loop);
 
@@ -312,6 +291,7 @@ export function StoryIntro() {
       <div id="o26-stage">
         <div id="o26-tex-navy" className="o26-tex o26-tex-navy" aria-hidden="true" />
         <div id="o26-day" aria-hidden="true">
+          <div id="o26-day-disc" />
           <div id="o26-tex-cream" className="o26-tex o26-tex-cream" />
         </div>
         <StoryScene />

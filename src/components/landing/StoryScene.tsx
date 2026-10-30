@@ -113,10 +113,12 @@ export function StoryScene() {
           {/* eslint-disable-next-line @next/next/no-img-element -- animated WebP, swapped in at runtime */}
           <img id="i-fire" alt="" src="/landing/fire.webp" />
         </div>
+        {/* The warm glow behind the burning logo: a gradient whose opacity is tweened (cheap), not a blurred filter. */}
+        <div id="logoglow" />
         <div id="logo">
-          {/* The burn-in mask from StoryIntro is applied to this wrapper every frame, so the canvas skips its own ignite. */}
+          {/* StoryIntro scrubs the burn-in front through flameReveal as you scroll. Drawn at 0.65 size to keep frames cheap. */}
           <div className="o26-logo-art">
-            <FlameLogo ignite={false} glow={false} />
+            <FlameLogo ignite={false} glow={false} externalReveal scale={0.65} />
           </div>
         </div>
       </div>

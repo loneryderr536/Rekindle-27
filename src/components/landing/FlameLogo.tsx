@@ -159,9 +159,26 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       if (reveal < 1) burnIn(ctx!, width, height, reveal);
     }
 
+    // Nothing to draw while the logo is faded out or hidden (the story hides the header logo and the big
+    // logo most of the time), so skip the work; a header-sized logo is also drawn at 30 fps at most.
+    let lastDraw = 0;
+    const hidden = () => {
+      let el: Element | null = shown;
+      for (let i = 0; i < 7 && el; i++, el = el.parentElement) {
+        const cs = getComputedStyle(el);
+        if (cs.visibility === "hidden" || cs.opacity === "0" || cs.display === "none") return true;
+      }
+      return false;
+    };
+
     function frame(now: number) {
       raf = 0;
       if (cancelled || !visible) return;
+      if ((small && now - lastDraw < 33) || hidden()) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
+      lastDraw = now;
       const t = (now - start) / 1000;
       const r = ignite ? Math.min(1, t / IGNITE_SECONDS) : 1;
       const reveal = r * r * (3 - 2 * r);

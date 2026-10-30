@@ -204,7 +204,8 @@ export function StoryIntro() {
     const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
     const hint = $<SVGGElement>("#holdhint");
-    const day = $<HTMLDivElement>("#o26-day");
+    const texNavy = $<HTMLDivElement>("#o26-tex-navy");
+    const texCream = $<HTMLDivElement>("#o26-tex-cream");
     const endK = $<SVGTextElement>("#o26-endtext-k");
     const endT = $<SVGTextElement>("#o26-endtext-t");
     const endU = $<SVGTextElement>("#o26-endtext-u");
@@ -268,11 +269,14 @@ export function StoryIntro() {
       const into = window.scrollY - section.offsetTop;
       const p = Math.min(1, Math.max(0, into / LEN));
       // The paper pattern travels with the scroll, exactly like the page beneath the pinned stage.
-      const bgY = -Math.round(Math.min(LEN, Math.max(0, into)));
+      // Moving whole tiles keeps the pattern seamless, so the layers only ever shift by less than one tile.
+      const tile = window.innerWidth <= 760 ? 540 : 760;
+      const bgY = -(Math.round(Math.min(LEN, Math.max(0, into))) % tile);
       if (bgY !== lastBgY) {
         lastBgY = bgY;
-        stage.style.backgroundPosition = `center ${bgY}px`;
-        day.style.backgroundPosition = `center ${bgY}px`;
+        const tf = `translate3d(0, ${bgY}px, 0)`;
+        texNavy.style.transform = tf;
+        texCream.style.transform = tf;
       }
       // The opening (presenters + title) plays on its own; scrolling then moves the playhead.
       const intro = Math.min(2.65, (now - introStart) / 1000);
@@ -282,10 +286,12 @@ export function StoryIntro() {
       else gates = stepGates(gates, cur, target, now);
       const limit = limitFor(gates);
       if (target > limit) {
-        // Hold the page where the gate is, so a flick cannot scroll the story out of view during the wait.
+        // Hold the page at the gate for the wait, so a flick cannot scroll the story out of view. The page is
+        // pinned once (wheel and touch are blocked) instead of being pulled back on every frame.
         target = limit;
-        const maxInto = scrollQ(limit) * 0.94 * LEN;
-        if (into > maxInto + 2) window.scrollTo({ top: section.offsetTop + maxInto, behavior: "instant" });
+        lock(section.offsetTop + scrollQ(limit) * 0.94 * LEN, gates.idx);
+      } else if (lockedIdx !== null && gates.idx !== lockedIdx) {
+        unlock();
       }
       const dt = Math.min(0.1, (now - (last || now)) / 1000);
       last = now;
@@ -336,6 +342,30 @@ export function StoryIntro() {
 
     // Jumps (anchor links, a #hash on load) skip the gates; scrolling back re-arms them.
     // Opened (or reloaded) already below the story: nothing to wait for.
+    let lockedIdx: number | null = null;
+    let pinY = 0;
+    const block = (e: Event) => {
+      if (e.cancelable) e.preventDefault();
+    };
+    const pin = () => {
+      if (Math.abs(window.scrollY - pinY) > 1) window.scrollTo({ top: pinY, behavior: "instant" });
+    };
+    const lock = (y: number, idx: number) => {
+      if (lockedIdx !== null) return;
+      lockedIdx = idx;
+      pinY = Math.round(y);
+      if (Math.abs(window.scrollY - pinY) > 1) window.scrollTo({ top: pinY, behavior: "instant" });
+      window.addEventListener("wheel", block, { passive: false });
+      window.addEventListener("touchmove", block, { passive: false });
+      window.addEventListener("scroll", pin, { passive: true });
+    };
+    const unlock = () => {
+      if (lockedIdx === null) return;
+      lockedIdx = null;
+      window.removeEventListener("wheel", block);
+      window.removeEventListener("touchmove", block);
+      window.removeEventListener("scroll", pin);
+    };
     let gates: GateState = { idx: window.scrollY - section.offsetTop > LEN * 0.94 ? GATES.length : 0, arrivedAt: null };
     let skipGatesUntil = 0;
     const allowJump = (e: Event) => {
@@ -352,6 +382,7 @@ export function StoryIntro() {
 
     return () => {
       cancelAnimationFrame(raf);
+      unlock();
       document.removeEventListener("click", allowJump, true);
       window.removeEventListener("hashchange", allowHashJump);
       vid.pause();
@@ -362,7 +393,10 @@ export function StoryIntro() {
   return (
     <section id="o26-story" ref={sectionRef} aria-label="ONE·26 Rekindle — the story">
       <div id="o26-stage">
-        <div id="o26-day" aria-hidden="true" />
+        <div id="o26-tex-navy" className="o26-tex o26-tex-navy" aria-hidden="true" />
+        <div id="o26-day" aria-hidden="true">
+          <div id="o26-tex-cream" className="o26-tex o26-tex-cream" />
+        </div>
         <StoryScene />
         <div id="o26-scrub" aria-hidden="true">
           <div id="o26-scrub-fill" />

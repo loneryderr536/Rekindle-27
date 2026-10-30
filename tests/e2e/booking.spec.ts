@@ -19,12 +19,16 @@ test("guest books 2 seats, pays, sees QR, gate scan green then red", async ({ br
   await expect(page.getByRole("dialog").getByText("asha.e2e@example.com")).toBeVisible();
   await confirmAndPay(page);
 
-  // Stubbed Checkout pays at once; the app verifies the signature and lands on the booking page.
-  await page.waitForURL(/\/booking\/(?!success)[^/]+$/, { timeout: 30_000 });
-  await expect(page.getByText("Confirmed", { exact: true })).toBeVisible({ timeout: 30_000 });
-  await expect(page.getByRole("img", { name: /^QR code for seat / })).toHaveCount(2);
-  const code = (await page.getByRole("heading", { level: 1 }).innerText()).replace("Booking", "").trim();
+  // Stubbed Checkout pays at once; the app verifies the signature, opens the booking page, and the signed-in owner lands on My bookings.
+  await page.waitForURL(/\/my-bookings\?new=[^&]+$/, { timeout: 30_000 });
+  const code = new URL(page.url()).searchParams.get("new")!;
   expect(code).not.toBe("");
+  const card = page.locator('li[aria-current="true"]');
+  await expect(card).toContainText(code);
+  await expect(card.getByText("Just booked")).toBeVisible();
+  await expect(card.getByText("Confirmed", { exact: true })).toBeVisible({ timeout: 30_000 });
+  await card.getByRole("link", { name: "View tickets" }).click();
+  await expect(page.getByRole("img", { name: /^QR code for seat / })).toHaveCount(2);
 
   // The tickets email is queued (the running app cannot reach a real mail provider; its content is covered by integration tests).
   const outbox = await query<{ kind: string }>(

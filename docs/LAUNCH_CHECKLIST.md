@@ -5,7 +5,8 @@ Work top to bottom. Tick each item only after you have checked it for real.
 ## 1. Hosting and database
 
 - [ ] Vercel project created, region set to `bom1` (Mumbai). Deploy from the main branch.
-- [ ] Managed Postgres 16 in Mumbai. Use the **pooled** connection URL as `DATABASE_URL`.
+- [ ] Managed Postgres 16 in Mumbai. Use the **pooled** connection URL as `DATABASE_URL`. With Supabase hosting, that is the pooled string (transaction mode, port **6543**).
+- [ ] Migrations run against the **direct** connection string (port **5432**), passed as `DATABASE_URL` for that command only. The Drizzle schema lives in `public`; Supabase's `auth` schema is not touched.
 - [ ] Daily backups and point-in-time recovery (PITR) are switched on.
 - [ ] Backups verified by a **test restore** into a scratch database; the data looked right.
 - [ ] Migrations applied to the production database: `DATABASE_URL=<prod> npm run db:migrate`.
@@ -23,9 +24,24 @@ Work top to bottom. Tick each item only after you have checked it for real.
 
 - [ ] All keys from the README table are set in Vercel.
 - [ ] `PAYMENT_GATEWAY` is **not** `fake` (best: unset).
+- [ ] **Never set `GUEST_AUTH` in production** (leave it unset, so it is `supabase`). `fake` skips real sign-in and is for browser tests only.
+- [ ] `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` are set in Vercel, from the **rekindle-prod** project (Project settings > API). Preview deployments use the **rekindle-dev** project's values.
 - [ ] `ALLOW_TEST_MODES` is **unset**.
 - [ ] `TURNSTILE_SECRET` is the real Cloudflare secret (not `test`), with the production site key in `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. The app refuses to run in production otherwise.
 - [ ] `CRON_SECRET` is a long random value; `SESSION_SECRET` is 32+ random characters; `APP_URL` is the final https domain.
+
+## 3a. Guest sign-in (Supabase)
+
+Two Supabase projects: **rekindle-dev** (localhost and Vercel previews) and **rekindle-prod**. Do every step in both.
+
+- [ ] **Auth > Providers > Email:** on; confirm email on.
+- [ ] **Auth > Email templates > Magic link / OTP:** the body uses `{{ .Token }}` (a 6-digit code), not a link, and carries the ONE·26 name.
+- [ ] **Auth > Settings:** email OTP expiry 600 s (10 minutes); OTP length 6.
+- [ ] **Auth > SMTP:** custom SMTP through Resend: host `smtp.resend.com`, port 465, user `resend`, password = a Resend API key, sender = `EMAIL_FROM`. The built-in sender allows only a few emails per hour.
+- [ ] **Auth > Providers > Google:** on, with a Google Cloud OAuth client (type web). Consent screen: app name ONE·26 Rekindle, scopes email and profile. Authorised redirect URI: `https://<project>.supabase.co/auth/v1/callback` (one per project).
+- [ ] **Auth > URL configuration:** site URL = `APP_URL`; redirect allow-list has `http://localhost:3000/auth/callback`, the Vercel preview pattern, and the production URL `/auth/callback`.
+- [ ] **Auth > Bot and abuse protection:** CAPTCHA on, provider Cloudflare Turnstile, with the existing Turnstile secret. The sign-in form passes the Turnstile token to Supabase.
+- [ ] A real sign-in on the production site works both ways (Google, and an emailed 6-digit code), and the booking then shows under `/my-bookings`.
 
 ## 4. Razorpay
 

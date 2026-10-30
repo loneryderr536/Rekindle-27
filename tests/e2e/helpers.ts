@@ -56,15 +56,21 @@ export async function stubRazorpay(context: BrowserContext, opts: { pay: boolean
   });
 }
 
-/** Step 1 on /register: fills in who is coming and how many, then goes on to the seat map. */
+/** Signs the page's context in as a guest through the fake sign-in (GUEST_AUTH=fake), so it carries the guest cookie. */
+export async function signInGuest(page: Page, email: string, name?: string): Promise<void> {
+  const res = await page.request.post("/api/dev/guest-sign-in", { data: { email, name } });
+  if (!res.ok()) throw new Error(`guest sign-in failed for ${email}: ${res.status()}`);
+}
+
+/** Step 1 on /register: signs in as the guest, fills in who is coming and how many, then goes on to the seat map. */
 export async function startBooking(
   page: Page,
   who: { name: string; email: string; phone: string },
   participants: number,
 ): Promise<void> {
+  await signInGuest(page, who.email, who.name);
   await page.goto("/register");
   await page.getByLabel("Full name").fill(who.name);
-  await page.getByLabel("Email").fill(who.email);
   await page.getByLabel("Mobile number").fill(who.phone);
   for (let i = 1; i < participants; i++) await page.getByRole("button", { name: "More participants" }).click();
   await page.getByRole("button", { name: /^Choose / }).click();

@@ -33,6 +33,7 @@ export default defineConfig({
       TURNSTILE_SECRET: "test",
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "test",
       ALLOW_TEST_MODES: "1",
+      GUEST_AUTH: "fake",
     },
   },
 });

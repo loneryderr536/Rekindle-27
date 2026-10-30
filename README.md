@@ -24,6 +24,8 @@ npm run dev
 
 Open http://localhost:3000 for the landing page, http://localhost:3000/lineup and http://localhost:3000/dates for the line-up and key dates, http://localhost:3000/register for seat booking, and http://localhost:3000/admin/login for the admin area. Guests who lost their email can get their tickets back at http://localhost:3000/booking/find. To cancel a paid booking, open it in Admin > Bookings and use **Cancel & refund** (frees the seats, voids the QR codes, refunds in full); complimentary bookings have **Cancel comp** instead (no refund, the guest is emailed). Full refunds made in the Razorpay dashboard cancel the booking too, via the webhook or, if that is lost, the reconcile job.
 
+Guests sign in before they book: with a Google account, or with an email address and a 6-digit code (Supabase Auth). Booking needs a session, so the Supabase keys in the table below must be set; the dashboard setup is in `docs/LAUNCH_CHECKLIST.md`. Signed-in guests see all their bookings at http://localhost:3000/my-bookings (tickets, resend, finish paying) and sign in at http://localhost:3000/sign-in. Browser tests skip Supabase with `GUEST_AUTH=fake`.
+
 Notes:
 
 - With the Docker database, `DATABASE_URL` is `postgres://postgres:postgres@127.0.0.1:5434/booking`. It uses port 5434, not 5432, so it does not clash with a Postgres installed directly on the machine (which usually takes 5432).

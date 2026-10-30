@@ -7,6 +7,8 @@ import { LINKS } from "@/components/landing/links";
 import { getGuest } from "@/server/guestAuth/getGuest";
 
 export const metadata: Metadata = { title: "Register" };
+// Reads the guest session cookie; without this the page is prerendered at build as "signed out".
+export const dynamic = "force-dynamic";
 
 const row = { display: "flex", gap: 12, alignItems: "center" } as const;
 

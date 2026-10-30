@@ -44,6 +44,11 @@ export function parseAttendee(raw: string | null | undefined): Attendee | null {
   }
 }
 
+/** True when the stored details were entered under a different email than the signed-in guest's. */
+export function isForeignAttendee(a: Attendee | null, email: string): boolean {
+  return a !== null && a.email.trim().toLowerCase() !== email.trim().toLowerCase();
+}
+
 const noopSubscribe = () => () => {};
 
 /** For useSyncExternalStore: the stored attendee never changes underneath a mounted page. */

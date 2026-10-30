@@ -1,8 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { attendeeStore, parseAttendee, saveAttendee, type Attendee } from "@/lib/attendee";
+import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
+import { clearHoldToken } from "@/lib/activeHold";
+import { attendeeStore, clearAttendee, isForeignAttendee, parseAttendee, saveAttendee, type Attendee } from "@/lib/attendee";
 import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
 import { guestSignOut } from "@/lib/guestSignOut";
 import { normalizeIndianPhone } from "@/lib/phone";
@@ -14,8 +15,17 @@ export function AttendeeForm({ email, suggestedName }: { email: string; suggeste
     attendeeStore.getSnapshot,
     attendeeStore.getServerSnapshot,
   );
+  const stored = parseAttendee(raw);
+  // Details (and a hold) left by another account in this tab must not carry over to this one.
+  const foreign = isForeignAttendee(stored, email);
+  useEffect(() => {
+    if (foreign) {
+      clearAttendee();
+      clearHoldToken();
+    }
+  }, [foreign]);
   // Remount once the stored details are read, so "Edit details" comes back with the form filled in.
-  return <DetailsForm key={raw ?? "new"} initial={parseAttendee(raw)} email={email} suggestedName={suggestedName} />;
+  return <DetailsForm key={raw ?? "new"} initial={foreign ? null : stored} email={email} suggestedName={suggestedName} />;
 }
 
 function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | null; email: string; suggestedName: string | null }) {

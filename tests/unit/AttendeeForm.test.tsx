@@ -10,6 +10,7 @@ const guestSignOut = vi.fn();
 vi.mock("@/lib/guestSignOut", () => ({ guestSignOut: () => guestSignOut() }));
 
 import { AttendeeForm } from "@/components/AttendeeForm";
+import { readHoldToken, saveHoldToken } from "@/lib/activeHold";
 
 beforeEach(() => {
   sessionStorage.clear();
@@ -31,11 +32,30 @@ test("name is prefilled with the suggested name when nothing is stored", () => {
 });
 
 test("submit saves the attendee with the session email", async () => {
-  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old", email: "old@example.com", phone: "9876543210", participants: 2 }));
+  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old", email: "asha@example.com", phone: "9876543210", participants: 2 }));
   render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
   await userEvent.click(screen.getByRole("button", { name: /^Choose/ }));
   expect(push).toHaveBeenCalledWith("/register/seats");
   expect(JSON.parse(sessionStorage.getItem("attendee")!)).toMatchObject({ name: "Old", email: "asha@example.com", participants: 2 });
+});
+
+test("details stored under another account's email are cleared with the hold token and not prefilled", async () => {
+  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old Person", email: "old@example.com", phone: "9876543210", participants: 3 }));
+  saveHoldToken("hold-from-old-account");
+  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
+  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Asha Rao");
+  expect((screen.getByLabelText(/^Mobile number/) as HTMLInputElement).value).toBe("");
+  await waitFor(() => expect(sessionStorage.getItem("attendee")).toBeNull());
+  expect(readHoldToken()).toBeNull();
+});
+
+test("details stored under the same email (any case) are kept", () => {
+  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old", email: "Asha@Example.com ", phone: "9876543210", participants: 2 }));
+  saveHoldToken("hold-1");
+  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
+  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Old");
+  expect(sessionStorage.getItem("attendee")).not.toBeNull();
+  expect(readHoldToken()).toBe("hold-1");
 });
 
 test("Switch account signs out then refreshes", async () => {

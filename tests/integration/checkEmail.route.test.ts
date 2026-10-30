@@ -56,8 +56,8 @@ test("missing email is a 400", async () => {
   expect(res.status).toBe(400);
 });
 
-test("21st call from one IP is 429 with Retry-After", async () => {
-  for (let i = 0; i < 20; i++) expect((await call({ email: "a@example.com" })).status).toBe(200);
+test("61st call from one IP is 429 with Retry-After", async () => {
+  for (let i = 0; i < 60; i++) expect((await call({ email: "a@example.com" })).status).toBe(200);
   const res = await call({ email: "a@example.com" });
   expect(res.status).toBe(429);
   expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);

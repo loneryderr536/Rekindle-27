@@ -5,7 +5,8 @@ import { checkEmail } from "@/server/guestAuth/checkEmail";
 import { clientIp } from "@/server/security/clientIp";
 import { rateLimit } from "@/server/security/rateLimit";
 
-const LIMIT = 20;
+// Generous: Turnstile stops bots, and many guests can share one IP (offices, colleges, mobile carriers).
+const LIMIT = 60;
 const WINDOW_SECONDS = 600;
 
 const Input = z.object({ email: z.string().max(320), ignoreTypo: z.boolean().optional() });

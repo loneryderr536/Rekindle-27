@@ -171,12 +171,6 @@ export function StoryScene() {
             </g>
           ))}
         </g>
-        <g id="holdhint" opacity="0" style={{ transition: "opacity 0.4s" }}>
-          <text x="960" y="140" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="22" fill="#0B1020" letterSpacing="6" opacity="0.8">
-            KEEP SCROLLING
-          </text>
-          <path d="M940 162 L960 182 L980 162" stroke="#FF4520" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </g>
         <g id="endtext" opacity="0">
           <text id="o26-endtext-k" x="960" y="470" textAnchor="middle" className="o26-ff-poppins" fontWeight="600" fontSize="24" fill="#FF4520" letterSpacing="10">
             REKINDLE · 26 JANUARY 2027

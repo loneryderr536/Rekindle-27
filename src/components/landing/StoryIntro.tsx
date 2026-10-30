@@ -5,19 +5,14 @@ import { useEffect, useRef } from "react";
 import { StoryScene } from "@/components/landing/StoryScene";
 
 /** px of scrolling that plays the story. */
-const LEN = 5000;
+const LEN = 6500;
 /**
  * How much scroll each part of the story gets: [from, to, weight] in story seconds.
- * The boy, the push-in and the snap get extra room so they are never skipped past.
+ * The boy, the push-in, the snap and the burning logo get extra room so they are never skipped past:
+ * the story never waits for anything, scrolling alone plays it.
  */
-const SEG: [number, number, number][] = [[2.7, 4.15, 1.4], [4.15, 6.9, 1.3], [6.9, 7.7, 3.2], [7.7, 10.0, 1.1], [10.0, 11.6, 1.4], [11.6, 14.6, 0.8]];
+const SEG: [number, number, number][] = [[2.7, 4.15, 1.4], [4.15, 6.9, 1.3], [6.9, 7.7, 3.2], [7.7, 10.0, 1.3], [10.0, 11.6, 2.2], [11.6, 14.6, 1.0]];
 const SEGTOT = SEG.reduce((sum, [a, b, w]) => sum + (b - a) * w, 0);
-/**
- * Story times where the story waits GATE_WAIT_MS: on the burning Rekindle logo (the boy has gone), and once the logo has
- * landed in the header with the closing line. A hard flick cannot carry past a gate; the wait runs from arrival.
- */
-export const GATES = [11.0, 13.9];
-export const GATE_WAIT_MS = 3000;
 /** Story time reached at the end of the scroll. */
 const END = 14.6;
 const IGNITE = 7.55;
@@ -47,33 +42,6 @@ export function scrollQ(t: number): number {
     used += (b - a) * w;
   }
   return 1;
-}
-
-export type GateState = { idx: number; arrivedAt: number | null };
-
-/** Advances the gates one frame: `cur` is the story time on screen, `target` where the scroll wants it, `now` in ms. */
-export function stepGates(st: GateState, cur: number, target: number, now: number): GateState {
-  let { idx, arrivedAt } = st;
-  // Scrolling back to before a gate puts it back in force.
-  const ahead = GATES.findIndex((g) => g > target + 0.3);
-  const rearm = ahead < 0 ? GATES.length : ahead;
-  if (idx > rearm) {
-    idx = rearm;
-    arrivedAt = null;
-  }
-  if (idx < GATES.length && cur >= GATES[idx] - 0.005) {
-    arrivedAt ??= now;
-    if (now - arrivedAt >= GATE_WAIT_MS) {
-      idx++;
-      arrivedAt = null;
-    }
-  }
-  return { idx, arrivedAt };
-}
-
-/** The furthest story time the story may reach while the gates are in force. */
-export function limitFor(st: GateState): number {
-  return st.idx < GATES.length ? GATES[st.idx] : Infinity;
 }
 
 /** Height of the logo's burn-in front (0 = not lit, 1 = fully alight), eased like the flame canvas. */
@@ -203,7 +171,6 @@ export function StoryIntro() {
     const img = $<HTMLImageElement>("#i-fire");
     const logoArt = $<HTMLDivElement>("#logo .o26-logo-art");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
-    const hint = $<SVGGElement>("#holdhint");
     const texNavy = $<HTMLDivElement>("#o26-tex-navy");
     const texCream = $<HTMLDivElement>("#o26-tex-cream");
     const endK = $<SVGTextElement>("#o26-endtext-k");
@@ -281,18 +248,7 @@ export function StoryIntro() {
       // The opening (presenters + title) plays on its own; scrolling then moves the playhead.
       const intro = Math.min(2.65, (now - introStart) / 1000);
       const scrollT = p > 0.0005 ? storyAt(Math.min(1, p / 0.94)) : 0;
-      let target = Math.max(intro, scrollT);
-      if (reduce || now < skipGatesUntil) gates = { idx: GATES.length, arrivedAt: null };
-      else gates = stepGates(gates, cur, target, now);
-      const limit = limitFor(gates);
-      if (target > limit) {
-        // Hold the page at the gate for the wait, so a flick cannot scroll the story out of view. The page is
-        // pinned once (wheel and touch are blocked) instead of being pulled back on every frame.
-        target = limit;
-        lock(section.offsetTop + scrollQ(limit) * 0.94 * LEN, gates.idx);
-      } else if (lockedIdx !== null && gates.idx !== lockedIdx) {
-        unlock();
-      }
+      const target = Math.max(intro, scrollT);
       const dt = Math.min(0.1, (now - (last || now)) / 1000);
       last = now;
       if (reduce || into > LEN + stage.clientHeight) cur = target;
@@ -306,7 +262,6 @@ export function StoryIntro() {
       }
       const t = cur;
       if (tl && Math.abs(tl.time() - t) > 0.0004) tl.time(t);
-      hint.style.opacity = gates.idx === 1 && Math.abs(t - GATES[0]) < 0.05 ? "1" : "0";
       fill.style.width = `${(Math.min(1, t / END) * 100).toFixed(2)}%`;
       if (into > LEN + stage.clientHeight) return; // story is off screen
 
@@ -342,49 +297,11 @@ export function StoryIntro() {
 
     // Jumps (anchor links, a #hash on load) skip the gates; scrolling back re-arms them.
     // Opened (or reloaded) already below the story: nothing to wait for.
-    let lockedIdx: number | null = null;
-    let pinY = 0;
-    const block = (e: Event) => {
-      if (e.cancelable) e.preventDefault();
-    };
-    const pin = () => {
-      if (Math.abs(window.scrollY - pinY) > 1) window.scrollTo({ top: pinY, behavior: "instant" });
-    };
-    const lock = (y: number, idx: number) => {
-      if (lockedIdx !== null) return;
-      lockedIdx = idx;
-      pinY = Math.round(y);
-      if (Math.abs(window.scrollY - pinY) > 1) window.scrollTo({ top: pinY, behavior: "instant" });
-      window.addEventListener("wheel", block, { passive: false });
-      window.addEventListener("touchmove", block, { passive: false });
-      window.addEventListener("scroll", pin, { passive: true });
-    };
-    const unlock = () => {
-      if (lockedIdx === null) return;
-      lockedIdx = null;
-      window.removeEventListener("wheel", block);
-      window.removeEventListener("touchmove", block);
-      window.removeEventListener("scroll", pin);
-    };
-    let gates: GateState = { idx: window.scrollY - section.offsetTop > LEN * 0.94 ? GATES.length : 0, arrivedAt: null };
-    let skipGatesUntil = 0;
-    const allowJump = (e: Event) => {
-      if ((e.target as Element | null)?.closest?.('a[href*="#"]')) skipGatesUntil = performance.now() + 3000;
-    };
-    const allowHashJump = () => {
-      skipGatesUntil = performance.now() + 3000;
-    };
-    document.addEventListener("click", allowJump, true);
-    window.addEventListener("hashchange", allowHashJump);
-
     layout(true);
     raf = requestAnimationFrame(loop);
 
     return () => {
       cancelAnimationFrame(raf);
-      unlock();
-      document.removeEventListener("click", allowJump, true);
-      window.removeEventListener("hashchange", allowHashJump);
       vid.pause();
       ctx.revert();
     };

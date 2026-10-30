@@ -198,7 +198,7 @@ html:has(#o26-root) body {
 /* Scroll story --------------------------------------------------------------- */
 #o26-story {
   position: relative;
-  height: calc(min(100svh, 1200px) + 5000px);
+  height: calc(min(100svh, 1200px) + 6500px);
   background: #fdfbf4 url("/landing/tex-cream.webp") repeat center top / 760px 760px;
 }
 #o26-stage {

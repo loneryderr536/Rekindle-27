@@ -4,6 +4,7 @@ import type { Booking } from "@/db/schema";
 import { AppError } from "@/lib/errors";
 import { normalizeIndianPhone } from "@/lib/phone";
 import { logAudit } from "./audit";
+import type { Tx } from "@/server/tickets/tokens";
 import type { BookingSummary } from "./dashboard";
 
 function escapeLike(q: string): string {
@@ -68,17 +69,26 @@ export async function getBookingDetail(id: string): Promise<AdminBookingDetail |
   };
 }
 
+/**
+ * Inside `tx`: locks the booking (FOR SHARE), enforces the paid/comp rule (409 NOT_RESENDABLE)
+ * and queues a fresh tickets email. Shared by the admin and guest resend paths.
+ */
+export async function queueTicketsEmail(tx: Tx, bookingId: string): Promise<{ publicCode: string }> {
+  const { rows } = await tx.execute<{ public_code: string; status: Booking["status"] }>(sql`
+    SELECT public_code, status FROM bookings WHERE id = ${bookingId} FOR SHARE`);
+  const b = rows[0];
+  if (!b) throw new AppError("NOT_FOUND", "Booking not found", 404);
+  if (b.status !== "paid" && b.status !== "comp") {
+    throw new AppError("NOT_RESENDABLE", "Tickets can only be resent for confirmed bookings", 409);
+  }
+  await tx.execute(sql`INSERT INTO email_outbox (booking_id, kind) VALUES (${bookingId}, 'tickets')`);
+  return { publicCode: b.public_code };
+}
+
 /** Queues a fresh tickets email for a paid/comp booking and audits it, atomically. */
 export async function resendTickets(bookingId: string, adminUserId: string): Promise<void> {
   await db.transaction(async (tx) => {
-    const { rows } = await tx.execute<{ public_code: string; status: Booking["status"] }>(sql`
-      SELECT public_code, status FROM bookings WHERE id = ${bookingId} FOR SHARE`);
-    const b = rows[0];
-    if (!b) throw new AppError("NOT_FOUND", "Booking not found", 404);
-    if (b.status !== "paid" && b.status !== "comp") {
-      throw new AppError("NOT_RESENDABLE", "Tickets can only be resent for confirmed bookings", 409);
-    }
-    await tx.execute(sql`INSERT INTO email_outbox (booking_id, kind) VALUES (${bookingId}, 'tickets')`);
-    await logAudit(adminUserId, "resend_tickets", { bookingId, publicCode: b.public_code }, tx);
+    const { publicCode } = await queueTicketsEmail(tx, bookingId);
+    await logAudit(adminUserId, "resend_tickets", { bookingId, publicCode }, tx);
   });
 }

@@ -9,7 +9,7 @@ import type { EmailCheck } from "@/server/guestAuth/checkEmail";
 export type GuestAuthClient = {
   sendCode(email: string, captchaToken: string): Promise<{ error: string | null }>;
   verifyCode(email: string, code: string): Promise<{ error: string | null }>;
-  google(next: string): Promise<void>;
+  google(next: string): Promise<{ error: string | null }>;
 };
 
 export type CheckEmailFn = (email: string, opts?: { ignoreTypo?: boolean }) => Promise<EmailCheck>;
@@ -25,6 +25,7 @@ const COPY = {
   noMailServer: "That email domain can't receive mail. Check the spelling.",
   disposable: "Please use your own email, not a temporary one.",
   format: "Enter a valid email address.",
+  google: "Google sign-in didn't finish. Try again or use an email code.",
   captcha: "The security check didn't load. Refresh the page and try again.",
 };
 
@@ -64,10 +65,11 @@ const defaultClient: GuestAuthClient = {
     return { error: error?.message ?? null };
   },
   async google(next) {
-    await createSupabaseBrowser().auth.signInWithOAuth({
+    const { error } = await createSupabaseBrowser().auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
     });
+    return { error: error?.message ?? null };
   },
 };
 
@@ -171,13 +173,14 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
       const { error: verifyError } = await client.verifyCode(sentTo, code.trim());
       if (verifyError) {
         setError(COPY.wrongCode);
+        setBusy(false);
         return;
       }
+      // Stay busy on success so a second submit cannot run while the navigation happens.
       router.replace(next);
       router.refresh();
     } catch {
       setError(COPY.trouble);
-    } finally {
       setBusy(false);
     }
   }
@@ -197,9 +200,10 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
   async function onGoogle() {
     setError(null);
     try {
-      await client.google(next);
+      const { error: googleError } = await client.google(next);
+      if (googleError) setError(COPY.google);
     } catch {
-      setError(COPY.trouble);
+      setError(COPY.google);
     }
   }
 
@@ -211,8 +215,12 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
       <p className="m-0 text-center text-sm text-muted" aria-hidden="true">or</p>
 
       {/* One widget for both steps (hidden on the code step) so Send again can fetch a fresh token. */}
-      {!testMode && <div ref={widgetEl} hidden={step !== "email"} className="min-h-[65px]" />}
-      {widgetError && step === "email" && <p className="text-sm text-danger">{COPY.captcha}</p>}
+      {!testMode && <div ref={widgetEl} data-testid="turnstile-widget" hidden={step === "code" && !!token} className="min-h-[65px]" />}
+      {widgetError && (
+        <p role="alert" className="text-sm text-danger">
+          {COPY.captcha}
+        </p>
+      )}
 
       {step === "email" ? (
         <form onSubmit={onEmailSubmit} className="space-y-5">
@@ -243,7 +251,7 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
               >
                 Did you mean {typo}?
               </button>
-              <button type="button" className="btn-ghost w-full" disabled={busy} onClick={() => void checkAndSend(email, true)}>
+              <button type="button" className="btn-ghost w-full" disabled={busy || (!testMode && !token)} onClick={() => void checkAndSend(email, true)}>
                 Use {email.trim().toLowerCase()} anyway
               </button>
             </div>

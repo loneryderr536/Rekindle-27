@@ -5,6 +5,9 @@ import { beforeEach, expect, test, vi } from "vitest";
 import { GuestSignIn, type GuestAuthClient } from "@/components/GuestSignIn";
 import type { EmailCheck } from "@/server/guestAuth/checkEmail";
 
+const turnstile = vi.hoisted(() => ({ render: vi.fn(), reset: vi.fn(), remove: vi.fn() }));
+vi.mock("@/lib/turnstile", () => ({ loadTurnstile: () => Promise.resolve(turnstile) }));
+
 const replace = vi.fn();
 const refresh = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ replace, refresh }) }));
@@ -19,7 +22,7 @@ function fakeClient(over: Partial<GuestAuthClient> = {}): GuestAuthClient {
   return {
     sendCode: vi.fn().mockResolvedValue({ error: null }),
     verifyCode: vi.fn().mockResolvedValue({ error: null }),
-    google: vi.fn().mockResolvedValue(undefined),
+    google: vi.fn().mockResolvedValue({ error: null }),
     ...over,
   };
 }
@@ -89,6 +92,7 @@ test("a wrong code shows the retry copy; a right code replaces to next and refre
   await user.click(screen.getByRole("button", { name: "Verify and continue" }));
   await waitFor(() => expect(replace).toHaveBeenCalledWith("/register"));
   expect(refresh).toHaveBeenCalled();
+  expect((screen.getByRole("button", { name: "Verify and continue" }) as HTMLButtonElement).disabled).toBe(true);
 });
 
 test("Send again is disabled with a countdown right after sending", async () => {
@@ -98,4 +102,32 @@ test("Send again is disabled with a countdown right after sending", async () => 
   await user.click(screen.getByRole("button", { name: "Email me a code" }));
   const again = (await screen.findByRole("button", { name: "Send again in 60s" })) as HTMLButtonElement;
   expect(again.disabled).toBe(true);
+});
+
+test("a Google error shows the Google copy", async () => {
+  const client = fakeClient({ google: vi.fn().mockResolvedValue({ error: "oauth failed" }) });
+  const user = userEvent.setup();
+  render(<GuestSignIn next="/register" client={client} checkEmail={async (e) => ok(e)} />);
+  await user.click(screen.getByRole("button", { name: "Continue with Google" }));
+  expect(await screen.findByText("Google sign-in didn't finish. Try again or use an email code.")).toBeTruthy();
+});
+
+test("on the code step with no captcha token the widget is visible so Send again can be unlocked", async () => {
+  vi.stubEnv("NEXT_PUBLIC_TURNSTILE_SITE_KEY", "site-key");
+  turnstile.render.mockReset();
+  window.turnstile = turnstile;
+  turnstile.render.mockImplementation((_el: HTMLElement, opts: { callback: (t: string) => void }) => {
+    opts.callback("tok-1");
+    return "w1";
+  });
+  const user = userEvent.setup();
+  render(<GuestSignIn next="/register" client={fakeClient()} checkEmail={async (e) => ok(e)} />);
+  await user.type(emailInput(), "asha@example.com");
+  await waitFor(() =>
+    expect((screen.getByRole("button", { name: "Email me a code" }) as HTMLButtonElement).disabled).toBe(false),
+  );
+  await user.click(screen.getByRole("button", { name: "Email me a code" }));
+  await screen.findByLabelText("6-digit code");
+  expect(turnstile.reset).toHaveBeenCalled();
+  expect(screen.getByTestId("turnstile-widget").hidden).toBe(false);
 });

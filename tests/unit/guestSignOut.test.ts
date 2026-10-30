@@ -18,3 +18,14 @@ test("sign-out clears the attendee and the hold token so the next account does n
   expect(readAttendeeRaw()).toBeNull();
   expect(readHoldToken()).toBeNull();
 });
+
+test("a failed sign-out rejects but still clears the local data", async () => {
+  saveAttendee({ name: "Asha", email: "asha@example.com", phone: "9999999999", participants: 2 });
+  saveHoldToken("hold-token-1");
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(null, { status: 403 })));
+
+  await expect(guestSignOut()).rejects.toThrow();
+
+  expect(readAttendeeRaw()).toBeNull();
+  expect(readHoldToken()).toBeNull();
+});

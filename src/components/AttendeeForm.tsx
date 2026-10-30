@@ -4,24 +4,36 @@ import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore, type FormEvent } from "react";
 import { attendeeStore, parseAttendee, saveAttendee, type Attendee } from "@/lib/attendee";
 import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
+import { guestSignOut } from "@/lib/guestSignOut";
 import { normalizeIndianPhone } from "@/lib/phone";
 
 /** Step 1 of registration: who is coming and how many seats they need. */
-export function AttendeeForm() {
+export function AttendeeForm({ email, suggestedName }: { email: string; suggestedName: string | null }) {
   const raw = useSyncExternalStore<string | null | undefined>(
     attendeeStore.subscribe,
     attendeeStore.getSnapshot,
     attendeeStore.getServerSnapshot,
   );
   // Remount once the stored details are read, so "Edit details" comes back with the form filled in.
-  return <DetailsForm key={raw ?? "new"} initial={parseAttendee(raw)} />;
+  return <DetailsForm key={raw ?? "new"} initial={parseAttendee(raw)} email={email} suggestedName={suggestedName} />;
 }
 
-function DetailsForm({ initial }: { initial: Attendee | null }) {
+function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | null; email: string; suggestedName: string | null }) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initial?.participants ?? 1);
   const [phoneError, setPhoneError] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [switchError, setSwitchError] = useState(false);
+
+  async function switchAccount() {
+    setSwitchError(false);
+    try {
+      await guestSignOut();
+      router.refresh();
+    } catch {
+      setSwitchError(true);
+    }
+  }
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -35,7 +47,7 @@ function DetailsForm({ initial }: { initial: Attendee | null }) {
     setBusy(true);
     saveAttendee({
       name: String(data.get("name") ?? "").trim(),
-      email: String(data.get("email") ?? "").trim(),
+      email,
       phone,
       participants,
     });
@@ -48,13 +60,17 @@ function DetailsForm({ initial }: { initial: Attendee | null }) {
     <form onSubmit={submit} className="flex flex-col gap-5">
       <label className="field">
         <span>Full name</span>
-        <input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={initial?.name} />
+        <input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={initial?.name ?? suggestedName ?? ""} />
       </label>
       <label className="field">
         <span>Email</span>
-        <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={initial?.email} />
+        <input name="email" type="email" readOnly value={email} autoComplete="email" inputMode="email" />
         <small>Your tickets are sent here.</small>
       </label>
+      <div className="-mt-3 text-sm">
+        <button type="button" className="underline" onClick={switchAccount}>Not you? Switch account</button>
+        {switchError && <p role="alert" className="m-0 mt-1 font-medium text-danger">Couldn&apos;t switch account. Try again.</p>}
+      </div>
       <label className="field">
         <span>Mobile number</span>
         <input

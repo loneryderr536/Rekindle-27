@@ -33,7 +33,7 @@ type Hold = {
 const EXPIRED_MESSAGE = "Your hold expired — pick your seats again";
 
 type ApiError = { code: string; message: string; details?: { seatIds?: string[] } };
-type Notice = { tone: "error" | "info"; text: string };
+type Notice = { tone: "error" | "info"; text: string; signIn?: boolean };
 
 type SeatsData = { seats: SeatView[]; tiers: TierView[]; dateHeader: string | null };
 
@@ -278,7 +278,7 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
     const body = (await res.json().catch(() => ({}))) as Partial<Hold> & { error?: ApiError };
     if (!res.ok || !body.razorpayOrderId) {
       const err = body.error ?? { code: "internal_error", message: "" };
-      setNotice({ tone: "error", text: holdErrorMessage(err.code, err.message) });
+      setNotice({ tone: "error", text: holdErrorMessage(err.code, err.message), signIn: err.code === "SIGN_IN_REQUIRED" });
       if (err.code === "SEATS_TAKEN" || err.code === "INVALID_SEATS") {
         const taken = new Set(err.details?.seatIds ?? (err.code === "INVALID_SEATS" ? selected : []));
         setSelected((cur) => cur.filter((id) => !taken.has(id)));
@@ -365,6 +365,7 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
           {notice && (
             <p role="alert" className={`mb-2 text-sm font-medium ${notice.tone === "error" ? "text-[#FFB4A8]" : "text-[#FDFBF4]"}`}>
               {notice.text}
+              {notice.signIn && <> <Link href="/register" className="underline">Sign in</Link></>}
             </p>
           )}
           {hold && remaining !== null ? (
@@ -420,7 +421,7 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
           onKeyDown={(e) => e.key === "Escape" && setCheckoutOpen(false)}>
           <div className="sheet max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-paper p-6 sm:rounded-[28px]">
             <h2 id="checkout-title" className="font-display m-0 mb-4 text-3xl font-semibold">Confirm &amp; pay</h2>
-            {notice?.tone === "error" && <p role="alert" className="mb-3 text-sm font-medium text-danger">{notice.text}</p>}
+            {notice?.tone === "error" && <p role="alert" className="mb-3 text-sm font-medium text-danger">{notice.text}{notice.signIn && <> <Link href="/register" className="underline">Sign in</Link></>}</p>}
             <CheckoutForm selected={selectedSeats} tiers={tiers} attendee={attendee} onSubmit={submitDetails} onCancel={() => setCheckoutOpen(false)} />
           </div>
         </div>

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AttendeeForm } from "@/components/AttendeeForm";
 import { BrandPage, RegisterSteps } from "@/components/landing/BrandPage";
+import { GuestSignIn } from "@/components/GuestSignIn";
 import { LINKS } from "@/components/landing/links";
+import { getGuest } from "@/server/guestAuth/getGuest";
 
 export const metadata: Metadata = { title: "Register" };
 
@@ -16,7 +18,8 @@ function Icon({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  const guest = await getGuest();
   return (
     <BrandPage current="register">
       <section className="o26-navy" style={{ position: "relative", borderRadius: "0 0 48px 48px", padding: "clamp(36px, 5vw, 64px) 0 clamp(120px, 14vw, 180px)" }}>
@@ -54,8 +57,8 @@ export default function RegisterPage() {
             </div>
           </div>
           <section className="o26-reg-form" aria-labelledby="details-h">
-            <h2 id="details-h" className="font-display m-0 mb-5 text-3xl font-semibold">Your details</h2>
-            <AttendeeForm />
+            <h2 id="details-h" className="font-display m-0 mb-5 text-3xl font-semibold">{guest ? "Your details" : "Sign in to book"}</h2>
+            {guest ? <AttendeeForm email={guest.email} suggestedName={guest.name} /> : <GuestSignIn next="/register" />}
             <p className="mb-0 mt-5 text-center">
               <Link href={LINKS.findBooking} className="text-sm font-semibold underline">Already booked? Find your tickets</Link>
             </p>

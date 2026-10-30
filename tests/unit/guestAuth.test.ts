@@ -40,6 +40,11 @@ describe("fake guest cookie", () => {
     expect(readFakeGuest(signFakeGuest(g))).toEqual(g);
   });
 
+  test("normalises the email when signing", () => {
+    const signed = signFakeGuest({ ...g, email: " Asha@Example.COM " });
+    expect(readFakeGuest(signed)?.email).toBe("asha@example.com");
+  });
+
   test("rejects tampered payload, tampered signature and undefined", () => {
     const [payload, sig] = signFakeGuest(g).split(".");
     const forged = Buffer.from(JSON.stringify({ ...g, email: "x@evil.com" })).toString("base64url");

@@ -11,7 +11,7 @@ function sign(payload: string): Buffer {
 
 /** `base64url(JSON) + "." + base64url(HMAC-SHA256(SESSION_SECRET))`. */
 export function signFakeGuest(g: Guest): string {
-  const payload = Buffer.from(JSON.stringify(g)).toString("base64url");
+  const payload = Buffer.from(JSON.stringify({ ...g, email: g.email.trim().toLowerCase() })).toString("base64url");
   return `${payload}.${sign(payload).toString("base64url")}`;
 }
 

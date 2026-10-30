@@ -64,6 +64,8 @@ Set these in `.env.local` for development and in the hosting dashboard for produ
 | `CRON_SECRET` | Any long random string. Cron calls must send it (Vercel sends it automatically). |
 | `SESSION_SECRET` | Any random string of 32+ characters. |
 | `APP_URL` | Public base URL, e.g. `https://tickets.yourdomain.com`. Used in emails and the Origin check. |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase dashboard > Project settings > API (project URL and publishable key). |
+| `GUEST_AUTH` | Optional. `supabase` (default) or `fake`. `fake` is for browser tests only. |
 | `PAYMENT_GATEWAY` | Optional. `razorpay` (default) or `fake`. `fake` is for browser tests only. |
 | `LOAD_TEST_DISABLE_RATE_LIMIT` | Optional. `1` turns off the per-IP hold limits for a staging load run; only honoured together with `ALLOW_TEST_MODES=1`, never on Vercel. Remove afterwards. |
 | `ALLOW_TEST_MODES` | Optional. `1` lets a production-mode server accept `PAYMENT_GATEWAY=fake` and `TURNSTILE_SECRET=test`. Browser tests only. Must be unset in production; ignored when `VERCEL` is set. |
@@ -87,6 +89,8 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY=test
 CRON_SECRET=test_cron
 SESSION_SECRET=test_session_secret_at_least_32_chars_long
 APP_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_test
 ```
 
 Then `docker compose up -d db-test` and `npm test`. `tests/integration/e2e.flow.test.ts` walks the whole journey without a browser (seat map, hold, payment, email with QR codes, gate scan green then red, plus a two-guest race) and finishes by asserting that no seat is double-booked.

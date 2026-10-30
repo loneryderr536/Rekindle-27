@@ -14,6 +14,8 @@ const fullEnvFixture = {
   CRON_SECRET: "test_cron",
   SESSION_SECRET: "test_session_secret_at_least_32_chars_long",
   APP_URL: "http://localhost:3000",
+  NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co",
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
 };
 
 describe("parseEnv", () => {
@@ -27,6 +29,28 @@ describe("parseEnv", () => {
   test("rejects empty values and invalid APP_URL", () => {
     expect(() => parseEnv({ ...fullEnvFixture, CRON_SECRET: "" })).toThrow(/CRON_SECRET/);
     expect(() => parseEnv({ ...fullEnvFixture, APP_URL: "not a url" })).toThrow(/APP_URL/);
+  });
+});
+
+describe("Supabase guest auth env", () => {
+  const { NEXT_PUBLIC_SUPABASE_URL: _url, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: _key, ...base } = fullEnvFixture;
+  test("requires the Supabase URL and publishable key", () => {
+    expect(() => parseEnv({ ...base, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "k" })).toThrow(/NEXT_PUBLIC_SUPABASE_URL/);
+    expect(() => parseEnv({ ...base, NEXT_PUBLIC_SUPABASE_URL: "https://example.supabase.co" })).toThrow(
+      /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/,
+    );
+    expect(() => parseEnv({ ...fullEnvFixture, NEXT_PUBLIC_SUPABASE_URL: "not a url" })).toThrow(/NEXT_PUBLIC_SUPABASE_URL/);
+  });
+  test("GUEST_AUTH defaults to supabase", () => {
+    expect(parseEnv(fullEnvFixture).GUEST_AUTH).toBe("supabase");
+  });
+  test("GUEST_AUTH=fake is refused in production", () => {
+    const prod = { ...fullEnvFixture, NODE_ENV: "production", TURNSTILE_SECRET: "real", GUEST_AUTH: "fake" };
+    expect(() => parseEnv(prod)).toThrow(/GUEST_AUTH=fake is not allowed when NODE_ENV=production/);
+    expect(parseEnv({ ...prod, ALLOW_TEST_MODES: "1" }).GUEST_AUTH).toBe("fake");
+    expect(() => parseEnv({ ...prod, ALLOW_TEST_MODES: "1", VERCEL: "1" })).toThrow(
+      /GUEST_AUTH=fake is not allowed when NODE_ENV=production/,
+    );
   });
 });
 

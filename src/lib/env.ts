@@ -15,8 +15,12 @@ const envSchema = z.object({
   CRON_SECRET: secret,
   SESSION_SECRET: secret,
   APP_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: secret,
   /** `razorpay` (default) or `fake` (E2E only: in-memory gateway, see src/server/payments/fakeGateway.ts). */
   PAYMENT_GATEWAY: z.enum(["razorpay", "fake"]).default("razorpay"),
+  /** `supabase` (default) or `fake` (E2E only: in-memory guest sign-in, no Supabase calls). */
+  GUEST_AUTH: z.enum(["supabase", "fake"]).default("supabase"),
   /** Escape hatch so E2E can run `next start` (NODE_ENV=production) with test modes. Ignored on Vercel. */
   ALLOW_TEST_MODES: z.string().optional(),
   /** Staging load runs only: "1" turns off the per-IP hold limits. Needs ALLOW_TEST_MODES=1 as well; refused in production otherwise. */
@@ -38,6 +42,9 @@ const envSchema = z.object({
   if (testModesAllowed) return;
   if (e.PAYMENT_GATEWAY === "fake") {
     ctx.addIssue({ code: "custom", path: ["PAYMENT_GATEWAY"], message: `PAYMENT_GATEWAY=fake ${hint}` });
+  }
+  if (e.GUEST_AUTH === "fake") {
+    ctx.addIssue({ code: "custom", path: ["GUEST_AUTH"], message: `GUEST_AUTH=fake ${hint}` });
   }
   if (e.TURNSTILE_SECRET === "test") {
     ctx.addIssue({ code: "custom", path: ["TURNSTILE_SECRET"], message: `TURNSTILE_SECRET=test ${hint}` });

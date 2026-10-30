@@ -51,7 +51,7 @@ export function ConfirmPayment() {
   }, []);
 
   const leave = useCallback(() => {
-    if (target) router.replace(`/booking/${encodeURIComponent(target)}`);
+    if (target) router.replace(`/booking/${encodeURIComponent(target)}?paid=1`);
   }, [target, router]);
 
   // Verified: leave when the logo has settled (LoadingScreen calls back). Without motion, or if the

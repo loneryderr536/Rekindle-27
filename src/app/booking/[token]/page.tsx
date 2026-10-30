@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AutoRefresh } from "@/components/AutoRefresh";
 import { TicketSet } from "@/components/TicketCarousel";
 import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
 import { formatInr } from "@/lib/money";
+import { getGuest } from "@/server/guestAuth/getGuest";
 import { getBookingByAccessToken } from "@/server/tickets/loadBooking";
 import { qrDataUrl } from "@/server/tickets/qr";
 import { qrPayload } from "@/server/tickets/tokens";
@@ -17,10 +18,25 @@ export const metadata: Metadata = { title: "Your booking", robots: { index: fals
 
 const PENDING_REFRESH_MS = 5000;
 
-export default async function BookingPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function BookingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
+  searchParams: Promise<{ paid?: string | string[] }>;
+}) {
   const { token } = await params;
   const b = await getBookingByAccessToken(token);
   if (!b) notFound();
+
+  // Straight after paying, a signed-in guest who owns this booking lands on My bookings.
+  const { paid } = await searchParams;
+  if (paid === "1") {
+    const guest = await getGuest();
+    if (guest && b.email.trim().toLowerCase() === guest.email) {
+      redirect(`/my-bookings?new=${encodeURIComponent(b.publicCode)}`);
+    }
+  }
 
   const showTickets = ticketsVisible(b.status);
   const qrs = showTickets

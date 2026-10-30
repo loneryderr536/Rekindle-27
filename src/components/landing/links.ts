@@ -7,6 +7,7 @@ export const LINKS = {
   faq: "/#faq",
   register: "/register",
   findBooking: "/booking/find",
+  myBookings: "/my-bookings",
 } as const;
 
 export const LOGO = { src: "/landing/logo.png", width: 360, height: 410 } as const;

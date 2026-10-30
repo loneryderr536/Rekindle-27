@@ -15,7 +15,7 @@ export function BrandPage({
   children: ReactNode;
   footer?: boolean;
   dark?: "seats" | "ticket";
-  current?: "lineup" | "dates" | "register";
+  current?: "lineup" | "dates" | "register" | "my-bookings";
 }) {
   return (
     <div id="o26-root" className={`flex flex-1 flex-col${dark ? ` o26-dark o26-dark-${dark}` : ""}`}>

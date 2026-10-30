@@ -12,12 +12,13 @@ const MENU = [
   { href: LINKS.dates, label: "Key dates" },
   { href: LINKS.faq, label: "FAQ" },
   { href: LINKS.register, label: "Register" },
+  { href: LINKS.myBookings, label: "My bookings" },
 ];
 
 type Props = {
   solid?: boolean;
   /** The page this header is on, so its link reads as current. */
-  current?: "lineup" | "dates" | "register";
+  current?: "lineup" | "dates" | "register" | "my-bookings";
 };
 
 /**
@@ -62,6 +63,7 @@ export function LandingHeader({ solid = false, current }: Props) {
         <div className="o26-hr">
           <Link className="o26-hlink o26-hdesk" href={LINKS.lineup} aria-current={cur("lineup")}>Line-up</Link>
           <Link className="o26-hlink o26-hdesk" href={LINKS.register} aria-current={cur("register")}>Register</Link>
+          <Link className="o26-hlink o26-hdesk" href={LINKS.myBookings} aria-current={cur("my-bookings")}>My bookings</Link>
           <Link className="o26-hmob o26-mob-cta" href={LINKS.register}>Register</Link>
         </div>
         {menuOpen && (

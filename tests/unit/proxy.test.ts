@@ -46,6 +46,16 @@ test("signed-in /register passes through with the headers", async () => {
   expect(res.headers.get("cache-control")).toContain("no-store");
 });
 
+test("ticket page /booking/x?paid=1 passes through (signed out too) with refreshed cookies and headers", async () => {
+  getUser.mockResolvedValue({ data: { user: null } });
+  const res = await proxy(req("/booking/x?paid=1"));
+  expect(res.headers.get("location")).toBeNull();
+  expect(res.cookies.get("sb-x-auth-token")?.value).toBe("v");
+  expect(res.headers.get("cache-control")).toContain("no-store");
+  expect(res.headers.get("pragma")).toBe("no-cache");
+  expect(getUser).toHaveBeenCalled();
+});
+
 test("getUser throwing counts as signed out without crashing", async () => {
   getUser.mockRejectedValue(new Error("unreachable"));
   vi.spyOn(console, "error").mockImplementation(() => {});

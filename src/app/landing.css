@@ -198,16 +198,28 @@ html:has(#o26-root) body {
 /* Scroll story --------------------------------------------------------------- */
 #o26-story {
   position: relative;
-  height: calc(min(100svh, 1200px) + 6500px);
+  height: calc(100vh + 6500px);
   background: #fdfbf4 url("/landing/tex-cream.webp") repeat center top / 760px 760px;
 }
 #o26-stage {
   position: sticky;
   top: 0;
-  height: min(100svh, 1200px);
+  height: 100vh;
   overflow: hidden;
   background: #0b1020;
 }
+/*
+ * The pinned stage always covers the whole screen. 100lvh is the tallest the screen gets (browser toolbars
+ * slid away), so the next page never shows below the story when a phone's toolbar collapses; it is also
+ * a fixed size, so the story is not rebuilt each time the toolbar moves.
+ */
+@supports (height: 100lvh) {
+  #o26-story { height: calc(100lvh + 6500px); }
+  #o26-stage { height: 100lvh; }
+}
+/* No rubber-band bounce at the top or bottom of the page. */
+html:has(#o26-root) { overscroll-behavior-y: none; }
+
 /* The cream day that spreads out from the snap and covers the night. */
 #o26-day {
   position: absolute;

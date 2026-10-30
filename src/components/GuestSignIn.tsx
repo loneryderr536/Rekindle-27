@@ -6,9 +6,13 @@ import { createSupabaseBrowser } from "@/lib/supabase/browser";
 import { loadTurnstile } from "@/lib/turnstile";
 import type { EmailCheck } from "@/server/guestAuth/checkEmail";
 
+/** What went wrong with a Supabase call, so the form can show the right copy. */
+export type AuthFailure = { kind: "invalid" | "rate_limited" | "unavailable"; message: string };
+export type AuthResult = { error: null } | { error: AuthFailure };
+
 export type GuestAuthClient = {
-  sendCode(email: string, captchaToken: string): Promise<{ error: string | null }>;
-  verifyCode(email: string, code: string): Promise<{ error: string | null }>;
+  sendCode(email: string, captchaToken: string): Promise<AuthResult>;
+  verifyCode(email: string, code: string): Promise<AuthResult>;
   google(next: string): Promise<{ error: string | null }>;
 };
 
@@ -52,17 +56,25 @@ const defaultCheckEmail: CheckEmailFn = async (email, opts) => {
   return (await res.json()) as EmailCheck;
 };
 
+/** Network failures and 5xx are `unavailable` (status 0 or missing), 429 is `rate_limited`, anything else `invalid`. */
+export function toResult(error: { message: string; status?: number } | null): AuthResult {
+  if (!error) return { error: null };
+  const status = error.status;
+  const kind = !status || status >= 500 ? "unavailable" : status === 429 ? "rate_limited" : "invalid";
+  return { error: { kind, message: error.message } };
+}
+
 const defaultClient: GuestAuthClient = {
   async sendCode(email, captchaToken) {
     const { error } = await createSupabaseBrowser().auth.signInWithOtp({
       email,
       options: { shouldCreateUser: true, captchaToken },
     });
-    return { error: error?.message ?? null };
+    return toResult(error);
   },
   async verifyCode(email, code) {
     const { error } = await createSupabaseBrowser().auth.verifyOtp({ email, token: code, type: "email" });
-    return { error: error?.message ?? null };
+    return toResult(error);
   },
   async google(next) {
     const { error } = await createSupabaseBrowser().auth.signInWithOAuth({
@@ -130,7 +142,7 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
       if (widgetId.current && window.turnstile) window.turnstile.reset(widgetId.current);
     }
     if (sendError) {
-      setError(COPY.trouble);
+      setError(sendError.kind === "rate_limited" ? COPY.rateLimited : COPY.trouble);
       return false;
     }
     setSentTo(to);
@@ -172,7 +184,7 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
     try {
       const { error: verifyError } = await client.verifyCode(sentTo, code.trim());
       if (verifyError) {
-        setError(COPY.wrongCode);
+        setError(verifyError.kind === "invalid" ? COPY.wrongCode : verifyError.kind === "rate_limited" ? COPY.rateLimited : COPY.trouble);
         setBusy(false);
         return;
       }
@@ -195,6 +207,13 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
     } finally {
       setBusy(false);
     }
+  }
+
+  function onChangeEmail() {
+    setStep("email");
+    setCode("");
+    setError(null);
+    setTypo(null);
   }
 
   async function onGoogle() {
@@ -296,6 +315,9 @@ export function GuestSignIn({ next, client = defaultClient, checkEmail = default
             onClick={() => void onResend()}
           >
             {resendIn > 0 ? `Send again in ${resendIn}s` : "Send again"}
+          </button>
+          <button type="button" className="btn-ghost w-full" disabled={busy} onClick={onChangeEmail}>
+            Use a different email
           </button>
           <p className="m-0 text-sm text-muted">Can&apos;t find it? Check spam, or continue with Google.</p>
         </form>

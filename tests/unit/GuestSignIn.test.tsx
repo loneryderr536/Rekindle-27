@@ -2,7 +2,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
-import { GuestSignIn, type GuestAuthClient } from "@/components/GuestSignIn";
+import { GuestSignIn, toResult, type GuestAuthClient } from "@/components/GuestSignIn";
 import type { EmailCheck } from "@/server/guestAuth/checkEmail";
 
 const turnstile = vi.hoisted(() => ({ render: vi.fn(), reset: vi.fn(), remove: vi.fn() }));
@@ -77,7 +77,7 @@ test("an ok check sends the trimmed lower-case email and shows the code step", a
 });
 
 test("a wrong code shows the retry copy; a right code replaces to next and refreshes", async () => {
-  const verifyCode = vi.fn().mockResolvedValueOnce({ error: "bad" }).mockResolvedValueOnce({ error: null });
+  const verifyCode = vi.fn().mockResolvedValueOnce({ error: { kind: "invalid", message: "bad" } }).mockResolvedValueOnce({ error: null });
   const client = fakeClient({ verifyCode });
   const user = userEvent.setup();
   render(<GuestSignIn next="/register" client={client} checkEmail={async (e) => ok(e)} />);
@@ -130,4 +130,69 @@ test("on the code step with no captcha token the widget is visible so Send again
   await screen.findByLabelText("6-digit code");
   expect(turnstile.reset).toHaveBeenCalled();
   expect(screen.getByTestId("turnstile-widget").hidden).toBe(false);
+});
+
+async function toCodeStep(client: GuestAuthClient) {
+  const user = userEvent.setup();
+  render(<GuestSignIn next="/register" client={client} checkEmail={async (e) => ok(e)} />);
+  await user.type(emailInput(), "asha@example.com");
+  await user.click(screen.getByRole("button", { name: "Email me a code" }));
+  return { user, codeInput: await screen.findByLabelText("6-digit code") };
+}
+
+test("verify unavailable shows the trouble copy, rate limited the too-many copy", async () => {
+  const verifyCode = vi
+    .fn()
+    .mockResolvedValueOnce({ error: { kind: "unavailable", message: "x" } })
+    .mockResolvedValueOnce({ error: { kind: "rate_limited", message: "x" } });
+  const { user, codeInput } = await toCodeStep(fakeClient({ verifyCode }));
+  await user.type(codeInput, "123456");
+  await user.click(screen.getByRole("button", { name: "Verify and continue" }));
+  expect(await screen.findByText("Sign-in is having trouble. Try again shortly.")).toBeTruthy();
+  await user.click(screen.getByRole("button", { name: "Verify and continue" }));
+  expect(await screen.findByText("Too many attempts. Wait a few minutes and try again.")).toBeTruthy();
+  expect(replace).not.toHaveBeenCalled();
+});
+
+test("send rate limited shows the too-many copy; send unavailable or invalid shows the trouble copy", async () => {
+  const sendCode = vi
+    .fn()
+    .mockResolvedValueOnce({ error: { kind: "rate_limited", message: "x" } })
+    .mockResolvedValueOnce({ error: { kind: "unavailable", message: "x" } })
+    .mockResolvedValueOnce({ error: { kind: "invalid", message: "x" } });
+  const user = userEvent.setup();
+  render(<GuestSignIn next="/register" client={fakeClient({ sendCode })} checkEmail={async (e) => ok(e)} />);
+  await user.type(emailInput(), "asha@example.com");
+  await user.click(screen.getByRole("button", { name: "Email me a code" }));
+  expect(await screen.findByText("Too many attempts. Wait a few minutes and try again.")).toBeTruthy();
+  await user.click(screen.getByRole("button", { name: "Email me a code" }));
+  await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Sign-in is having trouble. Try again shortly."));
+  await user.click(screen.getByRole("button", { name: "Email me a code" }));
+  await waitFor(() => expect(sendCode).toHaveBeenCalledTimes(3));
+  expect(screen.getByRole("alert").textContent).toBe("Sign-in is having trouble. Try again shortly.");
+  expect(screen.queryByLabelText("6-digit code")).toBeNull();
+});
+
+test("Use a different email returns to the email step, keeps the email, clears code and errors", async () => {
+  const verifyCode = vi.fn().mockResolvedValue({ error: { kind: "invalid", message: "bad" } });
+  const { user, codeInput } = await toCodeStep(fakeClient({ verifyCode }));
+  await user.type(codeInput, "123456");
+  await user.click(screen.getByRole("button", { name: "Verify and continue" }));
+  await screen.findByText("That code didn't work. Check it or send a new one.");
+
+  await user.click(screen.getByRole("button", { name: "Use a different email" }));
+  expect(emailInput().value).toBe("asha@example.com");
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(screen.queryByLabelText("6-digit code")).toBeNull();
+});
+
+test("Supabase statuses map to error kinds", () => {
+  const kind = (status?: number) => (toResult({ message: "m", status }) as { error: { kind: string } }).error.kind;
+  expect(toResult(null)).toEqual({ error: null });
+  expect(kind(undefined)).toBe("unavailable");
+  expect(kind(0)).toBe("unavailable");
+  expect(kind(502)).toBe("unavailable");
+  expect(kind(429)).toBe("rate_limited");
+  expect(kind(400)).toBe("invalid");
+  expect(kind(403)).toBe("invalid");
 });

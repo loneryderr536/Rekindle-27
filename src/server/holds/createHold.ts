@@ -9,7 +9,7 @@ import { publicCode, randomToken } from "@/lib/random";
 import { findDiscount } from "@/server/discounts/findDiscount";
 
 export type CreateHoldInput = { seatIds: string[]; name: string; email: string; phone: string; clientIp?: string;
-  discountCode?: string };
+  discountCode?: string; guestUserId?: string };
 
 export type HoldResult = {
   bookingId: string;
@@ -78,6 +78,7 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
           email,
           phone,
           clientIp,
+          guestUserId: input.guestUserId ?? null,
           status: "pending",
           amountPaise: 0,
           seatCount: seatIds.length,

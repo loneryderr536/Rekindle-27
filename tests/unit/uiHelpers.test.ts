@@ -34,6 +34,7 @@ test("hold error codes map to friendly messages", () => {
     expect(msg).not.toBe("raw server text");
     expect(msg.length).toBeGreaterThan(10);
   }
+  expect(holdErrorMessage("SIGN_IN_REQUIRED", "")).toBe("Please sign in again to book your seats.");
   expect(holdErrorMessage("RATE_LIMITED", "")).toMatch(/too many/i);
   expect(holdErrorMessage("TURNSTILE_FAILED", "")).toMatch(/human/i);
   expect(holdErrorMessage("PAYMENT_UNAVAILABLE", "")).toMatch(/payment/i);

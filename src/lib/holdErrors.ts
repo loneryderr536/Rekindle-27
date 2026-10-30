@@ -5,6 +5,8 @@ export function holdErrorMessage(code: string, serverMessage: string): string {
       return "Some seats were just taken — please pick again";
     case "ACTIVE_HOLD_EXISTS":
       return "You already have a booking in progress. Finish it or wait 10 minutes.";
+    case "SIGN_IN_REQUIRED":
+      return "Please sign in again to book your seats.";
     case "RATE_LIMITED":
       return "Too many attempts from your connection. Wait a few minutes, then try again.";
     case "TURNSTILE_FAILED":

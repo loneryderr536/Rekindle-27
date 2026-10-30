@@ -9,7 +9,8 @@ import { createHold } from "@/server/holds/createHold";
 import { setGatewayForTests } from "@/server/payments/gateway";
 import { FakeGateway } from "../helpers/fakes";
 import { seedVenue } from "../helpers/db";
-import { guest, guestN, statusOf } from "../helpers/holds";
+import { setGuestForTests } from "@/server/guestAuth/getGuest";
+import { guest, guestN, signInFromBody, statusOf } from "../helpers/holds";
 
 let gateway: FakeGateway;
 beforeEach(async () => {
@@ -20,9 +21,13 @@ beforeEach(async () => {
     { code: "REKINDLE20", percent: 20 },
   ]);
 });
-afterEach(() => setGatewayForTests(null));
+afterEach(() => {
+  setGatewayForTests(null);
+  setGuestForTests(null);
+});
 
 function hold(body: unknown) {
+  signInFromBody(body);
   return postHold(
     new Request("http://localhost/api/holds", {
       method: "POST",

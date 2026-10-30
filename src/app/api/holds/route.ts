@@ -3,6 +3,7 @@ import { db } from "@/db/client";
 import { bookings } from "@/db/schema";
 import { env, loadTestLimitsDisabled } from "@/lib/env";
 import { AppError, jsonError } from "@/lib/errors";
+import { getGuest } from "@/server/guestAuth/getGuest";
 import { createHold } from "@/server/holds/createHold";
 import { releaseBooking } from "@/server/holds/releaseBooking";
 import { HoldInput } from "@/server/holds/schemas";
@@ -30,6 +31,10 @@ export async function POST(req: Request): Promise<Response> {
       return res;
     }
 
+    // Identity comes from the verified session, never from the request body.
+    const guest = await getGuest();
+    if (!guest) throw new AppError("SIGN_IN_REQUIRED", "Sign in to book", 401);
+
     let raw: unknown;
     try {
       raw = await req.json();
@@ -42,7 +47,7 @@ export async function POST(req: Request): Promise<Response> {
       throw new AppError("TURNSTILE_FAILED", "Bot check failed, please retry", 403);
     }
 
-    const hold = await createHold({ ...input, clientIp: ip });
+    const hold = await createHold({ ...input, email: guest.email, guestUserId: guest.userId, clientIp: ip });
 
     let orderId: string;
     try {

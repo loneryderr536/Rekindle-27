@@ -17,7 +17,8 @@ import type { SeatView } from "@/server/seats/listSeats";
 import { assertNoDoubleBooking } from "../helpers/doubleBooking";
 import { seedVenue } from "../helpers/db";
 import { FakeEmailSender, FakeGateway } from "../helpers/fakes";
-import { guest, guestN } from "../helpers/holds";
+import { setGuestForTests, type Guest } from "@/server/guestAuth/getGuest";
+import { guest, guestIdFor, guestN } from "../helpers/holds";
 
 /** Browser-free walk through the real route handlers, in the order a guest and a gate scanner hit them. */
 
@@ -36,11 +37,18 @@ afterEach(async () => {
   await settleKickedOutbox();
   setGatewayForTests(null);
   setEmailSenderForTests(null);
+  setGuestForTests(null);
 });
 
 let ipCounter = 0;
-function holdRequest(seatIds: string[], who: { name: string; email: string; phone: string }) {
+function holdRequest(
+  seatIds: string[],
+  who: { name: string; email: string; phone: string },
+  signedInAs: { guest: Guest | null } = { guest: { userId: guestIdFor(who.email), email: who.email, name: who.name } },
+) {
   ipCounter += 1;
+  // The route reads the signed-in guest, not the body, so sign in as this request's guest.
+  setGuestForTests(signedInAs);
   return postHold(
     new Request(`${ORIGIN}/api/holds`, {
       method: "POST",
@@ -141,7 +149,16 @@ test("guest books 2 seats, pays, receives QR emails, gate scan is ok then alread
 test("two guests race for the same seat: one 201, one 409", async () => {
   const { seats } = await seedVenue();
   const seat = seats[0].id;
-  const [a, b] = await Promise.all([holdRequest([seat], guestN(1)), holdRequest([seat], guestN(2))]);
+  // One shared override: hand out guest 1 to the first getGuest() read and guest 2 to the second, so the
+  // two concurrent requests are two different signed-in guests whichever reaches getGuest() first.
+  const reads = [guestN(1), guestN(2)].map((g) => ({ userId: guestIdFor(g.email), email: g.email, name: g.name }));
+  let next = 0;
+  const shared = {
+    get guest() {
+      return reads[next++ % reads.length];
+    },
+  };
+  const [a, b] = await Promise.all([holdRequest([seat], guestN(1), shared), holdRequest([seat], guestN(2), shared)]);
   expect([a.status, b.status].sort()).toEqual([201, 409]);
   const loser = a.status === 409 ? a : b;
   expect(((await loser.json()) as { error: { code: string } }).error.code).toBe("SEATS_TAKEN");

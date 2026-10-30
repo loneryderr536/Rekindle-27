@@ -35,6 +35,8 @@ export const bookings = pgTable(
     email: text("email").notNull(),
     phone: text("phone").notNull(),
     clientIp: text("client_ip"),
+    /** Supabase user who booked; null on bookings made before guest sign-in existed. */
+    guestUserId: uuid("guest_user_id"),
     status: bookingStatus("status").notNull(),
     amountPaise: integer("amount_paise").notNull(),
     /** Seat total before any discount; null on bookings made before discount codes existed. */

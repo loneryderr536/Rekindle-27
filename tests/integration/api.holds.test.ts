@@ -4,11 +4,13 @@ import { db } from "@/db/client";
 import { bookings } from "@/db/schema";
 import { GET as getSeats } from "@/app/api/seats/route";
 import { POST as postHold } from "@/app/api/holds/route";
+import { POST as postCurrent } from "@/app/api/holds/current/route";
 import { resetEnvForTests } from "@/lib/env";
 import { setGatewayForTests } from "@/server/payments/gateway";
 import { FakeGateway } from "../helpers/fakes";
 import { seedVenue } from "../helpers/db";
-import { guest, guestN, statusOf } from "../helpers/holds";
+import { setGuestForTests } from "@/server/guestAuth/getGuest";
+import { guest, guestIdFor, guestN, signInFromBody, statusOf } from "../helpers/holds";
 
 let gateway: FakeGateway;
 
@@ -16,9 +18,13 @@ beforeEach(() => {
   gateway = new FakeGateway();
   setGatewayForTests(gateway);
 });
-afterEach(() => setGatewayForTests(null));
+afterEach(() => {
+  setGatewayForTests(null);
+  setGuestForTests(null);
+});
 
-function hold(body: unknown, headers: Record<string, string> = {}, raw?: string) {
+function hold(body: unknown, headers: Record<string, string> = {}, raw?: string, signIn = true) {
+  if (signIn) signInFromBody(body);
   return postHold(
     new Request("http://localhost/api/holds", {
       method: "POST",
@@ -87,7 +93,8 @@ test("POST /api/holds 7 seats → 400 VALIDATION", async () => {
 });
 
 test("POST /api/holds malformed JSON → 400 VALIDATION", async () => {
-  const res = await hold(null, {}, "{not json");
+  signInFromBody(guest);
+  const res = await hold(null, {}, "{not json", false);
   expect(res.status).toBe(400);
   expect((await res.json()).error.code).toBe("VALIDATION");
 });
@@ -145,4 +152,43 @@ test("load-test flag (with ALLOW_TEST_MODES) lifts the per-IP hold limit", async
     }
     resetEnvForTests();
   }
+});
+
+test("POST /api/holds without a guest is 401 SIGN_IN_REQUIRED", async () => {
+  const { seats } = await seedVenue();
+  setGuestForTests({ guest: null });
+  const res = await hold(valid([seats[0].id]), {}, undefined, false);
+  expect(res.status).toBe(401);
+  expect((await res.json()).error.code).toBe("SIGN_IN_REQUIRED");
+  expect(await db.select().from(bookings)).toHaveLength(0);
+  expect(await statusOf(seats[0].id)).toBe("available");
+});
+
+test("booking email is the guest's, not the body's", async () => {
+  const { seats } = await seedVenue();
+  const userId = guestIdFor("asha@example.com");
+  const body = valid([seats[0].id], { email: "other@example.com" });
+  // Sign in as asha directly: hold() would sign in as the body's email.
+  setGuestForTests({ guest: { userId, email: "asha@example.com", name: "Asha Rao" } });
+  const res = await hold(body, {}, undefined, false);
+  expect(res.status).toBe(201);
+  const [b] = await db.select().from(bookings).where(eq(bookings.id, (await res.json()).bookingId));
+  expect(b.email).toBe("asha@example.com");
+  expect(b.guestUserId).toBe(userId);
+});
+
+test("held seats can still be paid after sign-out", async () => {
+  const { seats } = await seedVenue();
+  const res = await hold(valid([seats[0].id]));
+  expect(res.status).toBe(201);
+  const { accessToken } = await res.json();
+  setGuestForTests({ guest: null });
+  const cur = await postCurrent(
+    new Request("http://localhost/api/holds/current", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ accessToken }),
+    }),
+  );
+  expect(cur.status).toBe(200);
 });

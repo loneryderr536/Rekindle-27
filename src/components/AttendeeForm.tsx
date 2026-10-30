@@ -24,14 +24,17 @@ function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | nu
   const [phoneError, setPhoneError] = useState(false);
   const [busy, setBusy] = useState(false);
   const [switchError, setSwitchError] = useState(false);
+  const [switching, setSwitching] = useState(false);
 
   async function switchAccount() {
     setSwitchError(false);
+    setSwitching(true);
     try {
       await guestSignOut();
       router.refresh();
     } catch {
       setSwitchError(true);
+      setSwitching(false);
     }
   }
 
@@ -68,7 +71,7 @@ function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | nu
         <small>Your tickets are sent here.</small>
       </label>
       <div className="-mt-3 text-sm">
-        <button type="button" className="underline" onClick={switchAccount}>Not you? Switch account</button>
+        <button type="button" className="underline" disabled={switching} onClick={switchAccount}>Not you? Switch account</button>
         {switchError && <p role="alert" className="m-0 mt-1 font-medium text-danger">Couldn&apos;t switch account. Try again.</p>}
       </div>
       <label className="field">

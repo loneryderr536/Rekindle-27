@@ -19,6 +19,8 @@ export async function proxy(request: NextRequest) {
   }
 
   let response = NextResponse.next({ request });
+  // Cache headers from @supabase/ssr arrive only with the first cookie write; keep them for every response we build.
+  const cacheHeaders: Record<string, string> = {};
   let signedIn = false;
 
   if (env.GUEST_AUTH === "fake") {
@@ -28,10 +30,12 @@ export async function proxy(request: NextRequest) {
       const supabase = createServerClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
         cookies: {
           getAll: () => request.cookies.getAll(),
-          setAll: (list) => {
+          setAll: (list, headers) => {
+            Object.assign(cacheHeaders, headers);
             for (const { name, value } of list) request.cookies.set(name, value);
             response = NextResponse.next({ request });
             for (const { name, value, options } of list) response.cookies.set(name, value, options);
+            for (const [k, v] of Object.entries(cacheHeaders)) response.headers.set(k, v);
           },
         },
       });
@@ -47,6 +51,7 @@ export async function proxy(request: NextRequest) {
   if (to) {
     const redirect = NextResponse.redirect(new URL(to, request.url));
     for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    for (const [k, v] of Object.entries(cacheHeaders)) redirect.headers.set(k, v);
     return redirect;
   }
   return response;

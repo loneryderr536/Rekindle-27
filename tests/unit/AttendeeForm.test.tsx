@@ -39,9 +39,13 @@ test("submit saves the attendee with the session email", async () => {
 });
 
 test("Switch account signs out then refreshes", async () => {
-  guestSignOut.mockResolvedValue(undefined);
+  let finish!: () => void;
+  guestSignOut.mockReturnValue(new Promise<void>((r) => (finish = r)));
   render(<AttendeeForm email="asha@example.com" suggestedName={null} />);
-  await userEvent.click(screen.getByRole("button", { name: /Switch account/ }));
+  const btn = screen.getByRole("button", { name: /Switch account/ }) as HTMLButtonElement;
+  await userEvent.click(btn);
+  expect(btn.disabled).toBe(true);
+  finish();
   await waitFor(() => expect(refresh).toHaveBeenCalled());
 });
 
@@ -51,4 +55,5 @@ test("Switch account failure shows an alert and does not refresh", async () => {
   await userEvent.click(screen.getByRole("button", { name: /Switch account/ }));
   expect((await screen.findByRole("alert")).textContent).toBe("Couldn't switch account. Try again.");
   expect(refresh).not.toHaveBeenCalled();
+  expect((screen.getByRole("button", { name: /Switch account/ }) as HTMLButtonElement).disabled).toBe(false);
 });

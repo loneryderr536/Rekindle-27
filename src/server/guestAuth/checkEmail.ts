@@ -20,6 +20,25 @@ const COMMON_DOMAINS = [
   "rediffmail.com",
 ];
 
+/** Real providers that sit close to a typo target; never flagged as typos. */
+const KNOWN_PROVIDERS = new Set([
+  ...COMMON_DOMAINS,
+  "ymail.com",
+  "mail.com",
+  "email.com",
+  "yahoo.co.uk",
+  "yahoo.in",
+  "outlook.in",
+  "hotmail.co.uk",
+  "live.com",
+  "msn.com",
+  "aol.com",
+  "gmx.com",
+  "protonmail.com",
+  "proton.me",
+  "zoho.com",
+]);
+
 const DISPOSABLE_DOMAINS = new Set([
   "mailinator.com",
   "guerrillamail.com",
@@ -35,7 +54,7 @@ const DISPOSABLE_DOMAINS = new Set([
   "throwawaymail.com",
 ]);
 
-const emailSchema = z.string().email();
+const emailSchema = z.email();
 
 let testResolver: MailResolver | null = null;
 /** Test seam: replaces the DNS resolver. Pass null to restore the default. */
@@ -55,27 +74,41 @@ function levenshtein(a: string, b: string): number {
   return prev[b.length];
 }
 
-/** True only when the lookup definitively says the name has no such records. */
-function isDefiniteMiss(e: unknown): boolean {
-  const code = (e as { code?: unknown } | null)?.code;
-  return code === "ENOTFOUND" || code === "ENODATA";
+export const DNS_TIMEOUT_MS = 2500;
+
+type Lookup = "found" | "miss" | "unknown";
+
+/** "miss" only when the lookup definitively says the name has no such records. */
+async function lookup(fn: () => Promise<unknown[]>): Promise<Lookup> {
+  try {
+    return (await fn()).length > 0 ? "found" : "miss";
+  } catch (e) {
+    const code = (e as { code?: unknown } | null)?.code;
+    return code === "ENOTFOUND" || code === "ENODATA" ? "miss" : "unknown";
+  }
 }
 
 async function hasMailServer(domain: string, r: MailResolver): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<Lookup[]>((resolve) => {
+    timer = setTimeout(() => resolve(["unknown"]), DNS_TIMEOUT_MS); // fail open
+  });
   try {
-    if ((await r.resolveMx(domain)).length > 0) return true;
-  } catch (e) {
-    if (!isDefiniteMiss(e)) return true; // timeout / SERVFAIL: do not block the guest
+    const results = await Promise.race([
+      Promise.all([lookup(() => r.resolveMx(domain)), lookup(() => r.resolve4(domain))]),
+      timeout,
+    ]);
+    return !results.every((x) => x === "miss");
+  } finally {
+    clearTimeout(timer);
   }
-  try {
-    if ((await r.resolve4(domain)).length > 0) return true;
-  } catch (e) {
-    if (!isDefiniteMiss(e)) return true;
-  }
-  return false;
 }
 
-export async function checkEmail(email: string, resolver?: MailResolver): Promise<EmailCheck> {
+export async function checkEmail(
+  email: string,
+  resolver?: MailResolver,
+  opts: { ignoreTypo?: boolean } = {},
+): Promise<EmailCheck> {
   const trimmed = email.trim();
   if (!emailSchema.safeParse(trimmed).success) return { ok: false, reason: "format" };
   const normalized = trimmed.toLowerCase();
@@ -83,7 +116,7 @@ export async function checkEmail(email: string, resolver?: MailResolver): Promis
   const local = normalized.slice(0, at);
   const domain = normalized.slice(at + 1);
 
-  if (!COMMON_DOMAINS.includes(domain)) {
+  if (!opts.ignoreTypo && !KNOWN_PROVIDERS.has(domain)) {
     const near = COMMON_DOMAINS.find((d) => levenshtein(domain, d) <= 2);
     if (near) return { ok: false, reason: "typo", suggestion: `${local}@${near}` };
   }

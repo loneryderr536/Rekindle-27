@@ -36,6 +36,16 @@ test("valid body returns the EmailCheck", async () => {
   expect(await res.json()).toEqual({ ok: true, email: "asha@example.com" });
 });
 
+test("ignoreTypo: true skips the typo check", async () => {
+  expect(await (await call({ email: "asha@gmial.com" })).json()).toMatchObject({ ok: false, reason: "typo" });
+  const res = await call({ email: "asha@gmial.com", ignoreTypo: true });
+  expect(await res.json()).toEqual({ ok: true, email: "asha@gmial.com" });
+});
+
+test("non-boolean ignoreTypo is a 400", async () => {
+  expect((await call({ email: "a@example.com", ignoreTypo: "yes" })).status).toBe(400);
+});
+
 test("bad JSON is a 400", async () => {
   const res = await call(null, {}, "{nope");
   expect(res.status).toBe(400);

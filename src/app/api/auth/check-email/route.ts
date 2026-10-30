@@ -8,7 +8,7 @@ import { rateLimit } from "@/server/security/rateLimit";
 const LIMIT = 20;
 const WINDOW_SECONDS = 600;
 
-const Input = z.object({ email: z.string().max(320) });
+const Input = z.object({ email: z.string().max(320), ignoreTypo: z.boolean().optional() });
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,8 +28,8 @@ export async function POST(req: Request): Promise<Response> {
     } catch {
       throw new AppError("VALIDATION", "Request body must be valid JSON", 400);
     }
-    const { email } = Input.parse(raw);
-    return Response.json(await checkEmail(email));
+    const { email, ignoreTypo } = Input.parse(raw);
+    return Response.json(await checkEmail(email, undefined, { ignoreTypo }));
   } catch (e) {
     return jsonError(e);
   }

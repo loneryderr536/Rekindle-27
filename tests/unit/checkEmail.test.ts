@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
-import { checkEmail, type MailResolver } from "@/server/guestAuth/checkEmail";
+import { describe, expect, test, vi } from "vitest";
+import { checkEmail, DNS_TIMEOUT_MS, type MailResolver } from "@/server/guestAuth/checkEmail";
 
 const err = (code: string) => Object.assign(new Error(code), { code });
 const resolver = (mx: () => Promise<unknown[]>, a: () => Promise<unknown[]>): MailResolver => ({
@@ -71,5 +71,34 @@ describe("checkEmail", () => {
 
   test("trims and lower-cases the address", async () => {
     expect(await checkEmail(" Asha@Example.com ", withMx)).toEqual({ ok: true, email: "asha@example.com" });
+  });
+
+  test.each(["ymail.com", "mail.com", "email.com", "yahoo.co.uk"])("known provider %s is not a typo", async (d) => {
+    expect(await checkEmail(`a@${d}`, withMx)).toEqual({ ok: true, email: `a@${d}` });
+  });
+
+  test("ignoreTypo lets a typo-looking domain through", async () => {
+    expect(await checkEmail("asha@gmial.com", withMx, { ignoreTypo: true })).toEqual({
+      ok: true,
+      email: "asha@gmial.com",
+    });
+  });
+
+  test("ignoreTypo still rejects disposable domains", async () => {
+    expect(await checkEmail("x@mailinator.com", withMx, { ignoreTypo: true })).toMatchObject({
+      reason: "disposable",
+    });
+  });
+
+  test("a resolver that never answers fails open after the timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const never = resolver(() => new Promise(() => {}), () => new Promise(() => {}));
+      const p = checkEmail("a@example.org", never);
+      await vi.advanceTimersByTimeAsync(DNS_TIMEOUT_MS);
+      expect(await p).toEqual({ ok: true, email: "a@example.org" });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

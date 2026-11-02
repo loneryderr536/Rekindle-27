@@ -1,3 +1,4 @@
+import { BoyAnimation } from "@/components/landing/BoyAnimation";
 import { FlameLogo } from "@/components/landing/FlameLogo";
 
 const TAGLINE = "One for the Nation, One for the Youth";
@@ -16,16 +17,6 @@ const NOTES: { fill: string; shape: "note8" | "note16"; x: number; y: number }[]
 /** The night sky behind the opening; twinkles until the cream day spreads over it. */
 const STARS: [number, number, number][] = [[726, -392, 3], [2066, -602, 1.6], [1594, -508, 2.4], [1787, -582, 2], [-447, -524, 3], [1112, -557, 2], [-229, 428, 3], [-358, 458, 1.6], [314, 591, 1.6], [1763, 499, 3], [-397, -248, 1.6], [1680, -428, 2.4], [1116, -405, 1.6], [1738, -69, 2], [-178, 491, 2], [925, -501, 1.6], [1711, -578, 2], [1433, 693, 3], [686, 253, 3], [881, -87, 2], [136, -201, 1.6], [1752, -86, 3], [806, 219, 2.4], [1894, -551, 1.6], [1496, 156, 2], [2501, 0, 2], [1402, 163, 1.6], [2137, -542, 2.4], [793, 17, 3], [1775, 234, 1.6], [-217, -148, 3], [2255, 660, 1.6], [-352, -66, 3], [565, 90, 2.4], [-508, 245, 2.4], [88, 551, 1.6], [1422, -580, 2], [577, -436, 2], [1029, 100, 3], [-270, -360, 3], [1045, 425, 2.4], [-40, 181, 2.4], [2293, 150, 2.4], [2196, 79, 2], [18, -531, 2], [19, -225, 2]];
 
-const SNAP_LINES = [
-  [960, 640, 960, 560],
-  [1045, 675, 1102, 618],
-  [1080, 760, 1160, 760],
-  [875, 675, 818, 618],
-  [840, 760, 760, 760],
-  [1045, 845, 1102, 902],
-  [875, 845, 818, 902],
-];
-
 /**
  * The 1920×1080 world the scroll story plays in. Element ids are the targets of the GSAP
  * timeline in StoryIntro, so keep them in step with it.
@@ -41,70 +32,11 @@ export function StoryScene() {
               <circle key={i} className="o26-star" cx={cx} cy={cy} r={r} />
             ))}
           </g>
-          <g id="camera">
-            <g id="boy">
-              <path d="M570 2600 L570 1100 C570 860 610 700 710 660 Q830 620 950 660 C1050 700 1090 860 1090 1100 L1090 2600 Z" fill="#F9A90B" transform="translate(10,-8)" />
-              <path d="M1000 790 L1222 420" stroke="#F9A90B" strokeWidth="132" strokeLinecap="round" transform="translate(9,-7)" />
-              <ellipse cx="831" cy="473" rx="105" ry="125" fill="#F9A90B" />
-              <path d="M560 2600 L560 1100 C560 860 600 700 700 660 Q820 620 940 660 C1040 700 1080 860 1080 1100 L1080 2600 Z" fill="#0A5470" />
-              <path d="M690 965 Q820 935 950 965 L972 1100 L668 1100 Z" fill="#08465D" />
-              <path d="M700 668 Q820 742 940 668 Q935 606 820 598 Q705 606 700 668 Z" fill="#083F54" />
-              <line x1="795" y1="690" x2="785" y2="822" stroke="#F9A90B" strokeWidth="9" strokeLinecap="round" />
-              <line x1="850" y1="690" x2="861" y2="822" stroke="#F9A90B" strokeWidth="9" strokeLinecap="round" />
-              <circle cx="785" cy="828" r="9" fill="#F9A90B" />
-              <circle cx="861" cy="828" r="9" fill="#F9A90B" />
-              <path d="M1000 790 L1222 420" stroke="#0A5470" strokeWidth="132" strokeLinecap="round" />
-              <path d="M1198 458 L1238 392" stroke="#083F54" strokeWidth="122" strokeLinecap="round" />
-              <path d="M1236 396 L1262 356" stroke="#8F5A35" strokeWidth="70" strokeLinecap="round" />
-              <rect x="786" y="560" width="68" height="96" rx="20" fill="#8F5A35" />
-              <ellipse cx="722" cy="495" rx="21" ry="33" fill="#B7774A" />
-              <ellipse cx="724" cy="497" rx="9" ry="17" fill="#8F5A35" />
-              <ellipse cx="820" cy="480" rx="105" ry="125" fill="#B7774A" />
-              <path d="M706 488 C688 372 758 334 836 336 C908 338 952 384 934 458 C916 426 882 404 840 408 C806 412 780 430 768 470 C752 454 736 466 730 502 Z" fill="#1A1420" />
-              <path d="M800 340 C820 300 870 296 900 318 C872 314 848 322 836 338 Z" fill="#1A1420" />
-              <path d="M838 426 L873 418" stroke="#1A1420" strokeWidth="9" strokeLinecap="round" />
-              <path d="M897 414 L928 416" stroke="#1A1420" strokeWidth="9" strokeLinecap="round" />
-              <ellipse cx="858" cy="456" rx="10" ry="13" fill="#1A1420" />
-              <ellipse cx="911" cy="451" rx="9" ry="12" fill="#1A1420" />
-              <circle cx="861" cy="451" r="3" fill="#FDFBF4" />
-              <circle cx="914" cy="446" r="3" fill="#FDFBF4" />
-              <path d="M908 470 Q930 504 902 512 Z" fill="#8F5A35" />
-              <ellipse cx="872" cy="520" rx="20" ry="11" fill="#FF4520" opacity="0.28" />
-              <path d="M858 545 Q888 568 914 538" stroke="#1A1420" strokeWidth="7" strokeLinecap="round" fill="none" />
-              <g id="hand">
-                <path d="M1296 282 Q1322 230 1338 188" stroke="#8F5A35" strokeWidth="32" strokeLinecap="round" fill="none" />
-                <ellipse cx="1272" cy="335" rx="62" ry="74" fill="#B7774A" transform="rotate(-25 1272 335)" />
-                <circle cx="1326" cy="324" r="24" fill="#8F5A35" />
-                <circle cx="1318" cy="362" r="21" fill="#8F5A35" />
-                <g id="fingers-pressed">
-                  <path d="M1314 292 Q1344 255 1310 228" stroke="#B7774A" strokeWidth="34" strokeLinecap="round" fill="none" />
-                  <path d="M1232 318 Q1250 262 1302 226" stroke="#B7774A" strokeWidth="36" strokeLinecap="round" fill="none" />
-                </g>
-                <g id="fingers-snapped" opacity="0">
-                  <path d="M1232 318 Q1262 250 1320 204" stroke="#B7774A" strokeWidth="36" strokeLinecap="round" fill="none" />
-                  <path d="M1316 292 Q1310 340 1272 356" stroke="#8F5A35" strokeWidth="34" strokeLinecap="round" fill="none" />
-                </g>
-                <g id="sparks" fill="#F9A90B" opacity="0">
-                  <circle cx="1338" cy="196" r="5" />
-                  <circle cx="1292" cy="200" r="4" />
-                  <circle cx="1322" cy="176" r="3.5" />
-                  <circle cx="1350" cy="222" r="3" />
-                  <circle cx="1300" cy="182" r="2.5" fill="#FF4520" />
-                </g>
-              </g>
-            </g>
-          </g>
-          <g id="snapfx" opacity="0">
-            <circle id="snapring" cx="960" cy="760" r="40" fill="none" stroke="#FF4520" strokeWidth="14" />
-            <g id="snaplines" stroke="#F9A90B" strokeWidth="12" strokeLinecap="round">
-              {SNAP_LINES.map(([x1, y1, x2, y2]) => (
-                <line key={`${x1}-${y1}`} x1={x1} y1={y1} x2={x2} y2={y2} />
-              ))}
-            </g>
-          </g>
-          <rect id="flash" x="-3000" y="-3000" width="7920" height="7080" fill="#FFB347" opacity="0" />
         </g>
       </svg>
+
+      {/* The snapping boy: StoryIntro sizes this canvas to the visible scene and scrubs it with the scroll. */}
+      <BoyAnimation />
 
       <div id="fire" className="o26-layer">
         <div id="firevid">

@@ -285,6 +285,15 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   height: 1080px;
   transform-origin: 0 0;
 }
+/* StoryIntro sizes the boy's canvas to the visible window of the scene (it can be bigger than 1920×1080). */
+#o26-world .o26-boy {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 1080px;
+  max-width: none;
+}
 #o26-world svg,
 #o26-world .o26-layer {
   position: absolute;

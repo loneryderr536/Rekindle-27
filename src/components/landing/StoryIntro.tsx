@@ -2,6 +2,8 @@
 
 import gsap from "gsap";
 import { useEffect, useRef } from "react";
+import { boyPlayer } from "@/components/landing/BoyAnimation";
+import { BOY_DURATION } from "@/components/landing/boyEngine";
 import { flameReveal } from "@/components/landing/FlameLogo";
 import { StoryScene } from "@/components/landing/StoryScene";
 
@@ -17,6 +19,8 @@ const SEGTOT = SEG.reduce((sum, [a, b, w]) => sum + (b - a) * w, 0);
 /** Story time reached at the end of the scroll. */
 const END = 14.6;
 const IGNITE = 7.55;
+/** Story time at which the boy starts rising; BoyAnimation runs on the story clock minus this (his snap lands on 7.0). */
+const BOY_AT = 2.7;
 
 type Geo = { s: number; y0: number; ext: number; mobile: boolean };
 
@@ -56,20 +60,11 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   const landY = y0 + (headH - logoPx) / 2 / s - 240; // 240 = logo art top in the scene
 
   g.set("#shake", { x: 0, y: 0 });
-  g.set("#camera", { svgOrigin: "0 0", scale: 1, x: 0, y: 0 });
-  g.set("#boy", { y: 1080 + E, opacity: 1, visibility: "visible" });
   g.set("#o26-title", { y: 0 });
   g.set("#presenters", { opacity: 0, y: 16 });
   g.set("#title-main", { opacity: 0, scale: 0.9, transformOrigin: "50% 50%" });
   g.set(".tag-ch", { opacity: 0 });
   g.set("#scrollcue", { opacity: 0, y: 0 });
-  g.set("#fingers-pressed", { opacity: 1 });
-  g.set("#fingers-snapped", { opacity: 0 });
-  g.set("#sparks", { opacity: 0 });
-  g.set("#snapfx", { opacity: 0 });
-  g.set("#snapring", { scale: 0.4, opacity: 1, transformOrigin: "50% 50%" });
-  g.set("#snaplines", { scale: 0.4, opacity: 1, svgOrigin: "960 760" });
-  g.set("#flash", { opacity: 0 });
   g.set("#o26-day-disc", { scale: 0, transformOrigin: "50% 50%" });
   g.set("#o26-tex-cream", { opacity: 0 });
   g.set("#logoglow", { opacity: 0 });
@@ -91,24 +86,12 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to(".tag-ch", { opacity: 1, duration: 0.25, stagger: 0.025 }, 1.2)
     .to("#scrollcue", { opacity: 1, duration: 0.4 }, 2.3)
     .to("#scrollcue", { y: 10, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, 2.4);
-  // 2. Title lifts away, the boy rises into frame
+  // 2. Title lifts away as the boy rises into frame (the boy, his push-in, sparks, snap ring and flash are
+  //    drawn by BoyAnimation, scrubbed from the same playhead at BOY_AT)
   tl.to("#o26-title", { y: -700 - E, duration: 1.45, ease: "sine.inOut" }, 2.7)
-    .to("#scrollcue", { opacity: 0, duration: 0.3 }, 2.7)
-    .to("#boy", { y: 60, duration: 1.45, ease: "sine.inOut" }, 2.7);
-  // 3. Push in onto the fingers
-  tl.to("#camera", { scale: 2.4, x: -2184, y: 100, duration: 2.5, ease: "power2.inOut" }, 3.9)
-    .to("#sparks", { opacity: 1, duration: 0.08, repeat: 9, yoyo: true, ease: "none" }, 6.1)
-    .set("#sparks", { opacity: 1 }, 6.9);
-  // 4. SNAP
-  tl.set("#fingers-pressed", { opacity: 0 }, 7.0)
-    .set("#fingers-snapped", { opacity: 1 }, 7.0)
-    .set("#sparks", { opacity: 0 }, 7.0)
-    .set("#snapfx", { opacity: 1 }, 7.0)
-    .to("#snapring", { scale: 3.4, opacity: 0, duration: 0.4, ease: "power3.out" }, 7.0)
-    .to("#snaplines", { scale: 1.25, opacity: 0, duration: 0.35, ease: "power3.out" }, 7.0)
-    .to("#flash", { opacity: 0.18, duration: 0.05, ease: "none" }, 7.0)
-    .to("#flash", { opacity: 0, duration: 0.25 }, 7.05)
-    .to("#o26-day-disc", { scale: 1, duration: 1.9, ease: "power2.inOut" }, 7.35)
+    .to("#scrollcue", { opacity: 0, duration: 0.3 }, 2.7);
+  // 3. SNAP at 7.0: the stars shake and daylight spreads out from the fingertips
+  tl.to("#o26-day-disc", { scale: 1, duration: 1.9, ease: "power2.inOut" }, 7.35)
     .to("#o26-tex-cream", { opacity: 1, duration: 1.0, ease: "power1.inOut" }, 8.3)
     .to("#shake", { x: 6, y: -4, duration: 0.04, ease: "none" }, 7.02)
     .to("#shake", { x: -6, y: 3, duration: 0.05, ease: "none" }, 7.06)
@@ -123,10 +106,8 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
     .to("#logoglow", { opacity: 0.6, duration: 0.18, ease: "sine.inOut", yoyo: true, repeat: 5 }, 8.8)
     .to("#logo", { scale: 1.015, duration: 0.3, ease: "sine.inOut", yoyo: true, repeat: 3 }, 8.85)
     .to("#firevid", { opacity: 0, duration: 0.7, ease: "power1.inOut" }, 8.6);
-  // 6. The boy steps out of frame; the flaming logo is left alone on the cream
+  // 6. The boy has faded with the night; the flaming logo is left alone on the cream
   tl.to("#logoglow", { opacity: 0, duration: 0.9, ease: "power1.out" }, 10.2)
-    .to("#boy", { opacity: 0, y: 220, duration: 1.1, ease: "power2.in" }, 9.9)
-    .set("#boy", { visibility: "hidden" }, 11.0)
     .to("#o26-scrub", { autoAlpha: 0, duration: 0.4 }, 11.6);
   // 7. The logo rises into the header, the menu opens out on both sides
   tl.to("#fire", { y: landY, scale: k, duration: 1.2, ease: "power3.inOut" }, 11.6)
@@ -159,6 +140,7 @@ export function StoryIntro() {
     const vid = $<HTMLVideoElement>("#v-fire");
     const img = $<HTMLImageElement>("#i-fire");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
+    const boyCanvas = $<HTMLCanvasElement>("#o26-boy");
     const texNavy = $<HTMLDivElement>("#o26-tex-navy");
     const texCream = $<HTMLDivElement>("#o26-tex-cream");
     const endK = $<SVGTextElement>("#o26-endtext-k");
@@ -183,6 +165,7 @@ export function StoryIntro() {
     let cur = 0;
     let last = 0;
     let fireOn = false;
+    let lastBoyT = NaN;
     let lastBgY = NaN;
     let raf = 0;
     const introStart = performance.now();
@@ -198,6 +181,13 @@ export function StoryIntro() {
       const x0 = 960 - W / 2, y0 = 540 - H / 2;
       const s = w / W;
       world.style.transform = `scale(${s}) translate(${-x0}px, ${-y0}px)`;
+      // The boy's canvas covers exactly the visible window of the scene, so he fits like everything else.
+      boyCanvas.style.left = `${x0}px`;
+      boyCanvas.style.top = `${y0}px`;
+      boyCanvas.style.width = `${W}px`;
+      boyCanvas.style.height = `${H}px`;
+      boyPlayer.current?.setExtra(Math.max(0, (H - 1080) / 2));
+      lastBoyT = NaN; // draw him again at the new size
       const narrow = W < 1300;
       endK.setAttribute("font-size", narrow ? "30" : "24");
       endK.setAttribute("letter-spacing", narrow ? "6" : "10");
@@ -251,6 +241,13 @@ export function StoryIntro() {
       if (tl && Math.abs(tl.time() - t) > 0.0004) tl.time(t);
       fill.style.width = `${(Math.min(1, t / END) * 100).toFixed(2)}%`;
       if (into > LEN + stage.clientHeight) return; // story is off screen
+
+      // The boy plays on the story clock, starting when the title lifts away.
+      const boyT = Math.min(BOY_DURATION, Math.max(0, t - BOY_AT));
+      if (boyT !== lastBoyT) {
+        lastBoyT = boyT;
+        boyPlayer.current?.seek(boyT);
+      }
 
       // The real fire footage plays while it is on screen.
       const nowOn = t >= 7.4 && t < 9.4;

@@ -56,6 +56,7 @@ export const bookings = pgTable(
     check("bookings_refund_amount_paise_nonneg", sql`${t.refundAmountPaise} >= 0`),
     check("bookings_discount_paise_nonneg", sql`${t.discountPaise} >= 0`),
     index("bookings_discount_code_idx").on(t.discountCode),
+    index("bookings_lower_email_idx").on(sql`lower(trim(${t.email}))`),
   ],
 );
 
@@ -94,7 +95,10 @@ export const seats = pgTable(
     heldUntil: tstz("held_until"),
     version: integer("version").notNull().default(0),
   },
-  (t) => [index("seats_status_held_until_idx").on(t.status, t.heldUntil)],
+  (t) => [
+    index("seats_status_held_until_idx").on(t.status, t.heldUntil),
+    index("seats_section_row_number_idx").on(t.section, t.row, t.number),
+  ],
 );
 
 export const bookingItems = pgTable(
@@ -106,7 +110,10 @@ export const bookingItems = pgTable(
     tierName: text("tier_name").notNull(),
     pricePaise: integer("price_paise").notNull(),
   },
-  (t) => [check("booking_items_price_paise_nonneg", sql`${t.pricePaise} >= 0`)],
+  (t) => [
+    check("booking_items_price_paise_nonneg", sql`${t.pricePaise} >= 0`),
+    index("booking_items_booking_id_idx").on(t.bookingId),
+  ],
 );
 
 export const adminUsers = pgTable("admin_users", {
@@ -117,15 +124,19 @@ export const adminUsers = pgTable("admin_users", {
   createdAt: createdAt(),
 });
 
-export const tickets = pgTable("tickets", {
-  id: id(),
-  bookingId: uuid("booking_id").notNull().references(() => bookings.id),
-  seatId: uuid("seat_id").notNull().unique().references(() => seats.id),
-  token: text("token").notNull().unique(),
-  checkedInAt: tstz("checked_in_at"),
-  checkedInBy: uuid("checked_in_by").references(() => adminUsers.id),
-  gate: text("gate"),
-});
+export const tickets = pgTable(
+  "tickets",
+  {
+    id: id(),
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id),
+    seatId: uuid("seat_id").notNull().unique().references(() => seats.id),
+    token: text("token").notNull().unique(),
+    checkedInAt: tstz("checked_in_at"),
+    checkedInBy: uuid("checked_in_by").references(() => adminUsers.id),
+    gate: text("gate"),
+  },
+  (t) => [index("tickets_booking_id_idx").on(t.bookingId)],
+);
 
 export const adminSessions = pgTable("admin_sessions", {
   id: text("id").primaryKey(),
@@ -141,16 +152,20 @@ export const auditLog = pgTable("audit_log", {
   createdAt: createdAt(),
 });
 
-export const emailOutbox = pgTable("email_outbox", {
-  id: id(),
-  bookingId: uuid("booking_id").notNull().references(() => bookings.id),
-  kind: outboxKind("kind").notNull(),
-  status: outboxStatus("status").notNull().default("pending"),
-  attempts: integer("attempts").notNull().default(0),
-  lastError: text("last_error"),
-  createdAt: createdAt(),
-  sentAt: tstz("sent_at"),
-});
+export const emailOutbox = pgTable(
+  "email_outbox",
+  {
+    id: id(),
+    bookingId: uuid("booking_id").notNull().references(() => bookings.id),
+    kind: outboxKind("kind").notNull(),
+    status: outboxStatus("status").notNull().default("pending"),
+    attempts: integer("attempts").notNull().default(0),
+    lastError: text("last_error"),
+    createdAt: createdAt(),
+    sentAt: tstz("sent_at"),
+  },
+  (t) => [index("email_outbox_booking_id_idx").on(t.bookingId)],
+);
 
 export const webhookEvents = pgTable("webhook_events", {
   id: id(),

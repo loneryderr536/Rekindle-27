@@ -9,6 +9,7 @@ export async function verifyTurnstile(token: string, ip: string): Promise<boolea
     const res = await fetch(VERIFY_URL, {
       method: "POST",
       body: new URLSearchParams({ secret: env.TURNSTILE_SECRET, response: token, remoteip: ip }),
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return false;
     const json = (await res.json()) as { success?: boolean };

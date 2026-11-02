@@ -43,6 +43,13 @@
       "when": 1793352092063,
       "tag": "0005_curved_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793596637658,
+      "tag": "0006_eager_silver_centurion",
+      "breakpoints": true
     }
   ]
 }

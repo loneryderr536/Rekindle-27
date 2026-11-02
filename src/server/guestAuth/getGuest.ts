@@ -1,5 +1,5 @@
 import type { User } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { unstable_rethrow } from "next/navigation";
 import { env } from "@/lib/env";
 import { FAKE_GUEST_COOKIE, readFakeGuest } from "./fakeGuest";
@@ -28,6 +28,15 @@ export async function getGuest(): Promise<Guest | null> {
   try {
     if (env.GUEST_AUTH === "fake") {
       return readFakeGuest((await cookies()).get(FAKE_GUEST_COOKIE)?.value);
+    }
+    // proxy.ts already verified the session for every route that reaches this function; reuse that
+    // result via request headers instead of paying a second supabase.auth.getUser() network round trip.
+    const h = await headers();
+    const userId = h.get("x-guest-user-id");
+    const userEmail = h.get("x-guest-user-email");
+    if (userId && userEmail) {
+      const nameHeader = h.get("x-guest-user-name");
+      return { userId, email: userEmail, name: nameHeader ? decodeURIComponent(nameHeader) : null };
     }
     const supabase = await createSupabaseServer();
     return guestFromUser((await supabase.auth.getUser()).data.user);

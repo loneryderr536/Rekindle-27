@@ -22,6 +22,9 @@ export async function proxy(request: NextRequest) {
   // Cache headers from @supabase/ssr arrive only with the first cookie write; keep them for every response we build.
   const cacheHeaders: Record<string, string> = {};
   let signedIn = false;
+  // Forwarded to the page's Server Component so getGuest() can skip a second supabase.auth.getUser()
+  // round trip: this call already paid the latency to verify the session.
+  let verifiedUser: { id: string; email: string; name: string | null } | null = null;
 
   if (env.GUEST_AUTH === "fake") {
     signedIn = readFakeGuest(request.cookies.get(FAKE_GUEST_COOKIE)?.value) !== null;
@@ -41,6 +44,11 @@ export async function proxy(request: NextRequest) {
       });
       const user = (await supabase.auth.getUser()).data.user;
       signedIn = !!user && !!user.email && !!user.email_confirmed_at;
+      if (signedIn && user?.email) {
+        const meta = (user.user_metadata ?? {}) as Record<string, unknown>;
+        const name = [meta.full_name, meta.name].find((n): n is string => typeof n === "string" && n !== "") ?? null;
+        verifiedUser = { id: user.id, email: user.email.trim().toLowerCase(), name };
+      }
     } catch (e) {
       // Supabase unreachable: treat as signed out for the redirect; pages show their own messages.
       console.error("proxy getUser failed", e);
@@ -53,6 +61,16 @@ export async function proxy(request: NextRequest) {
     for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
     for (const [k, v] of Object.entries(cacheHeaders)) redirect.headers.set(k, v);
     return redirect;
+  }
+  if (verifiedUser) {
+    const forwardedHeaders = new Headers(request.headers);
+    forwardedHeaders.set("x-guest-user-id", verifiedUser.id);
+    forwardedHeaders.set("x-guest-user-email", verifiedUser.email);
+    if (verifiedUser.name) forwardedHeaders.set("x-guest-user-name", encodeURIComponent(verifiedUser.name));
+    const withIdentity = NextResponse.next({ request: { headers: forwardedHeaders } });
+    for (const cookie of response.cookies.getAll()) withIdentity.cookies.set(cookie);
+    for (const [k, v] of Object.entries(cacheHeaders)) withIdentity.headers.set(k, v);
+    response = withIdentity;
   }
   return response;
 }

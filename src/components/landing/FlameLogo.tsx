@@ -172,8 +172,9 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
 
     // Nothing to draw while the logo is faded out or hidden (the story hides the header logo and the big
     // logo most of the time), so skip the work; a header-sized logo is also drawn at 30 fps at most.
-    let lastDraw = 0;
-    const hidden = () => {
+    // Hidden-ness is recomputed only when an ancestor's style/class actually changes, never on every
+    // animation frame — getComputedStyle() is expensive and the loop runs at 60–120Hz.
+    const computeHidden = () => {
       let el: Element | null = shown;
       for (let i = 0; i < 7 && el; i++, el = el.parentElement) {
         const cs = getComputedStyle(el);
@@ -181,11 +182,23 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       }
       return false;
     };
+    let isHidden = computeHidden();
+    const hiddenObserver = new MutationObserver(() => {
+      isHidden = computeHidden();
+    });
+    {
+      let el: Element | null = shown;
+      for (let i = 0; i < 7 && el; i++, el = el.parentElement) {
+        hiddenObserver.observe(el, { attributes: true, attributeFilter: ["style", "class"] });
+      }
+    }
+
+    let lastDraw = 0;
 
     function frame(now: number) {
       raf = 0;
       if (cancelled || !visible) return;
-      if ((small && now - lastDraw < 33) || hidden()) {
+      if ((small && now - lastDraw < 33) || isHidden) {
         raf = requestAnimationFrame(frame);
         return;
       }
@@ -214,6 +227,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
       cancelled = true;
       cancelAnimationFrame(raf);
       io.disconnect();
+      hiddenObserver.disconnect();
     };
   }, [ignite, replayKey, small, scale, externalReveal]);
 

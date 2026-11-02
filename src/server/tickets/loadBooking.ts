@@ -22,13 +22,7 @@ type BookingRow = {
   paid_at: Date | null;
 };
 
-/** The booking plus one entry per seat (ordered by seat label), or null if it does not exist. */
-export async function loadBookingWithTickets(bookingId: string): Promise<BookingWithTickets | null> {
-  const { rows } = await db.execute<BookingRow>(sql`
-    SELECT id, public_code, access_token, name, email, status, amount_paise, refund_amount_paise, seat_count, paid_at
-      FROM bookings WHERE id = ${bookingId}`);
-  const b = rows[0];
-  if (!b) return null;
+async function loadTickets(bookingId: string): Promise<TicketInfo[]> {
   const items = await db.execute<{ label: string; tier_name: string; price_paise: number; token: string | null }>(sql`
     SELECT s.label, bi.tier_name, bi.price_paise, t.token
       FROM booking_items bi
@@ -36,6 +30,12 @@ export async function loadBookingWithTickets(bookingId: string): Promise<Booking
       LEFT JOIN tickets t ON t.seat_id = bi.seat_id AND t.booking_id = bi.booking_id
      WHERE bi.booking_id = ${bookingId}
      ORDER BY s.label`);
+  return items.rows.map((r) => ({
+    seatLabel: r.label, tierName: r.tier_name, pricePaise: r.price_paise, token: r.token,
+  }));
+}
+
+function toBooking(b: BookingRow, tickets: TicketInfo[]): BookingWithTickets {
   return {
     id: b.id,
     publicCode: b.public_code,
@@ -47,13 +47,30 @@ export async function loadBookingWithTickets(bookingId: string): Promise<Booking
     refundAmountPaise: b.refund_amount_paise,
     seatCount: b.seat_count,
     paidAt: b.paid_at ? new Date(b.paid_at) : null,
-    tickets: items.rows.map((r) => ({
-      seatLabel: r.label, tierName: r.tier_name, pricePaise: r.price_paise, token: r.token,
-    })),
+    tickets,
   };
 }
 
+/** The booking plus one entry per seat (ordered by seat label), or null if it does not exist. */
+export async function loadBookingWithTickets(bookingId: string): Promise<BookingWithTickets | null> {
+  // The booking row and its tickets both key off the already-known bookingId, so they run concurrently
+  // instead of waiting on each other.
+  const [{ rows }, tickets] = await Promise.all([
+    db.execute<BookingRow>(sql`
+      SELECT id, public_code, access_token, name, email, status, amount_paise, refund_amount_paise, seat_count, paid_at
+        FROM bookings WHERE id = ${bookingId}`),
+    loadTickets(bookingId),
+  ]);
+  const b = rows[0];
+  return b ? toBooking(b, tickets) : null;
+}
+
 export async function getBookingByAccessToken(token: string): Promise<BookingWithTickets | null> {
-  const { rows } = await db.execute<{ id: string }>(sql`SELECT id FROM bookings WHERE access_token = ${token}`);
-  return rows[0] ? loadBookingWithTickets(rows[0].id) : null;
+  // Looks up the booking directly by access token instead of a separate token→id query first.
+  const { rows } = await db.execute<BookingRow>(sql`
+    SELECT id, public_code, access_token, name, email, status, amount_paise, refund_amount_paise, seat_count, paid_at
+      FROM bookings WHERE access_token = ${token}`);
+  const b = rows[0];
+  if (!b) return null;
+  return toBooking(b, await loadTickets(b.id));
 }

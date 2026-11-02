@@ -168,6 +168,7 @@ export function StoryIntro() {
     let lastBoyT = NaN;
     let lastBgY = NaN;
     let raf = 0;
+    let inView = true;
     const introStart = performance.now();
 
     // Fit the 1920×1080 scene to any screen: wide screens see the full frame,
@@ -208,8 +209,6 @@ export function StoryIntro() {
 
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
-      // Re-fit as soon as the stage changes size (window resize, mobile toolbar, scrollbar appearing).
-      if (`${stage.clientWidth}x${stage.clientHeight}` !== layoutKey) layout(false);
       const into = window.scrollY - section.offsetTop;
       const p = Math.min(1, Math.max(0, into / LEN));
       // The paper pattern travels with the scroll, exactly like the page beneath the pinned stage.
@@ -274,10 +273,36 @@ export function StoryIntro() {
     };
 
     layout(true);
+
+    // Re-fit when the stage actually resizes (window resize, mobile toolbar, scrollbar appearing)
+    // instead of reading its size every animation frame, which forces a synchronous layout.
+    const resizeObserver = new ResizeObserver(() => layout(false));
+    resizeObserver.observe(stage);
+
+    // Only run the RAF loop while the story is near the viewport; scrolling it far out of view
+    // (above or below) stops the per-frame work entirely instead of letting it spin uselessly.
+    const intersectionObserver = new IntersectionObserver(
+      ([entry]) => {
+        const wasInView = inView;
+        inView = entry.isIntersecting;
+        if (inView && !wasInView) {
+          last = 0; // avoid a large dt jump after being paused
+          raf = requestAnimationFrame(loop);
+        } else if (!inView && wasInView) {
+          cancelAnimationFrame(raf);
+          if (!useImg) vid.pause();
+        }
+      },
+      { rootMargin: "100% 0px 100% 0px" },
+    );
+    intersectionObserver.observe(section);
+
     raf = requestAnimationFrame(loop);
 
     return () => {
       cancelAnimationFrame(raf);
+      resizeObserver.disconnect();
+      intersectionObserver.disconnect();
       vid.pause();
       ctx.revert();
     };

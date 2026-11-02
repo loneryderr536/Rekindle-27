@@ -611,7 +611,9 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   100% { opacity: 0; transform: translate(var(--dx), -52px) scale(0.4); }
 }
 .o26-ft-logo { position: relative; width: 96px; height: 96px; display: flex; align-items: flex-end; justify-content: center; }
-.o26-ft-logo img { position: relative; width: 84px; height: auto; transform-origin: 50% 92%; animation: o26FtFlame 1.9s ease-in-out infinite; }
+/* The same living flame logo as the header. */
+.o26-ft-flame { position: relative; display: block; height: 96px; width: auto; aspect-ratio: 1093 / 1237; }
+.o26-ft-flame canvas { height: 100% !important; width: auto !important; }
 .o26-ft-spark { position: absolute; bottom: 26px; width: 4px; height: 4px; border-radius: 50%; background: #f9a90b; opacity: 0; animation: o26FtSpark 2.4s ease-out infinite; }
 .o26-ft-spark:nth-of-type(1) { left: 44%; --dx: -14px; }
 .o26-ft-spark:nth-of-type(2) { left: 56%; --dx: 12px; animation-delay: 0.8s; background: #ff7a2e; }
@@ -684,7 +686,6 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   .o26-logo-glow,
   .o26-step-ic,
   .o26-star,
-  .o26-ft-logo img,
   .o26-ft-spark {
     animation: none !important;
   }

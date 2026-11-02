@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { FlameLogo } from "@/components/landing/FlameLogo";
 import { LINKS } from "@/components/landing/links";
 
 function FlameIcon({ width = 14, height = 18, fill = "#FF4520" }: { width?: number; height?: number; fill?: string }) {
@@ -188,8 +189,9 @@ export function LandingFooter() {
     <footer className="o26-footer">
       <div className="o26-wrap">
         <a href={LINKS.home} className="o26-ft-logo" aria-label="ONE·26 Rekindle — back to top">
-          {/* eslint-disable-next-line @next/next/no-img-element -- the footer flame wobbles in CSS */}
-          <img src="/landing/logo.png" alt="ONE·26 Rekindle logo" width={84} height={96} />
+          <span className="o26-ft-flame">
+            <FlameLogo ignite={false} glow={false} small />
+          </span>
           <span className="o26-ft-spark" aria-hidden="true" />
           <span className="o26-ft-spark" aria-hidden="true" />
           <span className="o26-ft-spark" aria-hidden="true" />

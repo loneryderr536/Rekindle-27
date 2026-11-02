@@ -12,6 +12,7 @@ function getPool(): pg.Pool {
     _pool = new pg.Pool({
       connectionString: process.env.DATABASE_URL,
       max: Number(process.env.DB_POOL_MAX ?? 20),
+      connectionTimeoutMillis: Number(process.env.DB_CONNECTION_TIMEOUT_MS ?? 5000),
     });
   }
   return _pool;

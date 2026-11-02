@@ -112,3 +112,65 @@ export async function issueComp(
     return { bookingId: booking.id, publicCode: code, accessToken };
   });
 }
+
+export const CashSaleInput = z.object({
+  seatIds: uniqueIds(50),
+  name: z.string().trim().min(2).max(80),
+  email: z.string().trim().toLowerCase().pipe(z.email()),
+  phone: z.string(),
+});
+export type CashSaleInput = z.input<typeof CashSaleInput>;
+
+/**
+ * Door sale paid in cash: a `paid` booking priced at the seats' real tier prices (no Razorpay order),
+ * sold seats, priced items, tickets and a ticket email — same shape as `issueComp` but billed in full
+ * and logged as a cash sale so it is distinguishable in the audit trail from an online payment.
+ */
+export async function issueCashSale(
+  input: CashSaleInput, adminUserId: string, now: Date = new Date(),
+): Promise<{ bookingId: string; publicCode: string; accessToken: string; amountPaise: number }> {
+  const p = CashSaleInput.parse(input);
+  const phone = normalizeIndianPhone(p.phone);
+  if (!phone) throw new AppError("INVALID_PHONE", "Invalid Indian mobile number", 400);
+  const code = publicCode();
+  const accessToken = randomToken();
+
+  return db.transaction(async (tx) => {
+    const ids = sql.param(p.seatIds);
+    // Lock first so the priced snapshot below can't be undercut by a concurrent tier change.
+    assertSeatsExist(p.seatIds, await lockSeats(tx, p.seatIds));
+    const { rows: priced } = await tx.execute<{ price_paise: number }>(sql`
+      SELECT t.price_paise FROM seats s JOIN tiers t ON t.id = s.tier_id WHERE s.id = ANY(${ids}::uuid[])`);
+    const amountPaise = priced.reduce((sum, r) => sum + r.price_paise, 0);
+
+    const { rows: [booking] } = await tx.execute<{ id: string }>(sql`
+      INSERT INTO bookings
+        (public_code, access_token, name, email, phone, status, amount_paise, subtotal_paise, seat_count, hold_expires_at, paid_at)
+      VALUES
+        (${code}, ${accessToken}, ${p.name}, ${p.email}, ${phone}, 'paid', ${amountPaise}, ${amountPaise}, ${p.seatIds.length}, ${now}, ${now})
+      RETURNING id`);
+    const { rows: sold } = await tx.execute<{ id: string }>(sql`
+      UPDATE seats SET status = 'sold', booking_id = ${booking.id}, held_until = NULL
+       WHERE id = ANY(${ids}::uuid[])
+         AND (status IN ('available', 'blocked') OR (status = 'held' AND held_until <= ${now}))
+      RETURNING id`);
+    if (sold.length !== p.seatIds.length) {
+      const got = new Set(sold.map((r) => r.id));
+      throw new AppError("SEATS_TAKEN", "Some of the selected seats are no longer available", 409, {
+        seatIds: p.seatIds.filter((id) => !got.has(id)),
+      });
+    }
+    await tx.execute(sql`
+      INSERT INTO booking_items (booking_id, seat_id, tier_name, price_paise)
+      SELECT ${booking.id}, s.id, t.name, t.price_paise
+        FROM seats s JOIN tiers t ON t.id = s.tier_id
+       WHERE s.id = ANY(${ids}::uuid[])`);
+    await createTicketsForBooking(tx, booking.id);
+    await tx.execute(sql`
+      INSERT INTO email_outbox (booking_id, kind, status) VALUES (${booking.id}, 'tickets', 'pending')`);
+    await logAudit(adminUserId, "cash_sale", {
+      bookingId: booking.id, publicCode: code, seatIds: p.seatIds, name: p.name, email: p.email, amountPaise,
+    }, tx);
+    return { bookingId: booking.id, publicCode: code, accessToken, amountPaise };
+  });
+}

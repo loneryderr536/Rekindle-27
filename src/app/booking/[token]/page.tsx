@@ -83,7 +83,13 @@ export default async function BookingPage({
           </p>
         )}
         {showTickets && (
-          <p className="mt-4 text-muted">Show one code per person at the gate. Use Download QR under each ticket to save it. We&apos;ve also emailed these to {b.email}.</p>
+          <>
+            <p className="mt-4 text-muted">Show one code per person at the gate. Use Download QR under each ticket to save it. We&apos;ve also emailed these to {b.email}.</p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <a href={`/api/tickets/${token}/pass`} className="btn-ghost" download>Download all tickets (PDF)</a>
+              <a href={`/api/tickets/${token}/invoice`} className="btn-ghost" download>Download receipt (PDF)</a>
+            </div>
+          </>
         )}
         </div>
 

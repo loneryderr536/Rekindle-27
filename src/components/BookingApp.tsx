@@ -37,11 +37,16 @@ type Notice = { tone: "error" | "info"; text: string; signIn?: boolean };
 
 type SeatsData = { seats: SeatView[]; tiers: TierView[]; dateHeader: string | null };
 
-async function fetchSeats(): Promise<SeatsData> {
-  const res = await fetch("/api/seats", { cache: "no-store" });
+/** `data` is null on a 304 (nothing changed since `etag`); the caller keeps its existing seats/tiers. */
+async function fetchSeats(etag: string | null): Promise<{ data: SeatsData | null; etag: string | null }> {
+  const res = await fetch("/api/seats", {
+    cache: "no-store",
+    headers: etag ? { "If-None-Match": etag } : undefined,
+  });
+  if (res.status === 304) return { data: null, etag };
   if (!res.ok) throw new Error(`GET /api/seats ${res.status}`);
   const data = (await res.json()) as { seats: SeatView[]; tiers: TierView[] };
-  return { ...data, dateHeader: res.headers.get("date") };
+  return { data: { ...data, dateHeader: res.headers.get("date") }, etag: res.headers.get("etag") };
 }
 
 /**
@@ -66,6 +71,7 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
   /** Clock offset from the latest /api/seats response; fallback when /api/holds has no Date header. */
   const seatsOffsetRef = useRef(0);
   const checkoutRef = useRef<CheckoutHandle | null>(null);
+  const seatsEtagRef = useRef<string | null>(null);
   useEffect(() => {
     holdRef.current = hold;
     selectedRef.current = selected;
@@ -86,7 +92,10 @@ export function BookingApp({ attendee }: { attendee: Attendee | null }) {
   }, []);
 
   const refresh = useCallback(() => {
-    fetchSeats().then(applySeats, () => setLoadFailed(true));
+    fetchSeats(seatsEtagRef.current).then(({ data, etag }) => {
+      seatsEtagRef.current = etag;
+      if (data) applySeats(data);
+    }, () => setLoadFailed(true));
   }, [applySeats]);
 
   // Poll the map every 5 s while the tab is visible; refresh as soon as it becomes visible again.

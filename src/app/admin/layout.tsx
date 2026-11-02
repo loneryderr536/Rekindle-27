@@ -5,8 +5,10 @@ import { getSession, SESSION_COOKIE } from "@/server/auth/session";
 
 const LINKS = [
   { href: "/admin", label: "Dashboard" },
+  { href: "/admin/checkins", label: "Check-ins" },
   { href: "/admin/bookings", label: "Bookings" },
   { href: "/admin/seats", label: "Seats" },
+  { href: "/admin/seat-designer", label: "Seat designer" },
   { href: "/admin/tiers", label: "Tiers" },
   { href: "/admin/audit", label: "Audit" },
   { href: "/scan", label: "Scan" },

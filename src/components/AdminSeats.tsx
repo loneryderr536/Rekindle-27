@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { SeatMap } from "@/components/SeatMap";
+import { formatInr } from "@/lib/money";
 import type { SeatView, TierView } from "@/server/seats/listSeats";
 
 type Data = { seats: SeatView[]; tiers: TierView[] };
@@ -32,6 +33,8 @@ export function AdminSeats({ initial }: { initial: Data }) {
   const [note, setNote] = useState<Note | null>(null);
   const [compOpen, setCompOpen] = useState(false);
   const [comp, setComp] = useState({ name: "", email: "", phone: "" });
+  const [cashOpen, setCashOpen] = useState(false);
+  const [cash, setCash] = useState({ name: "", email: "", phone: "" });
 
   const refresh = useCallback(async () => {
     try {
@@ -57,6 +60,14 @@ export function AdminSeats({ initial }: { initial: Data }) {
     for (const s of data.seats) c[s.status]++;
     return c;
   }, [data.seats]);
+
+  const cashTotalPaise = useMemo(() => {
+    const priceByTier = new Map(data.tiers.map((t) => [t.id, t.pricePaise]));
+    const selectedSeats = new Set(selected);
+    return data.seats
+      .filter((s) => selectedSeats.has(s.id))
+      .reduce((sum, s) => sum + (priceByTier.get(s.tierId) ?? 0), 0);
+  }, [data.seats, data.tiers, selected]);
 
   function describe(r: Reply, success: string): Note {
     if (r.ok) return { ok: true, text: success };
@@ -91,6 +102,21 @@ export function AdminSeats({ initial }: { initial: Data }) {
     setBusy(false);
   }
 
+  async function submitCash(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setNote(null);
+    const r = await post("/api/admin/cash-sale", { seatIds: selected, ...cash });
+    setNote(describe(r, r.ok ? `Cash sale recorded: booking ${r.data?.publicCode}. Tickets are being emailed.` : ""));
+    if (r.ok) {
+      setSelected([]);
+      setCashOpen(false);
+      setCash({ name: "", email: "", phone: "" });
+    }
+    await refresh();
+    setBusy(false);
+  }
+
   const none = selected.length === 0 || busy;
 
   return (
@@ -111,7 +137,25 @@ export function AdminSeats({ initial }: { initial: Data }) {
         </label>
         <button type="button" className="btn-ghost" disabled={none || !tierId} onClick={() => run({ action: "assignTier", tierId }, (d) => `Moved ${d.assigned?.length ?? 0} seats to the tier.`)}>Assign to tier</button>
         <button type="button" className="btn-ghost" disabled={none} onClick={() => setCompOpen((o) => !o)}>Issue comp</button>
+        <button type="button" className="btn-ghost" disabled={none} onClick={() => setCashOpen((o) => !o)}>Sell for cash</button>
       </div>
+
+      {cashOpen && (
+        <form onSubmit={submitCash} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-3">
+          <label className="field"><span>Buyer name</span>
+            <input required minLength={2} maxLength={80} value={cash.name} onChange={(e) => setCash({ ...cash, name: e.target.value })} /></label>
+          <label className="field"><span>Email</span>
+            <input required type="email" value={cash.email} onChange={(e) => setCash({ ...cash, email: e.target.value })} /></label>
+          <label className="field"><span>Mobile</span>
+            <input required inputMode="tel" value={cash.phone} onChange={(e) => setCash({ ...cash, phone: e.target.value })} /></label>
+          <div className="sm:col-span-3 flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold">Total due: {formatInr(cashTotalPaise)}</span>
+            <button type="submit" className="btn-primary" disabled={none}>
+              {busy ? "Recording..." : `Record cash sale for ${selected.length} seat(s)`}
+            </button>
+          </div>
+        </form>
+      )}
 
       {compOpen && (
         <form onSubmit={submitComp} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-3">

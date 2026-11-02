@@ -229,11 +229,13 @@ export function StoryIntro() {
       last = now;
       if (reduce || into > LEN + stage.clientHeight) cur = target;
       else {
-        // Ease towards the scroll position, but never faster than ~1.6× real time,
-        // so even a fast flick plays the boy, the snap and the fire like a video.
-        const step = (target - cur) * (1 - Math.exp(-dt * 6));
-        const cap = dt * (target < cur ? 5 : 1.6); // rewinding can be quicker
-        cur += Math.max(-cap, Math.min(cap, step));
+        // Ease towards the scroll position so motion stays smooth instead of snapping, but with no cap
+        // on how fast it may close a big gap: a hard real-time cap here previously meant a normal-paced
+        // scroll could outrun the catch-up and carry the section off screen (the sticky pin unsticks on
+        // raw scroll distance, not on animation progress) before the logo ever reached the header — the
+        // story would cut straight to the next section mid-animation. The exponential step still slows
+        // down as it nears the target, so it never visually "pops".
+        cur += (target - cur) * (1 - Math.exp(-dt * 6));
         if (Math.abs(target - cur) < 0.002) cur = target;
       }
       const t = cur;

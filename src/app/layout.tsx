@@ -4,7 +4,6 @@ import { EVENT } from "@/lib/event";
 import "./globals.css";
 import "./landing.css";
 import "./pages.css";
-import "./admin/admin.css";
 
 export const metadata: Metadata = {
   title: { default: `${EVENT.name} tickets`, template: `%s | ${EVENT.name}` },

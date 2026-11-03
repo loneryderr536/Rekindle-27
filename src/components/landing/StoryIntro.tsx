@@ -7,8 +7,15 @@ import { BOY_DURATION } from "@/components/landing/boyEngine";
 import { flameReveal } from "@/components/landing/FlameLogo";
 import { StoryScene } from "@/components/landing/StoryScene";
 
-/** px of scrolling that plays the story. */
-const LEN = 6500;
+/**
+ * px of scrolling that plays the story. Shorter on narrow/touch viewports (see the matching
+ * `@media (max-width: 760px)` override of #o26-story's height in landing.css — the two must agree,
+ * since the sticky pin's duration is driven by that CSS height): on a phone, 6500px of a ~300px swipe
+ * is 20+ full-screen flicks of a pinned, seemingly unchanging stage before any new section appears,
+ * which reads as the page being stuck rather than as a slow intro. Desktop keeps the full length.
+ */
+const DESKTOP_LEN = 6500;
+const MOBILE_LEN = 3200;
 /**
  * How much scroll each part of the story gets: [from, to, weight] in story seconds.
  * The boy, the push-in, the snap and the burning logo get extra room so they are never skipped past:
@@ -210,11 +217,13 @@ export function StoryIntro() {
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       const into = window.scrollY - section.offsetTop;
-      const p = Math.min(1, Math.max(0, into / LEN));
+      const mobile = window.innerWidth <= 760;
+      const len = mobile ? MOBILE_LEN : DESKTOP_LEN;
+      const p = Math.min(1, Math.max(0, into / len));
       // The paper pattern travels with the scroll, exactly like the page beneath the pinned stage.
       // Moving whole tiles keeps the pattern seamless, so the layers only ever shift by less than one tile.
-      const tile = window.innerWidth <= 760 ? 540 : 760;
-      const bgY = -(Math.round(Math.min(LEN, Math.max(0, into))) % tile);
+      const tile = mobile ? 540 : 760;
+      const bgY = -(Math.round(Math.min(len, Math.max(0, into))) % tile);
       if (bgY !== lastBgY) {
         lastBgY = bgY;
         const tf = `translate3d(0, ${bgY}px, 0)`;
@@ -227,7 +236,7 @@ export function StoryIntro() {
       const target = Math.max(intro, scrollT);
       const dt = Math.min(0.1, (now - (last || now)) / 1000);
       last = now;
-      if (reduce || into > LEN + stage.clientHeight) cur = target;
+      if (reduce || into > len + stage.clientHeight) cur = target;
       else {
         // Ease towards the scroll position so motion stays smooth instead of snapping, but with no cap
         // on how fast it may close a big gap: a hard real-time cap here previously meant a normal-paced
@@ -241,7 +250,7 @@ export function StoryIntro() {
       const t = cur;
       if (tl && Math.abs(tl.time() - t) > 0.0004) tl.time(t);
       fill.style.width = `${(Math.min(1, t / END) * 100).toFixed(2)}%`;
-      if (into > LEN + stage.clientHeight) return; // story is off screen
+      if (into > len + stage.clientHeight) return; // story is off screen
 
       // The boy plays on the story clock, starting when the title lifts away.
       const boyT = Math.min(BOY_DURATION, Math.max(0, t - BOY_AT));

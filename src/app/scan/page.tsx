@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ScanStation } from "@/components/ScanStation";
 import { requireAdminPage } from "@/server/auth/guard";
+import "../admin/admin.css";
 
 export const metadata: Metadata = { title: "Gate scanner", robots: { index: false } };
 export const dynamic = "force-dynamic";

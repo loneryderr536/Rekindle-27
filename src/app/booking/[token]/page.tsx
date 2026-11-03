@@ -8,8 +8,6 @@ import { bookingStatusLabel } from "@/lib/bookingStatus";
 import { EVENT } from "@/lib/event";
 import { formatInr } from "@/lib/money";
 import { getBookingByAccessToken } from "@/server/tickets/loadBooking";
-import { qrDataUrl } from "@/server/tickets/qr";
-import { qrPayload } from "@/server/tickets/tokens";
 import { ticketsVisible } from "@/server/tickets/visibility";
 import { postPaymentRedirect } from "./postPaymentRedirect";
 
@@ -35,9 +33,6 @@ export default async function BookingPage({
   if (to) redirect(to);
 
   const showTickets = ticketsVisible(b.status);
-  const qrs = showTickets
-    ? await Promise.all(b.tickets.map((t) => (t.token ? qrDataUrl(qrPayload(t.token)) : null)))
-    : [];
 
   return (
     <BrandPage dark={showTickets ? "ticket" : undefined}>
@@ -100,7 +95,9 @@ export default async function BookingPage({
               <h2 className="font-display m-0 text-[28px] font-semibold">ONE·26 {EVENT.name}</h2>
             </div>
             <TicketSet
-              tickets={b.tickets.flatMap((t, i) => (qrs[i] ? [{ seatLabel: t.seatLabel, tierName: t.tierName, qr: qrs[i]! }] : []))}
+              tickets={b.tickets.flatMap((t) =>
+                t.token ? [{ seatLabel: t.seatLabel, tierName: t.tierName, qr: `/api/tickets/qr/${t.token}` }] : [],
+              )}
               orderCode={b.publicCode}
               holder={b.name}
               eventName={EVENT.name}

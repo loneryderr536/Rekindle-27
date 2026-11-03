@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { AdminHeader } from "@/components/AdminHeader";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { getSession, SESSION_COOKIE } from "@/server/auth/session";
+import "./admin.css";
 
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const jar = await cookies();

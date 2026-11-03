@@ -217,6 +217,20 @@ html:has(#o26-root) body {
   #o26-story { height: calc(100lvh + 6500px); }
   #o26-stage { height: 100lvh; }
 }
+/*
+ * Shorter on phones: the pinned scroll length here must match StoryIntro.tsx's MOBILE_LEN —
+ * 6500px of ~300px swipes is 20+ flicks of an apparently unchanging screen, which reads as stuck
+ * rather than as a slow intro. These rules come after the base and @supports ones above so they
+ * win on a matching screen regardless of 100lvh support.
+ */
+@media (max-width: 760px) {
+  #o26-story { height: calc(100vh + 3200px); }
+}
+@supports (height: 100lvh) {
+  @media (max-width: 760px) {
+    #o26-story { height: calc(100lvh + 3200px); }
+  }
+}
 /* No rubber-band bounce at the top or bottom of the page. */
 html:has(#o26-root) { overscroll-behavior-y: none; }
 

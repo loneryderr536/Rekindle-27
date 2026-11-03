@@ -33,12 +33,3 @@
   gap: 2px;
 }
 #o26-root .o26-admin-links .o26-hlink { height: 40px; font-size: 14px; }
-
-/* A compact page heading that matches the landing page's eyebrow + title language. */
-.o26-admin-h1 {
-  margin: 0;
-  font-family: var(--o26-fredoka), sans-serif;
-  font-weight: 700;
-  font-size: clamp(26px, 3.2vw, 34px);
-  color: #0b1020;
-}

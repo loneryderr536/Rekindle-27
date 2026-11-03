@@ -9,7 +9,7 @@ export function AdminLogout() {
     router.push("/admin/login");
   }
   return (
-    <button type="button" className="rounded-full px-3 py-1.5 text-sm font-semibold hover:bg-white/10" onClick={logout}>
+    <button type="button" className="o26-hlink" onClick={logout}>
       Log out
     </button>
   );

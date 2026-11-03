@@ -6,7 +6,7 @@ import { GET as exportRoute } from "@/app/api/admin/export/route";
 import { POST as resendRoute } from "@/app/api/admin/bookings/[id]/resend/route";
 import { createSession } from "@/server/auth/session";
 import { getDashboard } from "@/server/admin/dashboard";
-import { searchBookings } from "@/server/admin/bookings";
+import { getBookingDetail, searchBookings } from "@/server/admin/bookings";
 import { csvField, exportCsv } from "@/server/admin/export";
 import { resendTickets } from "@/server/admin/bookings";
 import { setEmailSenderForTests } from "@/server/email/sender";
@@ -67,6 +67,10 @@ test("dashboard counts per tier and revenue", async () => {
   expect(d.revenuePaise).toBe(380000);
   expect(d.recent).toHaveLength(2);
   expect(d.recent[0]).toMatchObject({ publicCode: expect.any(String), status: "paid", seatCount: 1, amountPaise: 80000 });
+  // Regression: raw db.execute() returns timestamptz columns as strings, not Date objects — the
+  // mapping must convert them, or formatIst() throws "Invalid time value" when the admin dashboard renders.
+  expect(d.recent[0].createdAt).toBeInstanceOf(Date);
+  expect(Number.isNaN(d.recent[0].createdAt.getTime())).toBe(false);
 });
 
 test("expired hold not counted as held; live hold is", async () => {
@@ -111,6 +115,19 @@ test("search escapes % and _ wildcards", async () => {
   expect(await searchBookings("%")).toEqual([]);
   expect(await searchBookings("%%")).toEqual([]);
   expect(await searchBookings("as_a")).toEqual([]);
+});
+
+test("search and booking-detail dates are real Date objects, not raw strings", async () => {
+  const b = await paid([seatIds[0]]);
+  const [found] = await searchBookings(guest.email);
+  expect(found.createdAt).toBeInstanceOf(Date);
+  expect(Number.isNaN(found.createdAt.getTime())).toBe(false);
+
+  const detail = await getBookingDetail(b.bookingId);
+  expect(detail!.createdAt).toBeInstanceOf(Date);
+  expect(Number.isNaN(detail!.createdAt.getTime())).toBe(false);
+  expect(detail!.paidAt).toBeInstanceOf(Date);
+  expect(Number.isNaN(detail!.paidAt!.getTime())).toBe(false);
 });
 
 test("resend creates outbox row and audit entry", async () => {

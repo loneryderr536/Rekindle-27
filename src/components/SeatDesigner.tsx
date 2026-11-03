@@ -142,7 +142,7 @@ export function SeatDesigner({ initial }: { initial: Data }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-3">
+      <div className="flex flex-wrap items-center gap-2 o26-card p-3">
         <div className="flex overflow-hidden rounded-lg border border-line" role="group" aria-label="Tool">
           <button type="button" className={`px-3 py-1.5 text-sm font-semibold ${mode === "move" ? "bg-plum text-white" : ""}`} onClick={() => { setMode("move"); setPendingClick(null); }}>
             Move
@@ -229,7 +229,7 @@ export function SeatDesigner({ initial }: { initial: Data }) {
       </div>
 
       {selectedSeat && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-white p-4">
+        <div className="flex flex-wrap items-center gap-3 o26-card p-4">
           <span className="font-semibold">{selectedSeat.label}</span>
           <span className="text-muted">{selectedSeat.status}</span>
           <label className="ml-auto flex items-center gap-2 text-sm">
@@ -251,7 +251,7 @@ export function SeatDesigner({ initial }: { initial: Data }) {
       )}
 
       {drafts.length > 0 && (
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white text-sm">
+        <ul className="divide-y divide-line o26-card text-sm">
           {drafts.map((d) => (
             <li key={d.key} className="flex items-center justify-between gap-3 p-3">
               <span>{d.section}-{d.row}-{d.number} · {tierById.get(d.tierId)?.name}</span>

@@ -7,5 +7,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ScanPage() {
   await requireAdminPage(["admin", "scanner"]);
-  return <ScanStation />;
+  return (
+    <div id="o26-root" className="flex flex-1 flex-col">
+      <div className="o26-glass" aria-hidden="true" />
+      <ScanStation />
+    </div>
+  );
 }

@@ -1,8 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { AdminLogout } from "@/components/AdminLogout";
 import { QrScanner } from "@/components/QrScanner";
+import { StaffBar } from "@/components/StaffBar";
 
 type Result =
   | { result: "ok"; seatLabel: string; tierName: string; firstName: string }
@@ -28,7 +29,6 @@ function readGate(): string {
 const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 
 export function ScanStation() {
-  const router = useRouter();
   const [gate, setGate] = useState("");
   const [flash, setFlash] = useState<Result | { result: "error"; message: string } | null>(null);
   const [query, setQuery] = useState("");
@@ -137,20 +137,12 @@ export function ScanStation() {
     }
   }
 
-  async function logout() {
-    await fetch("/api/admin/logout", { method: "POST" }).catch(() => undefined);
-    router.push("/admin/login");
-  }
-
   return (
-    <main className="mx-auto w-full max-w-md space-y-6 px-4 py-6">
-      <header className="flex items-center justify-between">
-        <h1 className="font-display text-3xl font-bold text-plum">Gate scanner</h1>
-        <button type="button" className="btn-ghost" onClick={logout}>
-          Log out
-        </button>
-      </header>
-
+    <>
+      <StaffBar title="Gate scanner">
+        <AdminLogout />
+      </StaffBar>
+      <main className="relative z-10 mx-auto w-full max-w-md space-y-6 px-4 py-6">
       <label className="field">
         <span>Gate name</span>
         <input value={gate} onChange={(e) => changeGate(e.target.value)} maxLength={40} placeholder="e.g. Main gate" />
@@ -181,7 +173,7 @@ export function ScanStation() {
           {found?.map((t) => {
             const valid = t.bookingStatus === "paid" || t.bookingStatus === "comp";
             return (
-              <li key={t.ticketId} className="rounded-xl border border-line bg-white p-4">
+              <li key={t.ticketId} className="o26-card p-4">
                 <p className="text-lg font-bold">
                   {t.tierName} · {t.seatLabel}
                 </p>
@@ -237,6 +229,7 @@ export function ScanStation() {
           )}
         </div>
       )}
-    </main>
+      </main>
+    </>
   );
 }

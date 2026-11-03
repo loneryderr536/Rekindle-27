@@ -1,0 +1,44 @@
+/*
+ * Shared chrome for the staff tools (admin and the gate scanner): the paper page and the same
+ * navy-textured header as the public site (#o26-header, from landing.css), with a staff nav instead
+ * of the public menu. Scoped to the admin bar's own layout; the header's look itself is inherited.
+ */
+.o26-admin-bar {
+  position: relative;
+  min-height: 76px;
+  margin: 0 auto;
+  max-width: 1100px;
+  padding: 14px clamp(16px, 3vw, 40px);
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 4px;
+}
+.o26-admin-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+  color: #fdfbf4;
+  font-weight: 600;
+  font-size: 18px;
+  text-decoration: none;
+}
+#o26-admin-logo { display: block; height: 40px; width: auto; aspect-ratio: 1093 / 1237; }
+.o26-admin-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+#o26-root .o26-admin-links .o26-hlink { height: 40px; font-size: 14px; }
+
+/* A compact page heading that matches the landing page's eyebrow + title language. */
+.o26-admin-h1 {
+  margin: 0;
+  font-family: var(--o26-fredoka), sans-serif;
+  font-weight: 700;
+  font-size: clamp(26px, 3.2vw, 34px);
+  color: #0b1020;
+}

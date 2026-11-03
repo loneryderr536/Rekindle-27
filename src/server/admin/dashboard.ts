@@ -41,7 +41,7 @@ export async function getDashboard(now: Date = new Date()): Promise<{
     revenuePaise: Number(rev.rows[0].total),
     recent: recent.rows.map((r) => ({
       id: r.id, publicCode: r.public_code, name: r.name, status: r.status,
-      amountPaise: r.amount_paise, seatCount: r.seat_count, createdAt: r.created_at,
+      amountPaise: r.amount_paise, seatCount: r.seat_count, createdAt: new Date(r.created_at),
     })),
   };
 }

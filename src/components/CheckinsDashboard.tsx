@@ -55,7 +55,7 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
 
   return (
     <div className="space-y-8">
-      <section aria-label="Check-in progress" className="rounded-xl bg-plum p-5 text-white">
+      <section aria-label="Check-in progress" className="o26-navy rounded-xl p-5 text-white">
         <div className="flex items-baseline justify-between">
           <p className="text-sm text-white/70">Checked in</p>
           {stale && <p className="text-xs text-white/60">Connection lost — retrying…</p>}
@@ -70,8 +70,8 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
       </section>
 
       <section aria-labelledby="gate-h" className="space-y-3">
-        <h2 id="gate-h" className="text-lg font-bold">By gate</h2>
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <h2 id="gate-h" className="font-display text-lg font-bold">By gate</h2>
+        <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>
@@ -97,8 +97,8 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
       </section>
 
       <section aria-labelledby="tier-h" className="space-y-3">
-        <h2 id="tier-h" className="text-lg font-bold">By tier</h2>
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <h2 id="tier-h" className="font-display text-lg font-bold">By tier</h2>
+        <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>
@@ -121,8 +121,8 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
       </section>
 
       <section aria-labelledby="recent-h" className="space-y-3">
-        <h2 id="recent-h" className="text-lg font-bold">Recent check-ins</h2>
-        <ul className="divide-y divide-line rounded-xl border border-line bg-white">
+        <h2 id="recent-h" className="font-display text-lg font-bold">Recent check-ins</h2>
+        <ul className="divide-y divide-line o26-card">
           {recent.length === 0 && <li className="p-3 text-muted">No check-ins yet.</li>}
           {recent.map((r) => (
             <li key={r.ticketId} className="flex items-center justify-between gap-3 p-3 text-sm">

@@ -125,7 +125,7 @@ export function AdminSeats({ initial }: { initial: Data }) {
         {counts.available} available, {counts.blocked} blocked, {counts.held} held, {counts.sold} sold.
         Dashed dark seats are blocked. Held and sold seats cannot be selected.
       </p>
-      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-line bg-white p-3">
+      <div className="flex flex-wrap items-center gap-2 o26-card p-3">
         <span className="mr-2 text-sm font-semibold">{selected.length} selected</span>
         <button type="button" className="btn-primary" disabled={none} onClick={() => run({ action: "block" }, (d) => `Blocked ${d.blocked?.length ?? 0}, skipped ${d.skipped?.length ?? 0}.`)}>Block</button>
         <button type="button" className="btn-primary" disabled={none} onClick={() => run({ action: "unblock" }, (d) => `Unblocked ${d.unblocked?.length ?? 0}, skipped ${d.skipped?.length ?? 0}.`)}>Unblock</button>
@@ -141,7 +141,7 @@ export function AdminSeats({ initial }: { initial: Data }) {
       </div>
 
       {cashOpen && (
-        <form onSubmit={submitCash} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-3">
+        <form onSubmit={submitCash} className="grid gap-3 o26-card p-4 sm:grid-cols-3">
           <label className="field"><span>Buyer name</span>
             <input required minLength={2} maxLength={80} value={cash.name} onChange={(e) => setCash({ ...cash, name: e.target.value })} /></label>
           <label className="field"><span>Email</span>
@@ -158,7 +158,7 @@ export function AdminSeats({ initial }: { initial: Data }) {
       )}
 
       {compOpen && (
-        <form onSubmit={submitComp} className="grid gap-3 rounded-xl border border-line bg-white p-4 sm:grid-cols-3">
+        <form onSubmit={submitComp} className="grid gap-3 o26-card p-4 sm:grid-cols-3">
           <label className="field"><span>Guest name</span>
             <input required minLength={2} maxLength={80} value={comp.name} onChange={(e) => setComp({ ...comp, name: e.target.value })} /></label>
           <label className="field"><span>Email</span>
@@ -173,7 +173,7 @@ export function AdminSeats({ initial }: { initial: Data }) {
 
       {note && <p role="status" className={note.ok ? "text-sm font-medium" : "text-sm font-medium text-danger"}>{note.text}</p>}
 
-      <div className="rounded-xl border border-line bg-white">
+      <div className="o26-card">
         <SeatMap
           seats={data.seats}
           tiers={data.tiers}

@@ -6,7 +6,7 @@ import type { BookingSummary } from "@/server/admin/dashboard";
 export function BookingsTable({ rows, empty }: { rows: BookingSummary[]; empty: string }) {
   if (rows.length === 0) return <p className="text-muted">{empty}</p>;
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-white">
+    <div className="overflow-x-auto o26-card">
       <table className="w-full text-left text-sm">
         <thead className="border-b border-line text-muted">
           <tr>

@@ -32,7 +32,7 @@ export async function searchBookings(q: string, limit = 50): Promise<BookingSumm
      LIMIT ${limit}`);
   return rows.map((r) => ({
     id: r.id, publicCode: r.public_code, name: r.name, status: r.status,
-    amountPaise: r.amount_paise, seatCount: r.seat_count, createdAt: r.created_at,
+    amountPaise: r.amount_paise, seatCount: r.seat_count, createdAt: new Date(r.created_at),
   }));
 }
 
@@ -62,9 +62,11 @@ export async function getBookingDetail(id: string): Promise<AdminBookingDetail |
      ORDER BY s.label`);
   return {
     id: b.id, publicCode: b.public_code, name: b.name, email: b.email, phone: b.phone,
-    status: b.status, amountPaise: b.amount_paise, paidAt: b.paid_at, createdAt: b.created_at,
+    status: b.status, amountPaise: b.amount_paise,
+    paidAt: b.paid_at ? new Date(b.paid_at) : null, createdAt: new Date(b.created_at),
     seats: items.rows.map((r) => ({
-      label: r.label, tierName: r.tier_name, pricePaise: r.price_paise, checkedInAt: r.checked_in_at, gate: r.gate,
+      label: r.label, tierName: r.tier_name, pricePaise: r.price_paise,
+      checkedInAt: r.checked_in_at ? new Date(r.checked_in_at) : null, gate: r.gate,
     })),
   };
 }

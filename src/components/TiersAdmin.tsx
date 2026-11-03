@@ -93,7 +93,7 @@ export function TiersAdmin({ tiers }: { tiers: TierView[] }) {
   return (
     <div className="space-y-8">
       <p className="text-sm text-muted">A price change applies to new holds only. Guests already checking out pay the price they were shown.</p>
-      <div className="overflow-x-auto rounded-xl border border-line bg-white">
+      <div className="overflow-x-auto o26-card">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-line text-muted">
             <tr><th className="p-3">Tier</th><th className="p-3">Price</th><th className="p-3">Colour</th><th className="p-3" /></tr>
@@ -101,7 +101,7 @@ export function TiersAdmin({ tiers }: { tiers: TierView[] }) {
           <tbody>{tiers.map((t) => <TierRow key={t.id} tier={t} />)}</tbody>
         </table>
       </div>
-      <form onSubmit={create} className="flex flex-wrap items-end gap-3 rounded-xl border border-line bg-white p-4">
+      <form onSubmit={create} className="flex flex-wrap items-end gap-3 o26-card p-4">
         <h2 className="w-full font-display text-xl font-bold text-plum">New tier</h2>
         <label className="field"><span>Name</span><input required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label className="field"><span>Price (₹)</span><input required inputMode="decimal" value={rupees} onChange={(e) => setRupees(e.target.value)} /></label>

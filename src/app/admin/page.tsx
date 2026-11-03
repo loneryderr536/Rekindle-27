@@ -21,14 +21,14 @@ export default async function AdminHome() {
         </a>
       </header>
 
-      <section aria-label="Revenue" className="rounded-xl bg-plum p-5 text-white">
+      <section aria-label="Revenue" className="o26-navy rounded-xl p-5 text-white">
         <p className="text-sm text-white/70">Revenue (paid bookings)</p>
         <p className="font-display text-4xl font-bold text-marigold">{formatInr(d.revenuePaise)}</p>
       </section>
 
       <section aria-labelledby="tiers-h" className="space-y-3">
-        <h2 id="tiers-h" className="text-lg font-bold">Seats by tier</h2>
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <h2 id="tiers-h" className="font-display text-lg font-bold">Seats by tier</h2>
+        <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>
@@ -58,7 +58,7 @@ export default async function AdminHome() {
 
       <section aria-labelledby="recent-h" className="space-y-3">
         <div className="flex items-baseline justify-between">
-          <h2 id="recent-h" className="text-lg font-bold">Recent bookings</h2>
+          <h2 id="recent-h" className="font-display text-lg font-bold">Recent bookings</h2>
           <Link href="/admin/bookings" className="text-sm font-semibold underline">Search bookings</Link>
         </div>
         <BookingsTable rows={d.recent} empty="No bookings yet." />

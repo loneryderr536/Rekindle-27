@@ -32,8 +32,8 @@ export default async function AdminBookingDetail({ params }: PageProps<"/admin/b
         </p>
       </header>
 
-      <section aria-labelledby="guest-h" className="space-y-2 rounded-xl border border-line bg-white p-4">
-        <h2 id="guest-h" className="font-bold">Guest</h2>
+      <section aria-labelledby="guest-h" className="space-y-2 o26-card p-4">
+        <h2 id="guest-h" className="font-display font-bold">Guest</h2>
         <dl className="grid grid-cols-[6rem_1fr] gap-y-1 text-sm">
           <dt className="text-muted">Name</dt><dd>{b.name}</dd>
           <dt className="text-muted">Email</dt><dd className="break-all">{b.email}</dd>
@@ -44,8 +44,8 @@ export default async function AdminBookingDetail({ params }: PageProps<"/admin/b
       </section>
 
       <section aria-labelledby="seats-h" className="space-y-3">
-        <h2 id="seats-h" className="text-lg font-bold">Seats</h2>
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <h2 id="seats-h" className="font-display text-lg font-bold">Seats</h2>
+        <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>

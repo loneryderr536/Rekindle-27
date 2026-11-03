@@ -22,7 +22,7 @@ export default async function AdminAuditPage() {
       {rows.length === 0 ? (
         <p className="text-muted">Nothing has been recorded yet.</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-line bg-white">
+        <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr><th className="p-3">Time (IST)</th><th className="p-3">Admin</th><th className="p-3">Action</th><th className="p-3">Details</th></tr>

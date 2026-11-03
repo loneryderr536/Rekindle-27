@@ -8,6 +8,16 @@ import { requireAdminPage } from "@/server/auth/guard";
 export const metadata: Metadata = { title: "Dashboard", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
+const TOOLS = [
+  { href: "/admin/checkins", label: "Check-ins", desc: "Live check-in progress across every gate." },
+  { href: "/admin/bookings", label: "Bookings", desc: "Search by code, email, phone or name." },
+  { href: "/admin/seats", label: "Seats", desc: "Block seats, issue comps, or sell for cash." },
+  { href: "/admin/seat-designer", label: "Seat designer", desc: "Lay out the venue visually." },
+  { href: "/admin/tiers", label: "Tiers", desc: "Adjust prices and tier colours." },
+  { href: "/admin/audit", label: "Audit log", desc: "Every admin action, who and when." },
+  { href: "/scan", label: "Gate scanner", desc: "Scan or manually check in a ticket." },
+];
+
 export default async function AdminHome() {
   await requireAdminPage(["admin"]);
   const d = await getDashboard();
@@ -20,6 +30,22 @@ export default async function AdminHome() {
           Export CSV
         </a>
       </header>
+
+      <section aria-labelledby="tools-h" className="space-y-3">
+        <h2 id="tools-h" className="font-display text-lg font-bold">Tools</h2>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+          {TOOLS.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="o26-card block p-4 transition-transform hover:-translate-y-0.5"
+            >
+              <p className="font-display font-bold text-plum">{t.label}</p>
+              <p className="mt-1 text-sm text-muted">{t.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       <section aria-label="Revenue" className="o26-navy rounded-xl p-5 text-white">
         <p className="text-sm text-white/70">Revenue (paid bookings)</p>

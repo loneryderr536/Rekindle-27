@@ -173,7 +173,9 @@ export function AdminSeats({ initial }: { initial: Data }) {
 
       {note && <p role="status" className={note.ok ? "text-sm font-medium" : "text-sm font-medium text-danger"}>{note.text}</p>}
 
-      <div className="o26-card">
+      {/* SeatMap is styled for the dark seat-selection page (near-white text), so it needs a navy
+          background here too — a white card made it almost unreadable. */}
+      <div className="o26-navy overflow-hidden rounded-[28px]">
         <SeatMap
           seats={data.seats}
           tiers={data.tiers}

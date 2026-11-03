@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { GuestSignIn } from "@/components/GuestSignIn";
+import { RoleSignIn } from "@/components/RoleSignIn";
 import { BrandPage, PageIntro } from "@/components/landing/BrandPage";
 import { safeNext } from "@/lib/safeNext";
 import { getGuest } from "@/server/guestAuth/getGuest";
@@ -29,7 +29,7 @@ export default async function SignInPage({ searchParams }: Props) {
               Google sign-in didn&apos;t finish. Try again or use an email code.
             </p>
           )}
-          <GuestSignIn next={next} />
+          <RoleSignIn next={next} defaultRole="guest" />
         </section>
       </div>
     </BrandPage>

@@ -1,15 +1,20 @@
 import { and, eq, gt, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { bookingItems, bookings, seats, tiers } from "@/db/schema";
-import { HOLD_MINUTES } from "@/lib/constants";
+import { HOLD_MINUTES, MAX_SEATS_PER_BOOKING } from "@/lib/constants";
 import { discountAmountPaise } from "@/lib/discount";
 import { AppError } from "@/lib/errors";
 import { normalizeIndianPhone } from "@/lib/phone";
 import { publicCode, randomToken } from "@/lib/random";
 import { findDiscount } from "@/server/discounts/findDiscount";
+import { getDefaultTier } from "@/server/seats/defaultTier";
 
-export type CreateHoldInput = { seatIds: string[]; name: string; email: string; phone: string; clientIp?: string;
-  discountCode?: string; guestUserId?: string };
+/** Exactly one of `seatIds` (specific seats, used by admin/internal callers) or `seatCount` (the guest
+ *  flow: any N available seats of the event's default tier are picked automatically) must be set. */
+export type CreateHoldInput = { name: string; email: string; phone: string; clientIp?: string;
+  discountCode?: string; guestUserId?: string } & (
+    { seatIds: string[]; seatCount?: undefined } | { seatCount: number; seatIds?: undefined }
+  );
 
 export type HoldResult = {
   bookingId: string;
@@ -38,11 +43,15 @@ function seatsTaken(seatIds: string[]): AppError {
  * All time comparisons use `now`, so callers (and tests) control the clock.
  */
 export async function createHold(input: CreateHoldInput, now: Date = new Date()): Promise<HoldResult> {
-  const seatIds = input.seatIds;
-  const duplicates = [...new Set(seatIds.filter((id, i) => seatIds.indexOf(id) !== i))];
-  if (duplicates.length > 0) {
-    throw new AppError("INVALID_SEATS", "Duplicate seat IDs", 400, { seatIds: duplicates });
+  if (input.seatIds) {
+    const duplicates = [...new Set(input.seatIds.filter((id, i) => input.seatIds!.indexOf(id) !== i))];
+    if (duplicates.length > 0) {
+      throw new AppError("INVALID_SEATS", "Duplicate seat IDs", 400, { seatIds: duplicates });
+    }
+  } else if (!Number.isInteger(input.seatCount) || input.seatCount < 1 || input.seatCount > MAX_SEATS_PER_BOOKING) {
+    throw new AppError("VALIDATION", "seatCount must be between 1 and " + MAX_SEATS_PER_BOOKING, 400);
   }
+  const requestedCount = input.seatIds?.length ?? input.seatCount!;
   const phone = normalizeIndianPhone(input.phone);
   if (!phone) throw new AppError("INVALID_PHONE", "Invalid Indian mobile number", 400);
   const email = input.email.trim().toLowerCase();
@@ -81,41 +90,66 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
           guestUserId: input.guestUserId ?? null,
           status: "pending",
           amountPaise: 0,
-          seatCount: seatIds.length,
+          seatCount: requestedCount,
           holdExpiresAt,
         })
         .returning({ id: bookings.id, publicCode: bookings.publicCode, accessToken: bookings.accessToken });
 
-      // Lock requested rows in a deterministic order so overlapping group holds cannot deadlock.
-      // sql.param binds the array as ONE uuid[] parameter (a bare ${seatIds} would expand to a row).
-      const ids = sql.param(seatIds);
-      const { rows: existing } = await tx.execute<{ id: string }>(sql`
-        SELECT id FROM seats WHERE id = ANY(${ids}::uuid[]) ORDER BY id FOR UPDATE`);
+      let heldIds: string[];
+      if (input.seatIds) {
+        const seatIds = input.seatIds;
+        // Lock requested rows in a deterministic order so overlapping group holds cannot deadlock.
+        // sql.param binds the array as ONE uuid[] parameter (a bare ${seatIds} would expand to a row).
+        const ids = sql.param(seatIds);
+        const { rows: existing } = await tx.execute<{ id: string }>(sql`
+          SELECT id FROM seats WHERE id = ANY(${ids}::uuid[]) ORDER BY id FOR UPDATE`);
 
-      // Spec §5 conditional update, with `now` as a parameter instead of SQL now().
-      const { rows: held } = await tx.execute<{ id: string; tier_id: string }>(sql`
-        UPDATE seats
-           SET status = 'held', booking_id = ${booking.id}, held_until = ${holdExpiresAt}
-         WHERE id = ANY(${ids}::uuid[])
-           AND (status = 'available'
-                OR (status = 'held' AND held_until <= ${now}))
-        RETURNING id, tier_id`);
+        // Spec §5 conditional update, with `now` as a parameter instead of SQL now().
+        const { rows: held } = await tx.execute<{ id: string; tier_id: string }>(sql`
+          UPDATE seats
+             SET status = 'held', booking_id = ${booking.id}, held_until = ${holdExpiresAt}
+           WHERE id = ANY(${ids}::uuid[])
+             AND (status = 'available'
+                  OR (status = 'held' AND held_until <= ${now}))
+          RETURNING id, tier_id`);
 
-      if (held.length !== seatIds.length) {
-        const existingIds = new Set(existing.map((s) => s.id));
-        const unknown = seatIds.filter((id) => !existingIds.has(id));
-        if (unknown.length > 0) {
-          throw new AppError("INVALID_SEATS", "Unknown seat IDs", 400, { seatIds: unknown });
+        if (held.length !== seatIds.length) {
+          const existingIds = new Set(existing.map((s) => s.id));
+          const unknown = seatIds.filter((id) => !existingIds.has(id));
+          if (unknown.length > 0) {
+            throw new AppError("INVALID_SEATS", "Unknown seat IDs", 400, { seatIds: unknown });
+          }
+          const gotIds = new Set(held.map((s) => s.id));
+          throw seatsTaken(seatIds.filter((id) => !gotIds.has(id)));
         }
-        const heldIds = new Set(held.map((s) => s.id));
-        throw seatsTaken(seatIds.filter((id) => !heldIds.has(id)));
+        heldIds = held.map((s) => s.id);
+      } else {
+        // The guest doesn't choose seats: lock the first `seatCount` available ones in the default
+        // tier. SKIP LOCKED means concurrent holds just get disjoint rows instead of deadlocking.
+        const tier = await getDefaultTier(tx);
+        const { rows: picked } = await tx.execute<{ id: string }>(sql`
+          SELECT id FROM seats
+           WHERE tier_id = ${tier.id}
+             AND (status = 'available' OR (status = 'held' AND held_until <= ${now}))
+           ORDER BY section, row, number
+             FOR UPDATE SKIP LOCKED
+           LIMIT ${input.seatCount}`);
+        if (picked.length < input.seatCount) {
+          throw new AppError("NOT_ENOUGH_SEATS", "Not enough seats are available", 409);
+        }
+        const ids = sql.param(picked.map((s) => s.id));
+        const { rows: held } = await tx.execute<{ id: string; tier_id: string }>(sql`
+          UPDATE seats SET status = 'held', booking_id = ${booking.id}, held_until = ${holdExpiresAt}
+           WHERE id = ANY(${ids}::uuid[])
+          RETURNING id, tier_id`);
+        heldIds = held.map((s) => s.id);
       }
 
       const priced = await tx
         .select({ seatId: seats.id, tierName: tiers.name, pricePaise: tiers.pricePaise })
         .from(seats)
         .innerJoin(tiers, eq(seats.tierId, tiers.id))
-        .where(inArray(seats.id, seatIds));
+        .where(inArray(seats.id, heldIds));
       await tx.insert(bookingItems).values(priced.map((p) => ({ bookingId: booking.id, ...p })));
       const subtotalPaise = priced.reduce((sum, p) => sum + p.pricePaise, 0);
       const discount = input.discountCode?.trim()
@@ -138,7 +172,10 @@ export async function createHold(input: CreateHoldInput, now: Date = new Date())
     });
   } catch (e) {
     const code = pgCode(e);
-    if (code === DEADLOCK || code === SERIALIZATION_FAILURE) throw seatsTaken(seatIds);
+    if (code === DEADLOCK || code === SERIALIZATION_FAILURE) {
+      if (input.seatIds) throw seatsTaken(input.seatIds);
+      throw new AppError("NOT_ENOUGH_SEATS", "Not enough seats are available", 409);
+    }
     throw e;
   }
 }

@@ -43,10 +43,10 @@ export function PageIntro({ eyebrow, title, lead }: { eyebrow: string; title: Re
   );
 }
 
-const STEPS = ["Your details", "Pick seats", "Pay"];
+const STEPS = ["Your details", "Confirm & pay"];
 
-/** The three-step progress line shown across the registration pages. */
-export function RegisterSteps({ current }: { current: 1 | 2 | 3 }) {
+/** The two-step progress line shown across the registration pages. */
+export function RegisterSteps({ current }: { current: 1 | 2 }) {
   return (
     <ol className="m-0 flex list-none flex-wrap gap-2 p-0" aria-label="Registration steps">
       {STEPS.map((label, i) => {

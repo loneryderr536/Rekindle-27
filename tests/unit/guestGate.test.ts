@@ -1,8 +1,8 @@
 import { expect, test } from "vitest";
 import { guestGate } from "@/server/guestAuth/guestGate";
 
-test("/register/seats signed out goes to /register", () => {
-  expect(guestGate("/register/seats", "", false)).toBe("/register");
+test("/register/seats signed out is left to the page", () => {
+  expect(guestGate("/register/seats", "", false)).toBeNull();
 });
 
 test("/my-bookings signed out goes to sign-in and keeps the query", () => {

@@ -9,8 +9,9 @@ export function escapeHtml(s: string): string {
 }
 
 /**
- * Content ID of a ticket's inline QR image. Mail clients only match plain IDs, so any character
- * other than letters, digits, "." and "-" is written as _<hex>_ (distinct labels stay distinct).
+ * Content ID of a ticket's inline QR image, keyed by its internal seat label (unique per ticket).
+ * Mail clients only match plain IDs, so any character other than letters, digits, "." and "-" is
+ * written as _<hex>_ (distinct labels stay distinct).
  */
 export function ticketCid(seatLabel: string): string {
   return `ticket-${seatLabel.replace(/[^A-Za-z0-9.-]/gu, (c) => `_${c.codePointAt(0)!.toString(16)}_`)}`;
@@ -18,20 +19,22 @@ export function ticketCid(seatLabel: string): string {
 
 export function ticketsEmail(b: BookingWithTickets): { subject: string; html: string } {
   const link = `${env.APP_URL}/booking/${b.accessToken}`;
+  const count = b.tickets.length;
   const blocks = b.tickets
-    .map(
-      (t) => `<div style="margin:16px 0">
-<p style="margin:0 0 4px"><strong>Seat ${escapeHtml(t.seatLabel)}</strong> &middot; ${escapeHtml(t.tierName)} &middot; ${formatInr(t.pricePaise)}</p>
-<img src="cid:${escapeHtml(ticketCid(t.seatLabel))}" alt="QR code for seat ${escapeHtml(t.seatLabel)}" width="200" height="200">
-</div>`,
-    )
+    .map((t, i) => {
+      const label = count > 1 ? `Ticket ${i + 1} of ${count}` : "General admission";
+      return `<div style="margin:16px 0">
+<p style="margin:0 0 4px"><strong>${escapeHtml(label)}</strong> &middot; ${formatInr(t.pricePaise)}</p>
+<img src="cid:${escapeHtml(ticketCid(t.seatLabel))}" alt="QR code for ${escapeHtml(label)}" width="200" height="200">
+</div>`;
+    })
     .join("\n");
   const html = `<!doctype html>
 <html><body style="font-family:sans-serif">
 <p>Hi ${escapeHtml(b.name)},</p>
 <p>Your booking <strong>${escapeHtml(b.publicCode)}</strong> is confirmed. Total paid: ${formatInr(b.amountPaise)}.</p>
 ${blocks}
-<p>Show the QR code for each seat at the gate. You can also view your tickets any time at
+<p>Show one QR code per person at the gate. You can also view your tickets any time at
 <a href="${escapeHtml(link)}">${escapeHtml(link)}</a>.</p>
 </body></html>`;
   return { subject: `Your tickets – ${b.publicCode}`, html };

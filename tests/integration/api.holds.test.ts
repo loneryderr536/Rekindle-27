@@ -9,8 +9,7 @@ import { resetEnvForTests } from "@/lib/env";
 import { setGatewayForTests } from "@/server/payments/gateway";
 import { FakeGateway } from "../helpers/fakes";
 import { seedVenue } from "../helpers/db";
-import { setGuestForTests } from "@/server/guestAuth/getGuest";
-import { guest, guestIdFor, guestN, signInFromBody, statusOf } from "../helpers/holds";
+import { guest, guestN, statusOf } from "../helpers/holds";
 
 let gateway: FakeGateway;
 
@@ -20,11 +19,9 @@ beforeEach(() => {
 });
 afterEach(() => {
   setGatewayForTests(null);
-  setGuestForTests(null);
 });
 
-function hold(body: unknown, headers: Record<string, string> = {}, raw?: string, signIn = true) {
-  if (signIn) signInFromBody(body);
+function hold(body: unknown, headers: Record<string, string> = {}, raw?: string) {
   return postHold(
     new Request("http://localhost/api/holds", {
       method: "POST",
@@ -34,8 +31,8 @@ function hold(body: unknown, headers: Record<string, string> = {}, raw?: string,
   );
 }
 
-const valid = (seatIds: string[], extra: object = {}) => ({
-  seatIds, ...guest, turnstileToken: "test-pass", ...extra,
+const valid = (seatCount: number, extra: object = {}) => ({
+  seatCount, ...guest, turnstileToken: "test-pass", ...extra,
 });
 
 test("GET /api/seats returns seats and tiers, no-store", async () => {
@@ -50,7 +47,7 @@ test("GET /api/seats returns seats and tiers, no-store", async () => {
 
 test("POST /api/holds creates hold and order, stores razorpay_order_id", async () => {
   const { seats } = await seedVenue();
-  const res = await hold(valid([seats[0].id, seats[1].id]));
+  const res = await hold(valid(2));
   expect(res.status).toBe(201);
   const body = await res.json();
   expect(body).toMatchObject({
@@ -66,35 +63,36 @@ test("POST /api/holds creates hold and order, stores razorpay_order_id", async (
   const [b] = await db.select().from(bookings).where(eq(bookings.id, body.bookingId));
   expect(b.razorpayOrderId).toBe("order_test_1");
   expect(b.clientIp).toBe("1.2.3.4");
+  // The two cheapest-sorting (default-tier) seats are the ones actually held.
   expect(await statusOf(seats[0].id)).toBe("held");
+  expect(await statusOf(seats[1].id)).toBe("held");
 });
 
 test("POST /api/holds ignores any amount sent by the browser", async () => {
-  const { seats } = await seedVenue();
-  const res = await hold(valid([seats[0].id], { amountPaise: 1 }));
+  await seedVenue();
+  const res = await hold(valid(1, { amountPaise: 1 }));
   expect(res.status).toBe(201);
   expect((await res.json()).amountPaise).toBe(150000);
 });
 
 test("POST /api/holds with bad turnstile → 403 TURNSTILE_FAILED, no hold", async () => {
   const { seats } = await seedVenue();
-  const res = await hold(valid([seats[0].id], { turnstileToken: "nope" }));
+  const res = await hold(valid(1, { turnstileToken: "nope" }));
   expect(res.status).toBe(403);
   expect((await res.json()).error.code).toBe("TURNSTILE_FAILED");
   expect(await statusOf(seats[0].id)).toBe("available");
   expect(gateway.orders).toHaveLength(0);
 });
 
-test("POST /api/holds 7 seats → 400 VALIDATION", async () => {
-  const { seats } = await seedVenue();
-  const res = await hold(valid(seats.slice(0, 7).map((s) => s.id)));
+test("POST /api/holds seatCount 7 → 400 VALIDATION", async () => {
+  await seedVenue();
+  const res = await hold(valid(7));
   expect(res.status).toBe(400);
   expect((await res.json()).error.code).toBe("VALIDATION");
 });
 
 test("POST /api/holds malformed JSON → 400 VALIDATION", async () => {
-  signInFromBody(guest);
-  const res = await hold(null, {}, "{not json", false);
+  const res = await hold(null, {}, "{not json");
   expect(res.status).toBe(400);
   expect((await res.json()).error.code).toBe("VALIDATION");
 });
@@ -102,47 +100,48 @@ test("POST /api/holds malformed JSON → 400 VALIDATION", async () => {
 test("gateway error → 502 and seats back to available", async () => {
   const { seats } = await seedVenue();
   gateway.failNextCreateOrder();
-  const res = await hold(valid([seats[0].id]));
+  const res = await hold(valid(1));
   expect(res.status).toBe(502);
   expect((await res.json()).error.code).toBe("PAYMENT_UNAVAILABLE");
   expect(await statusOf(seats[0].id)).toBe("available");
   const [b] = await db.select().from(bookings);
   expect(b.status).toBe("expired");
   // the guest can immediately try again
-  expect((await hold(valid([seats[0].id]))).status).toBe(201);
+  expect((await hold(valid(1))).status).toBe(201);
 });
 
-test("seat already taken → 409 SEATS_TAKEN", async () => {
-  const { seats } = await seedVenue();
-  expect((await hold(valid([seats[0].id]), { "x-forwarded-for": "9.9.9.1" })).status).toBe(201);
-  const res = await hold(valid([seats[0].id], { ...guestN(2) }), { "x-forwarded-for": "9.9.9.2" });
+test("not enough seats left in the default tier → 409 NOT_ENOUGH_SEATS", async () => {
+  await seedVenue({ seatsPerTier: 1 });
+  expect((await hold(valid(1), { "x-forwarded-for": "9.9.9.1" })).status).toBe(201);
+  const res = await hold(valid(1, { ...guestN(2) }), { "x-forwarded-for": "9.9.9.2" });
   expect(res.status).toBe(409);
-  expect((await res.json()).error.code).toBe("SEATS_TAKEN");
+  expect((await res.json()).error.code).toBe("NOT_ENOUGH_SEATS");
 });
 
 test("61st request from same IP → 429 with Retry-After", async () => {
   await seedVenue();
   for (let i = 0; i < 60; i++) {
-    const res = await hold(valid([]), { "x-forwarded-for": "5.5.5.5, 10.0.0.1" });
+    // seatCount 0 fails validation cheaply, without needing 60 seats.
+    const res = await hold(valid(0), { "x-forwarded-for": "5.5.5.5, 10.0.0.1" });
     expect(res.status).toBe(400);
   }
-  const res = await hold(valid([]), { "x-forwarded-for": "5.5.5.5, 10.0.0.2" });
+  const res = await hold(valid(0), { "x-forwarded-for": "5.5.5.5, 10.0.0.2" });
   expect(res.status).toBe(429);
   expect((await res.json()).error.code).toBe("RATE_LIMITED");
   expect(Number(res.headers.get("retry-after"))).toBeGreaterThan(0);
   // a different IP is unaffected
-  expect((await hold(valid([]), { "x-forwarded-for": "6.6.6.6" })).status).toBe(400);
+  expect((await hold(valid(0), { "x-forwarded-for": "6.6.6.6" })).status).toBe(400);
 });
 
 test("load-test flag (with ALLOW_TEST_MODES) lifts the per-IP hold limit", async () => {
-  const { seats } = await seedVenue({ seatsPerTier: 31 });
+  await seedVenue({ tiers: [{ name: "General", pricePaise: 100000 }], seatsPerTier: 62 });
   const prev = { f: process.env.LOAD_TEST_DISABLE_RATE_LIMIT, a: process.env.ALLOW_TEST_MODES };
   Object.assign(process.env, { LOAD_TEST_DISABLE_RATE_LIMIT: "1", ALLOW_TEST_MODES: "1" });
   resetEnvForTests();
   try {
     const sameIp = { "x-forwarded-for": "7.7.7.7" };
     for (let i = 0; i < 62; i++) {
-      const res = await hold(valid([seats[i].id], { ...guestN(i + 1) }), sameIp);
+      const res = await hold(valid(1, { ...guestN(i + 1) }), sameIp);
       expect(res.status).toBe(201);
     }
   } finally {
@@ -154,35 +153,20 @@ test("load-test flag (with ALLOW_TEST_MODES) lifts the per-IP hold limit", async
   }
 });
 
-test("POST /api/holds without a guest is 401 SIGN_IN_REQUIRED", async () => {
-  const { seats } = await seedVenue();
-  setGuestForTests({ guest: null });
-  const res = await hold(valid([seats[0].id]), {}, undefined, false);
-  expect(res.status).toBe(401);
-  expect((await res.json()).error.code).toBe("SIGN_IN_REQUIRED");
-  expect(await db.select().from(bookings)).toHaveLength(0);
-  expect(await statusOf(seats[0].id)).toBe("available");
-});
-
-test("booking email is the guest's, not the body's", async () => {
-  const { seats } = await seedVenue();
-  const userId = guestIdFor("asha@example.com");
-  const body = valid([seats[0].id], { email: "other@example.com" });
-  // Sign in as asha directly: hold() would sign in as the body's email.
-  setGuestForTests({ guest: { userId, email: "asha@example.com", name: "Asha Rao" } });
-  const res = await hold(body, {}, undefined, false);
+test("POST /api/holds needs no sign-in: identity is whatever was typed", async () => {
+  await seedVenue();
+  const res = await hold(valid(1, { email: "nobody-signed-in@example.com" }));
   expect(res.status).toBe(201);
   const [b] = await db.select().from(bookings).where(eq(bookings.id, (await res.json()).bookingId));
-  expect(b.email).toBe("asha@example.com");
-  expect(b.guestUserId).toBe(userId);
+  expect(b.email).toBe("nobody-signed-in@example.com");
+  expect(b.guestUserId).toBeNull();
 });
 
-test("held seats can still be paid after sign-out", async () => {
-  const { seats } = await seedVenue();
-  const res = await hold(valid([seats[0].id]));
+test("held seats can still be paid without ever signing in", async () => {
+  await seedVenue();
+  const res = await hold(valid(1));
   expect(res.status).toBe(201);
   const { accessToken } = await res.json();
-  setGuestForTests({ guest: null });
   const cur = await postCurrent(
     new Request("http://localhost/api/holds/current", {
       method: "POST",

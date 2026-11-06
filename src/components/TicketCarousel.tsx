@@ -3,7 +3,7 @@
 import { useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { TicketCard, TicketDetails, TicketFace } from "@/components/TicketCard";
 
-type Ticket = { seatLabel: string; tierName: string; qr: string };
+type Ticket = { token: string; qr: string };
 type Shared = {
   orderCode: string;
   holder: string;
@@ -22,7 +22,7 @@ const mod = (n: number, m: number) => ((n % m) + m) % m;
 
 /** One ticket stands alone; several ride a ring, and Next turns the ring so the following ticket comes round to the front. */
 export function TicketSet({ tickets, ...shared }: { tickets: Ticket[] } & Shared) {
-  if (tickets.length === 1) return <TicketCard {...tickets[0]} {...shared} />;
+  if (tickets.length === 1) return <TicketCard {...tickets[0]} index={1} count={1} {...shared} />;
   return <TicketRing tickets={tickets} {...shared} />;
 }
 
@@ -81,7 +81,7 @@ function TicketRing({ tickets, ...shared }: { tickets: Ticket[] } & Shared) {
             const dist = Math.min(mod(i - active, n), mod(active - i, n));
             return (
               <div
-                key={t.seatLabel}
+                key={t.token}
                 role="group"
                 aria-roledescription="slide"
                 aria-label={`Ticket ${i + 1} of ${n}`}
@@ -93,7 +93,7 @@ function TicketRing({ tickets, ...shared }: { tickets: Ticket[] } & Shared) {
                   backfaceVisibility: "hidden",
                 }}
               >
-                <TicketFace qr={t.qr} seatLabel={t.seatLabel} eventName={shared.eventName} shortDate={shared.shortDate} />
+                <TicketFace qr={t.qr} index={i + 1} count={n} eventName={shared.eventName} shortDate={shared.shortDate} />
               </div>
             );
           })}
@@ -107,7 +107,7 @@ function TicketRing({ tickets, ...shared }: { tickets: Ticket[] } & Shared) {
         <div className="flex gap-2" role="tablist" aria-label="Choose a ticket">
           {tickets.map((t, i) => (
             <button
-              key={t.seatLabel}
+              key={t.token}
               type="button"
               role="tab"
               aria-selected={i === active}
@@ -122,8 +122,8 @@ function TicketRing({ tickets, ...shared }: { tickets: Ticket[] } & Shared) {
         </button>
       </div>
 
-      <div key={current.seatLabel} className="o26-ticket-in mt-8 flex w-full justify-center">
-        <TicketDetails qr={current.qr} seatLabel={current.seatLabel} tierName={current.tierName} {...shared} />
+      <div key={current.token} className="o26-ticket-in mt-8 flex w-full justify-center">
+        <TicketDetails qr={current.qr} index={active + 1} count={n} {...shared} />
       </div>
     </section>
   );

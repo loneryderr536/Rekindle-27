@@ -6,12 +6,12 @@ import { QrScanner } from "@/components/QrScanner";
 import { StaffBar } from "@/components/StaffBar";
 
 type Result =
-  | { result: "ok"; seatLabel: string; tierName: string; firstName: string }
+  | { result: "ok"; firstName: string }
   | { result: "already"; checkedInAt: string; gate: string }
   | { result: "invalid" };
 
 type Found = {
-  ticketId: string; seatLabel: string; tierName: string; bookingCode: string; guestName: string;
+  ticketId: string; ticketIndex: number; ticketCount: number; bookingCode: string; guestName: string;
   bookingStatus: string; checkedInAt: string | null; gate: string | null;
 };
 
@@ -175,10 +175,8 @@ export function ScanStation() {
             return (
               <li key={t.ticketId} className="o26-card p-4">
                 <p className="text-lg font-bold">
-                  {t.tierName} · {t.seatLabel}
-                </p>
-                <p className="text-muted">
                   {t.guestName} · {t.bookingCode}
+                  {t.ticketCount > 1 && <span className="text-muted font-normal"> · Ticket {t.ticketIndex} of {t.ticketCount}</span>}
                 </p>
                 {!valid && <p className="font-semibold text-danger">Booking is {t.bookingStatus.replace("_", " ")}</p>}
                 {t.checkedInAt && (
@@ -211,8 +209,7 @@ export function ScanStation() {
         >
           {flash.result === "ok" ? (
             <>
-              <p className="font-display text-6xl font-bold">{flash.tierName}</p>
-              <p className="font-display text-5xl">{flash.seatLabel}</p>
+              <p className="font-display text-6xl font-bold">Valid</p>
               <p className="text-3xl">{flash.firstName}</p>
             </>
           ) : flash.result === "already" ? (

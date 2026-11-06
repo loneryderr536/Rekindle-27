@@ -44,23 +44,21 @@ export default async function AdminBookingDetail({ params }: PageProps<"/admin/b
       </section>
 
       <section aria-labelledby="seats-h" className="space-y-3">
-        <h2 id="seats-h" className="font-display text-lg font-bold">Seats</h2>
+        <h2 id="seats-h" className="font-display text-lg font-bold">Tickets</h2>
         <div className="overflow-x-auto o26-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-line text-muted">
               <tr>
-                <th className="p-3">Seat</th>
-                <th className="p-3">Tier</th>
+                <th className="p-3">Ticket</th>
                 <th className="p-3 text-right">Price</th>
                 <th className="p-3">Check-in</th>
                 <th className="p-3">Gate</th>
               </tr>
             </thead>
             <tbody>
-              {b.seats.map((s) => (
+              {b.seats.map((s, i) => (
                 <tr key={s.label} className="border-b border-line last:border-0">
-                  <th scope="row" className="p-3 font-semibold">{s.label}</th>
-                  <td className="p-3">{s.tierName}</td>
+                  <th scope="row" className="p-3 font-semibold">{i + 1} of {b.seats.length}</th>
                   <td className="p-3 text-right tabular-nums">{formatInr(s.pricePaise)}</td>
                   <td className="p-3">{s.checkedInAt ? formatIst(s.checkedInAt) : "Not checked in"}</td>
                   <td className="p-3">{s.gate ?? "-"}</td>

@@ -50,7 +50,7 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
     };
   }, []);
 
-  const { totals, byGate, byTier, recent } = data;
+  const { totals, byGate, recent } = data;
   const pct = totals.totalValid > 0 ? Math.round((totals.checkedIn / totals.totalValid) * 100) : 0;
 
   return (
@@ -96,39 +96,13 @@ export function CheckinsDashboard({ initial }: { initial: CheckinDashboard }) {
         </div>
       </section>
 
-      <section aria-labelledby="tier-h" className="space-y-3">
-        <h2 id="tier-h" className="font-display text-lg font-bold">By tier</h2>
-        <div className="overflow-x-auto o26-card">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-line text-muted">
-              <tr>
-                <th className="p-3">Tier</th>
-                <th className="p-3 text-right">Checked in</th>
-                <th className="p-3 text-right">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {byTier.map((t) => (
-                <tr key={t.tierName} className="border-b border-line last:border-0">
-                  <th scope="row" className="p-3 font-semibold">{t.tierName}</th>
-                  <td className="p-3 text-right tabular-nums">{t.checkedIn}</td>
-                  <td className="p-3 text-right tabular-nums">{t.total}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
       <section aria-labelledby="recent-h" className="space-y-3">
         <h2 id="recent-h" className="font-display text-lg font-bold">Recent check-ins</h2>
         <ul className="divide-y divide-line o26-card">
           {recent.length === 0 && <li className="p-3 text-muted">No check-ins yet.</li>}
           {recent.map((r) => (
             <li key={r.ticketId} className="flex items-center justify-between gap-3 p-3 text-sm">
-              <span>
-                <span className="font-semibold">{r.guestName}</span> · {r.tierName} · {r.seatLabel}
-              </span>
+              <span className="font-semibold">{r.guestName}</span>
               <span className="text-muted">{r.gate} · {timeOf(r.checkedInAt)}</span>
             </li>
           ))}

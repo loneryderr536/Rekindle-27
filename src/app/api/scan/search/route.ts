@@ -9,8 +9,8 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 type Row = {
-  id: string; label: string; tier_name: string; public_code: string; name: string;
-  status: string; checked_in_at: Date | null; gate: string | null;
+  id: string; booking_id: string; ticket_index: number; ticket_count: number; public_code: string;
+  name: string; status: string; checked_in_at: Date | null; gate: string | null;
 };
 
 export async function GET(req: Request): Promise<Response> {
@@ -18,20 +18,22 @@ export async function GET(req: Request): Promise<Response> {
     await requireRole(req, ["admin", "scanner"]);
     const q = SearchQuery.parse(new URL(req.url).searchParams.get("q") ?? "");
     const phone = normalizeIndianPhone(q);
+    // General admission: no seat/tier, just this ticket's position within its own booking (1 of 2, etc).
     const { rows } = await db.execute<Row>(sql`
-      SELECT t.id, s.label, bi.tier_name, b.public_code, b.name, b.status, t.checked_in_at, t.gate
+      SELECT t.id, t.booking_id, b.public_code, b.name, b.status, t.checked_in_at, t.gate,
+             row_number() OVER (PARTITION BY t.booking_id ORDER BY s.label) AS ticket_index,
+             count(*) OVER (PARTITION BY t.booking_id) AS ticket_count
         FROM tickets t
         JOIN bookings b ON b.id = t.booking_id
         JOIN seats s ON s.id = t.seat_id
-        JOIN booking_items bi ON bi.booking_id = t.booking_id AND bi.seat_id = t.seat_id
        WHERE upper(b.public_code) = upper(${q}) OR b.phone = ${phone}
        ORDER BY b.created_at, s.label
        LIMIT 20`);
     return Response.json({
       tickets: rows.map((r) => ({
         ticketId: r.id,
-        seatLabel: r.label,
-        tierName: r.tier_name,
+        ticketIndex: Number(r.ticket_index),
+        ticketCount: Number(r.ticket_count),
         bookingCode: r.public_code,
         guestName: r.name,
         bookingStatus: r.status,

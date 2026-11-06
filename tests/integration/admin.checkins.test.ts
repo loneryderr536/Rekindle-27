@@ -32,7 +32,7 @@ function get(cookie?: string, etag?: string) {
   return checkinsRoute(new Request(`${ORIGIN}/api/admin/checkins`, { headers }));
 }
 
-test("getCheckinDashboard totals, gate and tier breakdowns, recent list", async () => {
+test("getCheckinDashboard totals, gate breakdown, recent list", async () => {
   const { seats } = await seedVenue({ seatsPerTier: 2 });
   const b1 = await holdWithOrder([seats[0].id], guest);
   await confirmBooking({ orderId: b1.orderId, paymentId: `pay_${b1.orderId}`, amountPaise: b1.amountPaise });
@@ -50,8 +50,6 @@ test("getCheckinDashboard totals, gate and tier breakdowns, recent list", async 
   expect(after.byGate).toEqual([{ gate: "Main gate", count: 1 }]);
   expect(after.recent).toHaveLength(1);
   expect(after.recent[0]).toMatchObject({ ticketId: t1.id, gate: "Main gate", guestName: guest.name });
-  const tierRow = after.byTier.find((t) => t.total > 0 || t.checkedIn > 0);
-  expect(tierRow?.checkedIn).toBeGreaterThanOrEqual(1);
 });
 
 test("GET /api/admin/checkins requires an admin session, not scanner", async () => {

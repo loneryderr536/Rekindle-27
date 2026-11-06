@@ -2,13 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AttendeeForm } from "@/components/AttendeeForm";
 import { BrandPage, RegisterSteps } from "@/components/landing/BrandPage";
-import { GuestSignIn } from "@/components/GuestSignIn";
 import { LINKS } from "@/components/landing/links";
-import { getGuest } from "@/server/guestAuth/getGuest";
 
 export const metadata: Metadata = { title: "Register" };
-// Reads the guest session cookie; without this the page is prerendered at build as "signed out".
-export const dynamic = "force-dynamic";
 
 const row = { display: "flex", gap: 12, alignItems: "center" } as const;
 
@@ -20,8 +16,7 @@ function Icon({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default async function RegisterPage() {
-  const guest = await getGuest();
+export default function RegisterPage() {
   return (
     <BrandPage current="register">
       <section className="o26-navy" style={{ position: "relative", borderRadius: "0 0 48px 48px", padding: "clamp(36px, 5vw, 64px) 0 clamp(120px, 14vw, 180px)" }}>
@@ -30,7 +25,7 @@ export default async function RegisterPage() {
           <span className="p-in p-d1 p-eyebrow" style={{ marginTop: 8 }}>Registration · ONE·26</span>
           <h1 className="p-in p-d2 p-h1 o26-ff-fredoka" style={{ fontSize: "clamp(44px, 6.6vw, 86px)" }}>Save your seat.</h1>
           <p className="p-in p-d3 p-lead" style={{ fontSize: "clamp(16px, 1.6vw, 19px)" }}>
-            Tell us who&apos;s coming and how many of you there are. Next you&apos;ll pick your seats on the map, then pay to confirm.
+            Tell us who&apos;s coming and how many of you there are. Next you&apos;ll confirm your order and pay to secure your spot.
           </p>
         </div>
       </section>
@@ -59,8 +54,8 @@ export default async function RegisterPage() {
             </div>
           </div>
           <section className="o26-reg-form" aria-labelledby="details-h">
-            <h2 id="details-h" className="font-display m-0 mb-5 text-3xl font-semibold">{guest ? "Your details" : "Sign in to book"}</h2>
-            {guest ? <AttendeeForm email={guest.email} suggestedName={guest.name} /> : <GuestSignIn next="/register" />}
+            <h2 id="details-h" className="font-display m-0 mb-5 text-3xl font-semibold">Your details</h2>
+            <AttendeeForm />
             <p className="mb-0 mt-5 text-center">
               <Link href={LINKS.findBooking} className="text-sm font-semibold underline">Already booked? Find your tickets</Link>
             </p>

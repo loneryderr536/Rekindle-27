@@ -1,52 +1,28 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore, type FormEvent } from "react";
-import { clearHoldToken } from "@/lib/activeHold";
-import { attendeeStore, clearAttendee, isForeignAttendee, parseAttendee, saveAttendee, type Attendee } from "@/lib/attendee";
+import { useState, useSyncExternalStore, type FormEvent } from "react";
+import { attendeeStore, parseAttendee, saveAttendee, type Attendee } from "@/lib/attendee";
 import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
-import { guestSignOut } from "@/lib/guestSignOut";
 import { normalizeIndianPhone } from "@/lib/phone";
 
-/** Step 1 of registration: who is coming and how many seats they need. */
-export function AttendeeForm({ email, suggestedName }: { email: string; suggestedName: string | null }) {
+/** Step 1 of registration: name, email, phone and how many seats are needed. No sign-in required. */
+export function AttendeeForm() {
   const raw = useSyncExternalStore<string | null | undefined>(
     attendeeStore.subscribe,
     attendeeStore.getSnapshot,
     attendeeStore.getServerSnapshot,
   );
   const stored = parseAttendee(raw);
-  // Details (and a hold) left by another account in this tab must not carry over to this one.
-  const foreign = isForeignAttendee(stored, email);
-  useEffect(() => {
-    if (foreign) {
-      clearAttendee();
-      clearHoldToken();
-    }
-  }, [foreign]);
   // Remount once the stored details are read, so "Edit details" comes back with the form filled in.
-  return <DetailsForm key={raw ?? "new"} initial={foreign ? null : stored} email={email} suggestedName={suggestedName} />;
+  return <DetailsForm key={raw ?? "new"} initial={stored} />;
 }
 
-function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | null; email: string; suggestedName: string | null }) {
+function DetailsForm({ initial }: { initial: Attendee | null }) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initial?.participants ?? 1);
   const [phoneError, setPhoneError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [switchError, setSwitchError] = useState(false);
-  const [switching, setSwitching] = useState(false);
-
-  async function switchAccount() {
-    setSwitchError(false);
-    setSwitching(true);
-    try {
-      await guestSignOut();
-      router.refresh();
-    } catch {
-      setSwitchError(true);
-      setSwitching(false);
-    }
-  }
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,7 +36,7 @@ function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | nu
     setBusy(true);
     saveAttendee({
       name: String(data.get("name") ?? "").trim(),
-      email,
+      email: String(data.get("email") ?? "").trim(),
       phone,
       participants,
     });
@@ -73,17 +49,13 @@ function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | nu
     <form onSubmit={submit} className="flex flex-col gap-5">
       <label className="field">
         <span>Full name</span>
-        <input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={initial?.name ?? suggestedName ?? ""} />
+        <input name="name" required minLength={2} maxLength={80} autoComplete="name" defaultValue={initial?.name ?? ""} />
       </label>
       <label className="field">
         <span>Email</span>
-        <input name="email" type="email" readOnly value={email} autoComplete="email" inputMode="email" />
+        <input name="email" type="email" required autoComplete="email" inputMode="email" defaultValue={initial?.email ?? ""} />
         <small>Your tickets are sent here.</small>
       </label>
-      <div className="-mt-3 text-sm">
-        <button type="button" className="underline" disabled={switching} onClick={switchAccount}>Not you? Switch account</button>
-        {switchError && <p role="alert" className="m-0 mt-1 font-medium text-danger">Couldn&apos;t switch account. Try again.</p>}
-      </div>
       <label className="field">
         <span>Mobile number</span>
         <input
@@ -129,13 +101,13 @@ function DetailsForm({ initial, email, suggestedName }: { initial: Attendee | nu
             {participants === 1 ? "Just me" : `You + ${participants - 1} ${participants === 2 ? "friend" : "friends"}`}
           </span>
         </div>
-        <small>One seat each, up to {MAX_SEATS_PER_BOOKING} per booking. You&apos;ll pick them next.</small>
+        <small>One seat each, up to {MAX_SEATS_PER_BOOKING} per booking.</small>
       </div>
 
       <p className="m-0 text-sm text-muted">We use your name, email and phone only for this booking and its tickets.</p>
 
       <button type="submit" className="btn-primary flex items-center justify-center gap-2" disabled={busy}>
-        {busy ? "One moment…" : `Choose ${participants === 1 ? "my seat" : `${participants} seats`}`}
+        {busy ? "One moment…" : "Continue to payment"}
         <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
           <path d="M5 12h14M13 6l6 6-6 6" />
         </svg>

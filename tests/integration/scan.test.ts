@@ -35,10 +35,10 @@ async function paidBooking(ids: string[], who = guest) {
   return { ...b, tickets: rows };
 }
 
-test("first scan ok with seat, tier and first name", async () => {
+test("first scan ok with first name", async () => {
   const b = await paidBooking([seatIds[0]]);
   const r = await scanTicket({ token: b.tickets[0].token, adminUserId: adminId, gate: "Gate A" });
-  expect(r).toEqual({ result: "ok", seatLabel: "G-A-1", tierName: "Gold", firstName: "Asha" });
+  expect(r).toEqual({ result: "ok", firstName: "Asha" });
   const [t] = await db.select().from(tickets).where(eq(tickets.id, b.tickets[0].id));
   expect(t.checkedInAt).toBeInstanceOf(Date);
   expect(t.checkedInBy).toBe(adminId);
@@ -97,7 +97,7 @@ test("comp booking ticket is ok", async () => {
 
 test("manual check-in twice: ok then already; unknown id invalid", async () => {
   const b = await paidBooking([seatIds[0]]);
-  expect(await checkInTicketById(b.tickets[0].id, adminId, "Desk")).toMatchObject({ result: "ok", seatLabel: "G-A-1" });
+  expect(await checkInTicketById(b.tickets[0].id, adminId, "Desk")).toMatchObject({ result: "ok", firstName: "Asha" });
   expect(await checkInTicketById(b.tickets[0].id, adminId, "Desk")).toMatchObject({ result: "already", gate: "Desk" });
   expect(await checkInTicketById("00000000-0000-4000-8000-000000000000", adminId, "Desk")).toEqual({ result: "invalid" });
 });
@@ -127,7 +127,7 @@ test("POST /api/scan: scanner role scans a real payload", async () => {
   const b = await paidBooking([seatIds[0]]);
   const res = await scan(post("/api/scan", { payload: qrPayload(b.tickets[0].token), gate: " Gate A " }, await sessionCookie()));
   expect(res.status).toBe(200);
-  expect(await res.json()).toEqual({ result: "ok", seatLabel: "G-A-1", tierName: "Gold", firstName: "Asha" });
+  expect(await res.json()).toEqual({ result: "ok", firstName: "Asha" });
   const again = await scan(post("/api/scan", { payload: qrPayload(b.tickets[0].token), gate: "Gate A" }, await sessionCookie()));
   const body = await again.json();
   expect(body).toMatchObject({ result: "already", gate: "Gate A" });
@@ -171,13 +171,14 @@ test("search by booking code and by phone in another format", async () => {
   const { tickets: found } = await byCode.json();
   expect(found).toHaveLength(2);
   expect(found[0]).toMatchObject({
-    seatLabel: "G-A-1", tierName: "Gold", bookingCode: bk.publicCode, guestName: "Asha Rao",
+    ticketIndex: 1, ticketCount: 2, bookingCode: bk.publicCode, guestName: "Asha Rao",
     bookingStatus: "paid", checkedInAt: null, gate: null,
   });
+  expect(found[1]).toMatchObject({ ticketIndex: 2, ticketCount: 2 });
   expect(found[0].ticketId).toBeTruthy();
 
   const byPhone = await (await get("098765 43210")).json();
-  expect(byPhone.tickets.map((t: { seatLabel: string }) => t.seatLabel)).toEqual(["G-A-1", "G-A-2"]);
+  expect(byPhone.tickets.map((t: { ticketIndex: number }) => t.ticketIndex)).toEqual([1, 2]);
 
   expect((await get("a")).status).toBe(400);
   expect((await (await get("zzzzzzzz")).json()).tickets).toEqual([]);

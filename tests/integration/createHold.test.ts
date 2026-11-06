@@ -222,6 +222,47 @@ test("an expired pending hold does not block a new one for the same guest", asyn
   expect(r.amountPaise).toBe(150000);
 });
 
+test("seatCount holds N seats from the default (first-sorting) tier only", async () => {
+  const { gold, silver } = await venue(); // Gold sorts first
+  const r = await createHold({ seatCount: 3, ...guest });
+  expect(r.amountPaise).toBe(3 * 150000);
+  const held = await db.select().from(seats).where(eq(seats.bookingId, r.bookingId));
+  expect(held).toHaveLength(3);
+  expect(held.map((s) => s.id).sort()).toEqual(gold.slice(0, 3).map((s) => s.id).sort());
+  for (const s of silver) expect(await statusOf(s.id)).toBe("available");
+});
+
+test("seatCount picks the lowest section/row/number seats first, deterministically", async () => {
+  const { gold } = await venue();
+  const r = await createHold({ seatCount: 2, ...guest });
+  const items = await db.select().from(bookingItems).where(eq(bookingItems.bookingId, r.bookingId));
+  const heldIds = new Set(items.map((i) => i.seatId));
+  expect(heldIds).toEqual(new Set([gold[0].id, gold[1].id]));
+});
+
+test("seatCount skips already-held/sold seats and takes the next available ones", async () => {
+  const { gold } = await venue();
+  await createHold({ seatIds: [gold[0].id], ...guestN(1) });
+  await db.update(seats).set({ status: "sold" }).where(eq(seats.id, gold[1].id));
+  const r = await createHold({ seatCount: 2, ...guestN(2) });
+  const items = await db.select().from(bookingItems).where(eq(bookingItems.bookingId, r.bookingId));
+  expect(new Set(items.map((i) => i.seatId))).toEqual(new Set([gold[2].id, gold[3].id]));
+});
+
+test("seatCount more than the default tier has left → NOT_ENOUGH_SEATS, no booking row", async () => {
+  const v = await seedVenue({ tiers: [{ name: "Gold", pricePaise: 150000 }], seatsPerTier: 2 });
+  await expectAppError(createHold({ seatCount: 3, ...guest }), "NOT_ENOUGH_SEATS", 409);
+  expect(await bookingCount()).toBe(0);
+  for (const s of v.seats) expect(await statusOf(s.id)).toBe("available");
+});
+
+test("seatCount out of range → VALIDATION, before any seat is touched", async () => {
+  await venue();
+  await expectAppError(createHold({ seatCount: 0, ...guest }), "VALIDATION", 400);
+  await expectAppError(createHold({ seatCount: 7, ...guest }), "VALIDATION", 400);
+  expect(await bookingCount()).toBe(0);
+});
+
 test("listSeats reports expired hold as available", async () => {
   const { gold, silver, tiers } = await venue();
   const t = new Date("2026-11-01T10:00:00Z");
@@ -255,16 +296,16 @@ test("listSeats reports expired hold as available", async () => {
 
 test("HoldInput validates and normalizes", () => {
   const ok = HoldInput.parse({
-    seatIds: ["00000000-0000-4000-8000-000000000000"], name: "  Asha  ",
+    seatCount: 1, name: "  Asha  ",
     email: "asha@example.com", phone: "98765 43210", turnstileToken: "t",
   });
   expect(ok.phone).toBe("+919876543210");
   expect(ok.name).toBe("Asha");
-  const base = { seatIds: ok.seatIds, name: "Asha", email: "asha@example.com", phone: "9876543210", turnstileToken: "t" };
+  const base = { seatCount: 1, name: "Asha", email: "asha@example.com", phone: "9876543210", turnstileToken: "t" };
   expect(HoldInput.safeParse({ ...base, phone: "12345" }).success).toBe(false);
-  expect(HoldInput.safeParse({ ...base, seatIds: [] }).success).toBe(false);
-  expect(HoldInput.safeParse({ ...base, seatIds: Array(7).fill(ok.seatIds[0]) }).success).toBe(false);
-  expect(HoldInput.safeParse({ ...base, seatIds: ["nope"] }).success).toBe(false);
+  expect(HoldInput.safeParse({ ...base, seatCount: 0 }).success).toBe(false);
+  expect(HoldInput.safeParse({ ...base, seatCount: 7 }).success).toBe(false);
+  expect(HoldInput.safeParse({ ...base, seatCount: 1.5 }).success).toBe(false);
   expect(HoldInput.safeParse({ ...base, email: "nope" }).success).toBe(false);
   expect(HoldInput.safeParse({ ...base, name: "A" }).success).toBe(false);
 });

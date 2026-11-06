@@ -2,17 +2,17 @@ import { sql, type SQL } from "drizzle-orm";
 import { db } from "@/db/client";
 
 export type ScanResult =
-  | { result: "ok"; seatLabel: string; tierName: string; firstName: string }
+  | { result: "ok"; firstName: string }
   | { result: "already"; checkedInAt: Date; gate: string }
   | { result: "invalid" };
 
 /**
  * One conditional UPDATE does the check-in: it only matches an un-scanned ticket whose booking is
  * paid or comp, so concurrent scans of one ticket produce exactly one row. The CTE then joins the
- * seat label, the tier name booked for that seat and the guest name for the green screen.
+ * guest name for the green screen.
  */
 async function checkIn(match: SQL, adminUserId: string, gate: string): Promise<ScanResult | null> {
-  const { rows } = await db.execute<{ label: string; tier_name: string; name: string }>(sql`
+  const { rows } = await db.execute<{ name: string }>(sql`
     WITH u AS (
       UPDATE tickets t
          SET checked_in_at = now(), checked_in_by = ${adminUserId}, gate = ${gate}
@@ -21,19 +21,15 @@ async function checkIn(match: SQL, adminUserId: string, gate: string): Promise<S
          AND t.checked_in_at IS NULL
          AND b.id = t.booking_id
          AND b.status IN ('paid', 'comp')
-      RETURNING t.seat_id, t.booking_id
+      RETURNING t.booking_id
     )
-    SELECT s.label, bi.tier_name, b.name
+    SELECT b.name
       FROM u
-      JOIN seats s ON s.id = u.seat_id
-      JOIN bookings b ON b.id = u.booking_id
-      JOIN booking_items bi ON bi.booking_id = u.booking_id AND bi.seat_id = u.seat_id`);
+      JOIN bookings b ON b.id = u.booking_id`);
   const row = rows[0];
   if (!row) return null;
   return {
     result: "ok",
-    seatLabel: row.label,
-    tierName: row.tier_name,
     firstName: row.name.trim().split(/\s+/)[0] ?? "",
   };
 }

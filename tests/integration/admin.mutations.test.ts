@@ -100,7 +100,7 @@ test("comp ticket scans ok at the gate", async () => {
   const r = await issueComp({ seatIds: [silver[0].id], ...comp }, adminId);
   const [t] = await db.select().from(tickets).where(eq(tickets.bookingId, r.bookingId));
   expect(await scanTicket({ token: t.token, adminUserId: adminId, gate: "A" })).toMatchObject({
-    result: "ok", tierName: "Silver", firstName: "VIP",
+    result: "ok", firstName: "VIP",
   });
 });
 

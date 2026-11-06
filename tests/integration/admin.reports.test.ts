@@ -154,9 +154,9 @@ test("export escapes commas and neutralizes =cmd()", async () => {
   const b = await paid([seatIds[0]], { name: '=cmd("x"),Rao', email: "asha@example.com", phone: "+919876543210" });
   const csv = await exportCsv();
   const lines = csv.split("\r\n");
-  expect(lines[0]).toBe("booking_code,status,name,email,phone,seat,tier,price_inr,paid_at,checked_in_at");
+  expect(lines[0]).toBe("booking_code,status,name,email,phone,ticket,price_inr,paid_at,checked_in_at");
   const [code] = await db.select({ c: bookings.publicCode }).from(bookings).where(eq(bookings.id, b.bookingId));
-  expect(lines[1]).toMatch(new RegExp(`^${code.c},paid,"'=cmd\\(""x""\\),Rao",asha@example.com,\\+919876543210,G-A-1,Gold,1500\\.00,`));
+  expect(lines[1]).toMatch(new RegExp(`^${code.c},paid,"'=cmd\\(""x""\\),Rao",asha@example.com,\\+919876543210,1 of 1,1500\\.00,`));
   expect(lines[2]).toBe("");
 });
 
@@ -175,10 +175,10 @@ test("export: IST timestamps, check-in, excludes pending/refunded, orders by cod
   const codes = rows.map((r) => r[0]);
   expect(codes).toEqual([...codes].sort());
   const mine = rows.filter((r) => r[3] === "asha@example.com");
-  expect(mine.map((r) => r[5])).toEqual(["G-A-1", "G-A-2"]);
-  expect(mine[0][8]).toBe("2026-11-05T18:30:00+05:30");
-  expect(mine[0][9]).toBe("2026-11-05T19:30:00+05:30");
-  expect(mine[1][9]).toBe("");
+  expect(mine.map((r) => r[5])).toEqual(["1 of 2", "2 of 2"]);
+  expect(mine[0][7]).toBe("2026-11-05T18:30:00+05:30");
+  expect(mine[0][8]).toBe("2026-11-05T19:30:00+05:30");
+  expect(mine[1][8]).toBe("");
   expect(csv).not.toContain(pend.bookingId);
   expect(csv).not.toContain("guest4@example.com");
   expect(csv).not.toContain("guest3@example.com");

@@ -1,5 +1,5 @@
 // Load test for seat holds: 200 virtual users for 2 minutes, each looping
-//   GET /api/seats  ->  POST /api/holds on a random available seat.
+//   POST /api/holds for 1 seat (the server auto-assigns from the default tier).
 //
 // Run against STAGING only (it creates real holds and real Razorpay orders):
 //   k6 run -e BASE_URL=https://staging.example.com tests/load/hold.k6.js
@@ -49,21 +49,13 @@ function randomIp() {
 }
 
 export default function holdScenario() {
-  const seatsRes = http.get(`${BASE_URL}/api/seats`, { tags: { name: "GET /api/seats" } });
-  const ok = check(seatsRes, { "seats 200": (r) => r.status === 200 });
-  if (!ok) return;
-
-  const available = seatsRes.json("seats").filter((s) => s.status === "available");
-  if (available.length === 0) return;
-  const seat = available[Math.floor(Math.random() * available.length)];
-
   // Unique guest per request: a guest may only have one active hold.
   const id = `${__VU}-${__ITER}-${Date.now()}`;
   const phone = `+91${6 + Math.floor(Math.random() * 4)}${String(Math.floor(Math.random() * 1e9)).padStart(9, "0")}`;
   const res = http.post(
     `${BASE_URL}/api/holds`,
     JSON.stringify({
-      seatIds: [seat.id],
+      seatCount: 1,
       name: `Load Test ${id}`,
       email: `load-${id}@example.com`,
       phone,

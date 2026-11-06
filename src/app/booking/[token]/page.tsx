@@ -64,7 +64,7 @@ export default async function BookingPage({
         )}
         {b.status === "expired" && (
           <p className="mt-4">
-            This booking expired before payment was completed. <Link href="/register" className="underline">Pick seats again</Link>.
+            This booking expired before payment was completed. <Link href="/register" className="underline">Book again</Link>.
           </p>
         )}
         {b.status === "cancelled" && <p className="mt-4">This booking has been cancelled and its tickets are no longer valid.</p>}
@@ -96,7 +96,7 @@ export default async function BookingPage({
             </div>
             <TicketSet
               tickets={b.tickets.flatMap((t) =>
-                t.token ? [{ seatLabel: t.seatLabel, tierName: t.tierName, qr: `/api/tickets/qr/${t.token}` }] : [],
+                t.token ? [{ token: t.token, qr: `/api/tickets/qr/${t.token}` }] : [],
               )}
               orderCode={b.publicCode}
               holder={b.name}
@@ -109,11 +109,10 @@ export default async function BookingPage({
           </div>
         ) : (
           <ul className="mt-6 space-y-5">
-            {b.tickets.map((t) => (
-              <li key={t.seatLabel} className="ticket-stub shadow-[0_20px_40px_rgba(11,16,32,0.08)]">
+            {b.tickets.map((t, i) => (
+              <li key={t.token ?? i} className="ticket-stub shadow-[0_20px_40px_rgba(11,16,32,0.08)]">
                 <div className="flex items-baseline gap-3 py-3">
-                  <span className="font-display text-2xl font-semibold">{t.seatLabel}</span>
-                  <span className="text-muted">{t.tierName}</span>
+                  <span className="font-display text-2xl font-semibold">Ticket {i + 1}</span>
                   <span className="ml-auto tabular-nums">{formatInr(t.pricePaise)}</span>
                 </div>
               </li>

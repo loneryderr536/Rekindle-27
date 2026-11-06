@@ -3,7 +3,8 @@ import { MAX_SEATS_PER_BOOKING } from "@/lib/constants";
 import { normalizeIndianPhone } from "@/lib/phone";
 
 export const HoldInput = z.object({
-  seatIds: z.array(z.string().uuid()).min(1).max(MAX_SEATS_PER_BOOKING),
+  // Guests no longer pick seats; the server auto-assigns from the default tier.
+  seatCount: z.number().int().min(1).max(MAX_SEATS_PER_BOOKING),
   name: z.string().trim().min(2).max(80),
   email: z.string().email(),
   phone: z

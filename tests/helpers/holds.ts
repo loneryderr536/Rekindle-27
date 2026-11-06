@@ -4,7 +4,6 @@ import { db } from "@/db/client";
 import { bookings, seats } from "@/db/schema";
 import { randomToken } from "@/lib/random";
 import { createHold } from "@/server/holds/createHold";
-import { setGuestForTests } from "@/server/guestAuth/getGuest";
 
 export const guest = { name: "Asha Rao", email: "asha@example.com", phone: "+919876543210" };
 
@@ -34,14 +33,4 @@ export async function holdWithOrder(seatIds: string[], who: { name: string; emai
 export function guestIdFor(email: string): string {
   const h = createHash("md5").update(email.trim().toLowerCase()).digest("hex");
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-4${h.slice(13, 16)}-8${h.slice(17, 20)}-${h.slice(20, 32)}`;
-}
-
-/** Signs in (test override) as the guest named in a request body, or as nobody when the body has no email. */
-export function signInFromBody(body: unknown): void {
-  const b = body as { email?: unknown; name?: unknown } | null;
-  if (b && typeof b.email === "string") {
-    setGuestForTests({
-      guest: { userId: guestIdFor(b.email), email: b.email, name: typeof b.name === "string" ? b.name : null },
-    });
-  }
 }

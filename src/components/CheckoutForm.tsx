@@ -6,13 +6,12 @@ import type { Attendee } from "@/lib/attendee";
 import { discountAmountPaise } from "@/lib/discount";
 import { formatInr } from "@/lib/money";
 import { loadTurnstile } from "@/lib/turnstile";
-import type { SeatView, TierView } from "@/server/seats/listSeats";
 
 export type CheckoutDetails = { name: string; email: string; phone: string; turnstileToken: string; discountCode?: string };
 
 type Props = {
-  selected: SeatView[];
-  tiers: TierView[];
+  seatCount: number;
+  pricePaise: number;
   /** Entered on /register; this form only confirms it. */
   attendee: Omit<Attendee, "participants">;
   onSubmit: (details: CheckoutDetails) => Promise<void>;
@@ -22,8 +21,8 @@ type Props = {
 /** With the dev/test site key no widget is rendered; the server's test secret accepts this token. */
 const TEST_TOKEN = "test-pass";
 
-/** The last step before Razorpay: the attendee's details, the picked seats and total, and the bot check. */
-export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: Props) {
+/** The last step before Razorpay: the attendee's details, the seat count and total, and the bot check. */
+export function CheckoutForm({ seatCount, pricePaise, attendee, onSubmit, onCancel }: Props) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "";
   const testMode = siteKey === "test";
   const [token, setToken] = useState<string>(testMode ? TEST_TOKEN : "");
@@ -58,8 +57,7 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
     };
   }, [siteKey, testMode]);
 
-  const tierById = new Map(tiers.map((t) => [t.id, t]));
-  const subtotal = selected.reduce((sum, s) => sum + (tierById.get(s.tierId)?.pricePaise ?? 0), 0);
+  const subtotal = seatCount * pricePaise;
   const discount = applied ? discountAmountPaise(subtotal, applied.percent) : 0;
   const total = subtotal - discount;
   const codePending = codeInput.trim() !== "" && !applied;
@@ -113,18 +111,12 @@ export function CheckoutForm({ selected, tiers, attendee, onSubmit, onCancel }: 
 
   return (
     <form onSubmit={submit} className="checkout space-y-5">
-      <ul className="ticket-stub divide-y divide-dashed divide-line" aria-label="Selected seats">
-        {selected.map((s) => {
-          const tier = tierById.get(s.tierId);
-          return (
-            <li key={s.id} className="flex items-center gap-3 py-2">
-              <span className="h-3 w-3 shrink-0 rounded-full" style={{ background: tier?.color }} aria-hidden="true" />
-              <span className="font-semibold">{s.label}</span>
-              <span className="text-muted">{tier?.name}</span>
-              <span className="ml-auto tabular-nums">{tier ? formatInr(tier.pricePaise) : ""}</span>
-            </li>
-          );
-        })}
+      <ul className="ticket-stub divide-y divide-dashed divide-line" aria-label="Order summary">
+        <li className="flex items-center gap-3 py-2">
+          <span className="font-semibold">{seatCount === 1 ? "1 seat" : `${seatCount} seats`}</span>
+          <span className="text-muted">&times; {formatInr(pricePaise)}</span>
+          <span className="ml-auto tabular-nums">{formatInr(subtotal)}</span>
+        </li>
         {applied && (
           <li className="flex items-baseline justify-between py-2 text-sm">
             <span className="font-semibold">Discount ({applied.percent}% off)</span>

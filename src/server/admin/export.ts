@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { db } from "@/db/client";
 
-export const CSV_HEADER = "booking_code,status,name,email,phone,seat,tier,price_inr,paid_at,checked_in_at";
+export const CSV_HEADER = "booking_code,status,name,email,phone,ticket,price_inr,paid_at,checked_in_at";
 
 /** Quotes when needed and neutralises spreadsheet formulas (CSV injection). */
 export function csvField(value: string): string {
@@ -11,15 +11,17 @@ export function csvField(value: string): string {
   return /[,"\r\n]/.test(safe) ? `"${safe.replace(/"/g, '""')}"` : safe;
 }
 
-/** One row per seat of paid and comp bookings. */
+/** One row per ticket of paid and comp bookings, numbered within its own booking (general admission: no seats). */
 export async function exportCsv(): Promise<string> {
   const ist = (col: string) =>
     sql.raw(`to_char(${col} AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM-DD"T"HH24:MI:SS') || '+05:30'`);
   const { rows } = await db.execute<{
-    public_code: string; status: string; name: string; email: string; phone: string; label: string;
-    tier_name: string; price_paise: number; paid_at: string | null; checked_in_at: string | null;
+    public_code: string; status: string; name: string; email: string; phone: string;
+    ticket_index: number; ticket_count: number; price_paise: number; paid_at: string | null; checked_in_at: string | null;
   }>(sql`
-    SELECT b.public_code, b.status, b.name, b.email, b.phone, s.label, bi.tier_name, bi.price_paise,
+    SELECT b.public_code, b.status, b.name, b.email, b.phone, bi.price_paise,
+           row_number() OVER (PARTITION BY b.id ORDER BY s.label) AS ticket_index,
+           count(*) OVER (PARTITION BY b.id) AS ticket_count,
            ${ist("b.paid_at")} AS paid_at, ${ist("t.checked_in_at")} AS checked_in_at
       FROM bookings b
       JOIN booking_items bi ON bi.booking_id = b.id
@@ -29,7 +31,7 @@ export async function exportCsv(): Promise<string> {
      ORDER BY b.public_code, s.label`);
   const lines = rows.map((r) =>
     [
-      r.public_code, r.status, r.name, r.email, r.phone, r.label, r.tier_name,
+      r.public_code, r.status, r.name, r.email, r.phone, `${r.ticket_index} of ${r.ticket_count}`,
       (r.price_paise / 100).toFixed(2), r.paid_at ?? "", r.checked_in_at ?? "",
     ].map(csvField).join(","),
   );

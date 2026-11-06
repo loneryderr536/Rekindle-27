@@ -1,79 +1,54 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, expect, test, vi } from "vitest";
 
 const push = vi.fn();
-const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, refresh }) }));
-const guestSignOut = vi.fn();
-vi.mock("@/lib/guestSignOut", () => ({ guestSignOut: () => guestSignOut() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
 
 import { AttendeeForm } from "@/components/AttendeeForm";
-import { readHoldToken, saveHoldToken } from "@/lib/activeHold";
 
 beforeEach(() => {
   sessionStorage.clear();
   push.mockReset();
-  refresh.mockReset();
-  guestSignOut.mockReset();
 });
 
-test("email is the verified one and read-only", () => {
-  render(<AttendeeForm email="asha@example.com" suggestedName={null} />);
+test("email, name and phone are plain editable inputs, nothing prefilled when nothing is stored", () => {
+  render(<AttendeeForm />);
+  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("");
   const email = screen.getByLabelText(/^Email/) as HTMLInputElement;
-  expect(email.value).toBe("asha@example.com");
-  expect(email.readOnly).toBe(true);
-});
-
-test("name is prefilled with the suggested name when nothing is stored", () => {
-  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
-  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Asha Rao");
-});
-
-test("submit saves the attendee with the session email", async () => {
-  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old", email: "asha@example.com", phone: "9876543210", participants: 2 }));
-  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
-  await userEvent.click(screen.getByRole("button", { name: /^Choose/ }));
-  expect(push).toHaveBeenCalledWith("/register/seats");
-  expect(JSON.parse(sessionStorage.getItem("attendee")!)).toMatchObject({ name: "Old", email: "asha@example.com", participants: 2 });
-});
-
-test("details stored under another account's email are cleared with the hold token and not prefilled", async () => {
-  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old Person", email: "old@example.com", phone: "9876543210", participants: 3 }));
-  saveHoldToken("hold-from-old-account");
-  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
-  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Asha Rao");
+  expect(email.readOnly).toBe(false);
+  expect(email.value).toBe("");
   expect((screen.getByLabelText(/^Mobile number/) as HTMLInputElement).value).toBe("");
-  await waitFor(() => expect(sessionStorage.getItem("attendee")).toBeNull());
-  expect(readHoldToken()).toBeNull();
 });
 
-test("details stored under the same email (any case) are kept", () => {
-  sessionStorage.setItem("attendee", JSON.stringify({ name: "Old", email: "Asha@Example.com ", phone: "9876543210", participants: 2 }));
-  saveHoldToken("hold-1");
-  render(<AttendeeForm email="asha@example.com" suggestedName="Asha Rao" />);
-  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Old");
-  expect(sessionStorage.getItem("attendee")).not.toBeNull();
-  expect(readHoldToken()).toBe("hold-1");
+test("previously stored details are prefilled", () => {
+  sessionStorage.setItem("attendee", JSON.stringify({ name: "Asha Rao", email: "asha@example.com", phone: "9876543210", participants: 2 }));
+  render(<AttendeeForm />);
+  expect((screen.getByLabelText("Full name") as HTMLInputElement).value).toBe("Asha Rao");
+  expect((screen.getByLabelText(/^Email/) as HTMLInputElement).value).toBe("asha@example.com");
+  expect((screen.getByLabelText(/^Mobile number/) as HTMLInputElement).value).toBe("9876543210");
 });
 
-test("Switch account signs out then refreshes", async () => {
-  let finish!: () => void;
-  guestSignOut.mockReturnValue(new Promise<void>((r) => (finish = r)));
-  render(<AttendeeForm email="asha@example.com" suggestedName={null} />);
-  const btn = screen.getByRole("button", { name: /Switch account/ }) as HTMLButtonElement;
-  await userEvent.click(btn);
-  expect(btn.disabled).toBe(true);
-  finish();
-  await waitFor(() => expect(refresh).toHaveBeenCalled());
+test("submit saves the typed details and goes to /register/seats", async () => {
+  render(<AttendeeForm />);
+  await userEvent.type(screen.getByLabelText("Full name"), "Asha Rao");
+  await userEvent.type(screen.getByLabelText(/^Email/), "asha@example.com");
+  await userEvent.type(screen.getByLabelText(/^Mobile number/), "9876543210");
+  await userEvent.click(screen.getByRole("button", { name: /^Continue to payment/ }));
+  expect(push).toHaveBeenCalledWith("/register/seats");
+  expect(JSON.parse(sessionStorage.getItem("attendee")!)).toMatchObject({
+    name: "Asha Rao", email: "asha@example.com", phone: "9876543210", participants: 1,
+  });
 });
 
-test("Switch account failure shows an alert and does not refresh", async () => {
-  guestSignOut.mockRejectedValue(new Error("x"));
-  render(<AttendeeForm email="asha@example.com" suggestedName={null} />);
-  await userEvent.click(screen.getByRole("button", { name: /Switch account/ }));
-  expect((await screen.findByRole("alert")).textContent).toBe("Couldn't switch account. Try again.");
-  expect(refresh).not.toHaveBeenCalled();
-  expect((screen.getByRole("button", { name: /Switch account/ }) as HTMLButtonElement).disabled).toBe(false);
+test("an invalid phone number blocks submission", async () => {
+  render(<AttendeeForm />);
+  await userEvent.type(screen.getByLabelText("Full name"), "Asha Rao");
+  await userEvent.type(screen.getByLabelText(/^Email/), "asha@example.com");
+  await userEvent.type(screen.getByLabelText(/^Mobile number/), "12345");
+  await userEvent.click(screen.getByRole("button", { name: /^Continue to payment/ }));
+  expect(push).not.toHaveBeenCalled();
+  expect(sessionStorage.getItem("attendee")).toBeNull();
+  expect(screen.getByText("Enter a 10-digit Indian mobile number.")).toBeTruthy();
 });

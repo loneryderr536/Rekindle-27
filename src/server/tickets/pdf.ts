@@ -9,7 +9,6 @@ import { ticketsVisible } from "@/server/tickets/visibility";
 
 const INK = "#0B1020";
 const MUTED = "#6b6b6b";
-const MARIGOLD = "#F9A90B";
 
 const inrFormatter = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", currencyDisplay: "code" });
 
@@ -66,9 +65,11 @@ export async function generateTicketPassPdf(token: string): Promise<Buffer | nul
       .roundedRect(doc.page.margins.left, boxTop, doc.page.width - doc.page.margins.left - doc.page.margins.right, 170, 10)
       .lineWidth(1).strokeColor("#E4DFD2").stroke();
     doc
-      .fontSize(10).fillColor(MUTED).text("SEAT", doc.page.margins.left + 24, boxTop + 20)
-      .fontSize(28).fillColor(INK).text(t.seatLabel, doc.page.margins.left + 24, boxTop + 34)
-      .fontSize(13).fillColor(MARIGOLD).text(t.tierName, doc.page.margins.left + 24, boxTop + 74)
+      .fontSize(10).fillColor(MUTED).text("TICKET", doc.page.margins.left + 24, boxTop + 20)
+      .fontSize(28).fillColor(INK).text(
+        b.tickets.length > 1 ? `${i + 1} of ${b.tickets.length}` : "General admission",
+        doc.page.margins.left + 24, boxTop + 34,
+      )
       .fontSize(10).fillColor(MUTED).text("HOLDER", doc.page.margins.left + 24, boxTop + 104)
       .fontSize(14).fillColor(INK).text(b.name, doc.page.margins.left + 24, boxTop + 118)
       .fontSize(10).fillColor(MUTED).text(`Booking ${b.publicCode}`, doc.page.margins.left + 24, boxTop + 142);
@@ -135,30 +136,29 @@ export async function generateInvoicePdf(token: string): Promise<Buffer | null> 
     .text(extra.phone)
     .moveDown(1.5);
 
-  const colSeat = left, colTier = left + 140, colAmount = right - 100;
+  const colItem = left, colLabel = left + 140, colAmount = right - 100;
   const tableTop = doc.y;
   doc
     .fontSize(10).fillColor(MUTED)
-    .text("SEAT", colSeat, tableTop)
-    .text("TIER", colTier, tableTop)
+    .text("ITEM", colItem, tableTop)
     .text("AMOUNT", colAmount, tableTop, { width: right - colAmount, align: "right" });
   doc.moveTo(left, tableTop + 16).lineTo(right, tableTop + 16).strokeColor("#E4DFD2").stroke();
 
   let y = tableTop + 24;
-  for (const t of b.tickets) {
+  const count = b.tickets.length;
+  b.tickets.forEach((t, i) => {
     doc
       .fontSize(11).fillColor(INK)
-      .text(t.seatLabel, colSeat, y)
-      .text(t.tierName, colTier, y)
+      .text(count > 1 ? `Ticket ${i + 1} of ${count}` : "General admission", colItem, y)
       .text(inrForPdf(t.pricePaise), colAmount, y, { width: right - colAmount, align: "right" });
     y += 20;
-  }
+  });
   doc.moveTo(left, y + 4).lineTo(right, y + 4).strokeColor("#E4DFD2").stroke();
   y += 16;
 
   const totalsLine = (label: string, value: string, bold = false) => {
     doc.fontSize(bold ? 13 : 11).fillColor(bold ? INK : MUTED)
-      .text(label, colTier, y)
+      .text(label, colLabel, y)
       .text(value, colAmount, y, { width: right - colAmount, align: "right" });
     y += bold ? 24 : 18;
   };

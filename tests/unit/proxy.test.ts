@@ -46,6 +46,12 @@ test("signed-in /register passes through with the headers", async () => {
   expect(res.headers.get("cache-control")).toContain("no-store");
 });
 
+test("/register/seats passes through signed out too (no sign-in required to book)", async () => {
+  getUser.mockResolvedValue({ data: { user: null } });
+  const res = await proxy(req("/register/seats"));
+  expect(res.headers.get("location")).toBeNull();
+});
+
 test("ticket page /booking/x?paid=1 passes through (signed out too) with refreshed cookies and headers", async () => {
   getUser.mockResolvedValue({ data: { user: null } });
   const res = await proxy(req("/booking/x?paid=1"));
@@ -59,8 +65,8 @@ test("ticket page /booking/x?paid=1 passes through (signed out too) with refresh
 test("getUser throwing counts as signed out without crashing", async () => {
   getUser.mockRejectedValue(new Error("unreachable"));
   vi.spyOn(console, "error").mockImplementation(() => {});
-  const res = await proxy(req("/register/seats"));
-  expect(new URL(res.headers.get("location")!).pathname).toBe("/register");
+  const res = await proxy(req("/my-bookings"));
+  expect(new URL(res.headers.get("location")!).pathname).toBe("/sign-in");
 });
 
 test("admin without a session redirects to login and skips Supabase", async () => {

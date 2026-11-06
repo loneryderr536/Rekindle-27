@@ -70,11 +70,11 @@ test("7th selection is blocked with message 'Maximum 6 seats per booking'", asyn
   expect(screen.getByText("Maximum 6 seats per booking")).toBeTruthy();
 });
 
-test("total shows ₹2,300.00 for one Gold + one Silver", () => {
+test("total shows ₹2,300.00 for 2 seats at ₹1,150.00 each", () => {
   render(
     <CheckoutForm
-      selected={[seat(1), seat(1, "t-silver")]}
-      tiers={tiers}
+      seatCount={2}
+      pricePaise={115000}
       attendee={{ name: "Asha Rao", email: "asha@example.com", phone: "9876543210" }}
       onSubmit={async () => {}}
     />,
@@ -113,8 +113,8 @@ test("an applied discount code lowers the checkout total", async () => {
   vi.stubGlobal("fetch", vi.fn(async () => Response.json({ code: "REKINDLE20", percent: 20 })));
   render(
     <CheckoutForm
-      selected={[seat(1), seat(1, "t-silver")]}
-      tiers={tiers}
+      seatCount={2}
+      pricePaise={115000}
       attendee={{ name: "Asha Rao", email: "asha@example.com", phone: "9876543210" }}
       onSubmit={async () => {}}
     />,

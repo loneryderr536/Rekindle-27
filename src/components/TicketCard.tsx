@@ -2,11 +2,11 @@
 
 import { useState, type PointerEvent } from "react";
 
-type FaceProps = { qr: string; seatLabel: string; eventName: string; shortDate: string };
+type FaceProps = { qr: string; index: number; count: number; eventName: string; shortDate: string };
 type DetailsProps = {
   qr: string;
-  seatLabel: string;
-  tierName: string;
+  index: number;
+  count: number;
   orderCode: string;
   holder: string;
   longDate: string;
@@ -20,7 +20,7 @@ const NOTCH = "radial-gradient(circle at 0 204px, #0000 14px, #000 14.5px) left 
 const LOGO = "/landing/logo.png";
 
 /** The floating holographic card with its entry QR. */
-export function TicketFace({ qr, seatLabel, eventName, shortDate }: FaceProps) {
+export function TicketFace({ qr, index, count, eventName, shortDate }: FaceProps) {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const { x: tx, y: ty } = tilt;
 
@@ -65,7 +65,7 @@ export function TicketFace({ qr, seatLabel, eventName, shortDate }: FaceProps) {
                   <path d="M2 26 V8 a6 6 0 0 1 6 -6 H26 M124 2 H142 a6 6 0 0 1 6 6 V26 M148 124 V142 a6 6 0 0 1 -6 6 H124 M26 148 H8 a6 6 0 0 1 -6 -6 V124" fill="none" stroke="#FDFBF4" strokeWidth="3.5" strokeLinecap="round" />
                 </svg>
                 {/* eslint-disable-next-line @next/next/no-img-element -- data: URL generated on the server */}
-                <img src={qr} alt={`QR code for seat ${seatLabel}`} width={116} height={116} style={{ position: "absolute", left: 17, top: 17, width: 116, height: 116, padding: 6, boxSizing: "border-box", borderRadius: 8, background: "#FDFBF4", display: "block" }} />
+                <img src={qr} alt={count > 1 ? `QR code for ticket ${index} of ${count}` : "QR code for your ticket"} width={116} height={116} style={{ position: "absolute", left: 17, top: 17, width: 116, height: 116, padding: 6, boxSizing: "border-box", borderRadius: 8, background: "#FDFBF4", display: "block" }} />
               </div>
               <div aria-hidden="true" className="tk-sheen" style={{ position: "absolute", top: "-20%", left: 0, width: "38%", height: "140%", background: "linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 50%, rgba(255, 255, 255, 0) 100%)", pointerEvents: "none" }} />
               <div aria-hidden="true" style={{ position: "absolute", inset: 0, borderRadius: 20, boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 0 0 1px rgba(253, 251, 244, 0.25)", pointerEvents: "none" }} />
@@ -76,16 +76,14 @@ export function TicketFace({ qr, seatLabel, eventName, shortDate }: FaceProps) {
   );
 }
 
-/** Seat, venue, order number and the QR download for one ticket. */
-export function TicketDetails({ qr, seatLabel, tierName, orderCode, holder, longDate, hallLine, gatesOpen }: DetailsProps) {
-  // Labels are "section-row-number" (N-D-6); the ticket shows the seat as the guest finds it: D6.
-  const seatShort = seatLabel.split("-").slice(1).join("") || seatLabel;
-  const file = `${orderCode}-${seatLabel}`.replace(/[^A-Za-z0-9_-]+/g, "-");
+/** Venue, order number and the QR download for one ticket (general admission: no seat assignment). */
+export function TicketDetails({ qr, index, count, orderCode, holder, longDate, hallLine, gatesOpen }: DetailsProps) {
+  const file = `${orderCode}-ticket-${index}`.replace(/[^A-Za-z0-9_-]+/g, "-");
   return (
       <div className="flex w-full max-w-[342px] flex-col items-center gap-2 rounded-[28px] border border-[#FDFBF4]/20 bg-[#0B1020]/55 px-5 py-3.5 text-center backdrop-blur-md">
         <div className="flex flex-col gap-0.5">
-          <span className="text-xs text-[#C9CCD8]">Seat · {tierName}</span>
-          <span className="font-display text-[21px] font-semibold text-[#F9A90B]">{seatShort}</span>
+          <span className="text-xs text-[#C9CCD8]">{count > 1 ? "Ticket" : "Admission"}</span>
+          <span className="font-display text-[21px] font-semibold text-[#F9A90B]">{count > 1 ? `${index} of ${count}` : "General"}</span>
         </div>
         <div className="flex flex-col gap-0.5">
           <span className="text-xs text-[#C9CCD8]">{hallLine}</span>
@@ -112,7 +110,7 @@ export function TicketDetails({ qr, seatLabel, tierName, orderCode, holder, long
 /** One digital ticket: the card and its details plate. */
 export function TicketCard(props: Props) {
   return (
-    <article aria-label={`Ticket for seat ${props.seatLabel}`} className="flex flex-col items-center">
+    <article aria-label={props.count > 1 ? `Ticket ${props.index} of ${props.count}` : "Your ticket"} className="flex flex-col items-center">
       <div className="mt-4">
         <TicketFace {...props} />
       </div>

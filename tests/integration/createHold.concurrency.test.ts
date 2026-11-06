@@ -71,3 +71,29 @@ test("parallel holds by the same guest → only one active hold", async () => {
   expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
   expect(results.filter((r) => codeOf(r) === "ACTIVE_HOLD_EXISTS")).toHaveLength(19);
 });
+
+test("seatCount: 30 parallel 1-seat holds on a 10-seat tier → exactly 10 win, no oversell", async () => {
+  const { seats: all } = await seedVenue({ seatsPerTier: 10 }); // default tier (Gold) has 10 seats
+  const gold = all.filter((s) => s.section === "G").map((s) => s.id);
+  const results = await Promise.allSettled(
+    Array.from({ length: 30 }, (_, i) => createHold({ seatCount: 1, ...guestN(i) })),
+  );
+  const won = results.filter((r) => r.status === "fulfilled");
+  expect(won).toHaveLength(10);
+  expect(results.filter((r) => codeOf(r) === "NOT_ENOUGH_SEATS")).toHaveLength(20);
+
+  const heldRows = await db.select().from(seats).where(inArray(seats.id, gold));
+  expect(heldRows.filter((r) => r.status === "held")).toHaveLength(10);
+  // Every winner got a distinct seat (SKIP LOCKED never hands the same row to two transactions).
+  const bookingIds = new Set(heldRows.filter((r) => r.status === "held").map((r) => r.bookingId));
+  expect(bookingIds.size).toBe(10);
+  expect(await db.select().from(bookings)).toHaveLength(10);
+});
+
+test("seatCount: disjoint parallel holds don't deadlock", async () => {
+  await seedVenue({ seatsPerTier: 20 });
+  const results = await Promise.allSettled(
+    Array.from({ length: 20 }, (_, i) => createHold({ seatCount: 1, ...guestN(i) })),
+  );
+  expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(20);
+});

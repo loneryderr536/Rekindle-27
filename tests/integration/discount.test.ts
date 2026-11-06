@@ -9,8 +9,7 @@ import { createHold } from "@/server/holds/createHold";
 import { setGatewayForTests } from "@/server/payments/gateway";
 import { FakeGateway } from "../helpers/fakes";
 import { seedVenue } from "../helpers/db";
-import { setGuestForTests } from "@/server/guestAuth/getGuest";
-import { guest, guestN, signInFromBody, statusOf } from "../helpers/holds";
+import { guest, guestN, statusOf } from "../helpers/holds";
 
 let gateway: FakeGateway;
 beforeEach(async () => {
@@ -23,11 +22,9 @@ beforeEach(async () => {
 });
 afterEach(() => {
   setGatewayForTests(null);
-  setGuestForTests(null);
 });
 
 function hold(body: unknown) {
-  signInFromBody(body);
   return postHold(
     new Request("http://localhost/api/holds", {
       method: "POST",
@@ -47,8 +44,8 @@ function validate(body: unknown) {
 }
 
 test("a code takes its percentage off the seat total and the Razorpay order", async () => {
-  const { seats } = await seedVenue(); // Gold 150000 each
-  const res = await hold({ seatIds: [seats[0].id, seats[1].id], ...guest, turnstileToken: "test-pass", discountCode: "rekindle 20" });
+  await seedVenue(); // Gold 150000 each
+  const res = await hold({ seatCount: 2, ...guest, turnstileToken: "test-pass", discountCode: "rekindle 20" });
   expect(res.status).toBe(201);
   const body = await res.json();
   expect(body.amountPaise).toBe(240000); // 300000 - 20%
@@ -67,7 +64,7 @@ test("no code leaves the price alone", async () => {
 
 test("an unknown code is rejected and no seat is held", async () => {
   const { seats } = await seedVenue();
-  const res = await hold({ seatIds: [seats[0].id], ...guest, turnstileToken: "test-pass", discountCode: "NOPE50" });
+  const res = await hold({ seatCount: 1, ...guest, turnstileToken: "test-pass", discountCode: "NOPE50" });
   expect(res.status).toBe(400);
   expect((await res.json()).error.code).toBe("INVALID_DISCOUNT");
   expect(await statusOf(seats[0].id)).toBe("available");

@@ -26,7 +26,7 @@ export function MyBookingCard({ booking, highlight }: { booking: GuestBooking; h
         <span className="ml-auto font-semibold tabular-nums">{formatInr(booking.amountPaise)}</span>
       </div>
       <p className="mb-0 mt-3 text-muted">
-        {booking.seats.map((s) => `${s.label} (${s.tierName})`).join(", ")}
+        {booking.seats.length === 1 ? "1 ticket" : `${booking.seats.length} tickets`}
       </p>
       {confirmed && (
         <div className="mt-4 flex flex-wrap items-start gap-3">

@@ -3,6 +3,8 @@ export function holdErrorMessage(code: string, serverMessage: string): string {
   switch (code) {
     case "SEATS_TAKEN":
       return "Some seats were just taken — please pick again";
+    case "NOT_ENOUGH_SEATS":
+      return "Not enough seats are left for that many people. Try a smaller group.";
     case "ACTIVE_HOLD_EXISTS":
       return "You already have a booking in progress. Finish it or wait 10 minutes.";
     case "SIGN_IN_REQUIRED":

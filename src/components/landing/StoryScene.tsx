@@ -1,7 +1,7 @@
 import { BoyAnimation } from "@/components/landing/BoyAnimation";
 import { FlameLogo } from "@/components/landing/FlameLogo";
 
-const TAGLINE = "One for the Nation, One for the Youth";
+const TAGLINE = "One for Christ, One for the Nation, One for the Youth";
 
 const NOTES: { fill: string; shape: "note8" | "note16"; x: number; y: number }[] = [
   { fill: "#F9A90B", shape: "note8", x: 560, y: 700 },
@@ -74,7 +74,7 @@ export function StoryScene() {
           <g id="presenters" opacity="0">
             <image href="/landing/logo-presenter.png" x="902" y="14" width="116" height="141" preserveAspectRatio="xMidYMid meet" />
             <text x="960" y="200" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
-              Christos Marthoma Yuvajana Sakyam
+              Christos Marthoma Yuvajana Sakhyam
             </text>
             <text x="960" y="244" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="34" fill="#FDFBF4" letterSpacing="2">
               <tspan fill="#F9A90B" className="o26-ff-fredoka" fontWeight="600">&amp;</tspan> Young Family Fellowship
@@ -110,9 +110,12 @@ export function StoryScene() {
             REKINDLE · 26 JANUARY 2027
           </text>
           <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
-            One for the Nation,
+            One in Christ
           </text>
-          <text id="o26-endtext-u" x="960" y="640" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0A5470" letterSpacing="1">
+          <text id="o26-endtext-t" x="960" y="630" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
+            One for the Nation
+          </text>
+          <text id="o26-endtext-u" x="960" y="700" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0A5470" letterSpacing="1">
             One for the Youth
           </text>
         </g>

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { boyPlayer } from "@/components/landing/BoyAnimation";
 import { BOY_DURATION } from "@/components/landing/boyEngine";
 import { flameReveal } from "@/components/landing/FlameLogo";
+import { StoryBookCta } from "@/components/landing/StoryBookCta";
 import { StoryScene } from "@/components/landing/StoryScene";
 
 /**
@@ -148,6 +149,7 @@ export function StoryIntro() {
     const img = $<HTMLImageElement>("#i-fire");
     const fill = $<HTMLDivElement>("#o26-scrub-fill");
     const boyCanvas = $<HTMLCanvasElement>("#o26-boy");
+    const bookCta = $<HTMLAnchorElement>("#o26-bookcta");
     const texNavy = $<HTMLDivElement>("#o26-tex-navy");
     const texCream = $<HTMLDivElement>("#o26-tex-cream");
     const endK = $<SVGTextElement>("#o26-endtext-k");
@@ -174,6 +176,7 @@ export function StoryIntro() {
     let fireOn = false;
     let lastBoyT = NaN;
     let lastBgY = NaN;
+    let lastCtaV = 1;
     let raf = 0;
     let inView = true;
     const introStart = performance.now();
@@ -220,6 +223,18 @@ export function StoryIntro() {
       const mobile = window.innerWidth <= 760;
       const len = mobile ? MOBILE_LEN : DESKTOP_LEN;
       const p = Math.min(1, Math.max(0, into / len));
+      // The floating "Book Tickets" pill fades in on the same beat as the in-scene "SCROLL" cue, then
+      // hands off to the real header's Register link as it fades in near the end of the story. Driven
+      // from inline styles (not a CSS animation) so JS keeps full control of both ends of the fade.
+      const ctaIn = Math.min(1, Math.max(0, (now - introStart - 2300) / 500));
+      const ctaOut = p <= 0.82 ? 1 : p >= 0.97 ? 0 : 1 - (p - 0.82) / 0.15;
+      const ctaV = Math.min(ctaIn, ctaOut);
+      if (ctaV !== lastCtaV) {
+        lastCtaV = ctaV;
+        bookCta.style.opacity = ctaV.toFixed(3);
+        bookCta.style.transform = `translateY(${(14 * (1 - ctaIn)).toFixed(1)}px) scale(${(0.92 + 0.08 * ctaIn).toFixed(3)})`;
+        bookCta.style.pointerEvents = ctaV < 0.05 ? "none" : "auto";
+      }
       // The paper pattern travels with the scroll, exactly like the page beneath the pinned stage.
       // Moving whole tiles keeps the pattern seamless, so the layers only ever shift by less than one tile.
       const tile = mobile ? 540 : 760;
@@ -328,6 +343,7 @@ export function StoryIntro() {
           <div id="o26-tex-cream" className="o26-tex o26-tex-cream" />
         </div>
         <StoryScene />
+        <StoryBookCta />
         <div id="o26-scrub" aria-hidden="true">
           <div id="o26-scrub-fill" />
         </div>

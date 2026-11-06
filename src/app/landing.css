@@ -366,6 +366,45 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   border-radius: 2px;
   background: linear-gradient(90deg, #0a5470, #f9a90b, #ff4520);
 }
+/*
+ * Floating CTA so the story can be skipped straight to booking instead of scrolled through.
+ * Its opacity/transform are driven entirely from StoryIntro's per-frame scroll loop (time-based
+ * fade-in, scroll-based fade-out) rather than a CSS animation: a `fill-mode` animation always wins
+ * over an inline style on the same property, which would make the scroll-driven fade-out a no-op.
+ * The transition just smooths those JS-driven changes; the glow pulse only touches box-shadow.
+ */
+@keyframes o26BookCtaGlow {
+  0%, 100% { box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 0 rgba(249, 169, 11, 0); }
+  50% { box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 22px rgba(249, 169, 11, 0.85); }
+}
+#o26-root .o26-bookcta {
+  position: absolute;
+  z-index: 6;
+  right: 20px;
+  bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 20px;
+  border-radius: 23px;
+  background: #f9a90b;
+  color: #0b1020;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  opacity: 0;
+  transform: translateY(14px) scale(0.92);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  animation: o26BookCtaGlow 2.6s ease-in-out 2.8s infinite;
+}
+#o26-root .o26-bookcta:hover,
+#o26-root .o26-bookcta:focus-visible {
+  color: #0b1020;
+}
+@media (max-width: 760px) {
+  .o26-bookcta { right: 14px; bottom: 44px; height: 42px; padding: 0 16px; font-size: 14px; }
+}
 
 /* Sections ------------------------------------------------------------------- */
 .o26-wrap {
@@ -702,6 +741,13 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   .o26-star,
   .o26-ft-spark {
     animation: none !important;
+  }
+  .o26-bookcta {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    pointer-events: auto !important;
   }
   .o26-io {
     opacity: 1 !important;

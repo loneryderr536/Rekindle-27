@@ -173,6 +173,7 @@ export function StoryIntro() {
     let cur = 0;
     let last = 0;
     let fireOn = false;
+    let lastFireReset = -Infinity;
     let lastBoyT = NaN;
     let lastBgY = NaN;
     let lastCtaV = 1;
@@ -279,9 +280,20 @@ export function StoryIntro() {
       const nowOn = t >= 7.4 && t < 9.4;
       if (nowOn && !fireOn) {
         if (useImg) {
-          const src = img.getAttribute("src") ?? "";
-          img.setAttribute("src", "");
-          img.setAttribute("src", src);
+          // Rubber-band/momentum scrolling can make the playhead cross this boundary several times
+          // in quick succession (settling back and forth right where someone naturally pauses to watch
+          // the burst). Resetting `src` forces iOS to fully re-fetch and re-decode every frame of this
+          // animated WebP from scratch, and WebKit doesn't always release the previous decode promptly —
+          // repeated resets in a burst compound into exactly the kind of paint/memory spike that crashes
+          // the tab. The image already loops forever on its own (its ANIM chunk has an infinite loop
+          // count), so skip the reset — and the restart-from-frame-0 it is for — unless it has genuinely
+          // been a while since the last one.
+          if (now - lastFireReset > 1500) {
+            lastFireReset = now;
+            const src = img.getAttribute("src") ?? "";
+            img.setAttribute("src", "");
+            img.setAttribute("src", src);
+          }
         } else {
           try {
             vid.currentTime = Math.max(0, (t - 7.45) % 4);

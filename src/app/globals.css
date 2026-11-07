@@ -219,27 +219,38 @@ body {
   .tk-float, .tk-card, .tk-sheen, .tk-pulse, .tk-shadow, .lg-shine, .lg-glow { animation: none !important; }
 }
 
-/* Full-screen dark pages: the seat map and the digital ticket are the page itself, not a card on cream. */
+/*
+ * Full-screen dark pages: the seat map and the digital ticket are the page itself, not a card on
+ * cream. The gradients live on their own `position: fixed` layer (like .o26-glass below) rather than
+ * using `background-attachment: fixed` on the scrolling root — iOS Safari can't give a fixed
+ * *background* its own compositor layer the way it can a fixed *element*, so it repaints these
+ * gradients on every scroll frame instead of compositing them once, causing visible scroll jank
+ * on iPhone that desktop/Android never show.
+ */
 body:has(.o26-dark) {
   background: #0b1020;
 }
 #o26-root.o26-dark {
   color: #fdfbf4;
-  background-attachment: fixed;
+  background: #0b1020;
 }
-#o26-root.o26-dark-seats {
+.o26-dark-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+.o26-dark-bg-seats {
   background:
     radial-gradient(ellipse 60% 38% at 0% 38%, rgba(255, 69, 32, 0.5), rgba(255, 69, 32, 0) 70%),
     radial-gradient(ellipse 60% 38% at 100% 36%, rgba(26, 138, 168, 0.55), rgba(10, 84, 112, 0) 70%),
     radial-gradient(ellipse 45% 32% at 50% 42%, rgba(249, 169, 11, 0.35), rgba(249, 169, 11, 0) 70%),
     linear-gradient(180deg, #141b33 0%, #10183a 30%, #0b1020 100%);
-  background-attachment: fixed;
 }
-#o26-root.o26-dark-ticket {
+.o26-dark-bg-ticket {
   background:
     radial-gradient(ellipse 70% 40% at 50% 85%, rgba(255, 69, 32, 0.4), rgba(255, 69, 32, 0) 70%),
     radial-gradient(ellipse at 50% 25%, #2a1426 0%, #0b1020 62%);
-  background-attachment: fixed;
 }
 /* The glass sheen belongs to the cream pages; the dark stage has its own glows. */
 .o26-dark .o26-glass {

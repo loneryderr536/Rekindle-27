@@ -275,15 +275,17 @@ export function ConfirmAndPay({ attendee }: { attendee: Attendee | null }) {
 
   return (
     <>
-      <section className="o26-wrap w-full flex-1 px-6 pb-48 pt-[clamp(40px,6vw,72px)]">
-        {intro}
-        {notice && !hold && (
-          <p role="alert" className={`mt-4 text-sm font-medium ${notice.tone === "error" ? "text-danger" : ""}`}>
-            {notice.text}
-          </p>
-        )}
+      <section className="o26-wrap w-full flex-1 px-6 pb-48 pt-[clamp(40px,6vw,72px)] lg:flex lg:items-start lg:justify-between lg:gap-16">
+        <div className="lg:max-w-xl">
+          {intro}
+          {notice && !hold && (
+            <p role="alert" className={`mt-4 text-sm font-medium ${notice.tone === "error" ? "text-danger" : ""}`}>
+              {notice.text}
+            </p>
+          )}
+        </div>
         {!hold && attendee && pricePaise !== null && (
-          <div className="sheet mt-8 max-w-md rounded-[28px] bg-paper p-6">
+          <div className="sheet mt-8 max-w-md rounded-[28px] bg-paper p-6 lg:mt-0 lg:max-w-lg lg:shrink-0 lg:p-8">
             <CheckoutForm seatCount={attendee.participants} pricePaise={pricePaise} attendee={attendee} onSubmit={submitDetails} />
           </div>
         )}

@@ -6,6 +6,8 @@
  * 3.40–4.20 sparks flicker, 4.30 SNAP (ring, rays, flash, shake), 4.80–6.40 fades with the night, always breathing.
  */
 
+import { constrainedDevice } from "./deviceCapability";
+
 const WORLD_H = 1080;
 /** Where the 3792 × 3792 boy frames sit in the 1920 × 1080 world. */
 const BOY_X = 479, BOY_Y = 54, BOY_SIZE = 1099.68, SRC = 3792, K = BOY_SIZE / SRC;
@@ -104,9 +106,15 @@ export function createBoyAnimation(canvas: HTMLCanvasElement, basePath: string):
   let mobile = false;
   let destroyed = false;
 
+  // This canvas is redrawn every scroll frame — cap the backing store to 1x on any constrained
+  // device (WebKit's 2D canvas path is the slow one everywhere on an iPhone, even in "Chrome"
+  // there, but a low-core-count or small-screen device hits the same wall) so the backing store
+  // (and so the cost of every drawImage call) stays a quarter of what 2x would need.
+  const constrained = constrainedDevice();
+
   /** Canvas backing size follows its on-screen size (the story scales the whole scene with a CSS transform). */
   function size(): [number, number] {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(constrained ? 1 : 2, window.devicePixelRatio || 1);
     const r = canvas.getBoundingClientRect();
     const w = Math.max(1, Math.round((r.width || canvas.width) * dpr));
     const h = Math.max(1, Math.round((r.height || canvas.height) * dpr));

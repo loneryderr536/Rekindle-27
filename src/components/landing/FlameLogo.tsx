@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { constrainedDevice } from "./deviceCapability";
 
 /**
  * Living ONE·26 Rekindle logo. Only the eight flame tongues move: each is redrawn row by row
@@ -117,12 +118,23 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
     // Small mode draws on an off-screen full-size canvas and blits it down; otherwise it draws straight on screen.
     const W = CANVAS.width + PAD * 2, H = CANVAS.height + PAD * 2;
     const sc = small ? 1 : scale;
-    const rowStep = sc < 0.8 ? 2 : 1;
+    // This is hundreds of drawImage calls per tongue per frame — halve that again on any
+    // constrained device (WebKit's 2D canvas path is the weak link on iOS even in "Chrome"
+    // there, but a low-core-count or small-screen device hits the same wall) so the
+    // scroll-scrubbed story logo doesn't compete with the main thread for scroll frames.
+    const rowStep = (sc < 0.8 ? 2 : 1) * (constrainedDevice() ? 2 : 1);
     const canvas = small ? Object.assign(document.createElement("canvas"), { width: W, height: H }) : shown;
     const ctx = canvas.getContext("2d")!;
     ctx.imageSmoothingEnabled = true;
     ctx.setTransform(sc, 0, 0, sc, 0, 0); // draw in full-size logo coordinates whatever the canvas size
 
+    // The halving-chain canvases below only need to exist once per target size — rebuilding
+    // them every frame (as this used to) allocates a fresh set of canvases on every single
+    // animation frame, which iOS Safari doesn't reclaim promptly and compounds into the kind
+    // of memory pressure that crashes the tab. Cache the chain and only rebuild it when the
+    // on-screen box actually changes size (device rotation, resize, scale change).
+    let chain: HTMLCanvasElement[] = [];
+    let chainTw = -1, chainTh = -1;
     const blit = () => {
       if (!small) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -132,13 +144,24 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
         shown.width = tw;
         shown.height = th;
       }
+      if (tw !== chainTw || th !== chainTh) {
+        chainTw = tw;
+        chainTh = th;
+        chain = [];
+        let src: HTMLCanvasElement = canvas;
+        while (src.width / 2 >= tw && src.height / 2 >= th) {
+          const half = document.createElement("canvas");
+          half.width = Math.floor(src.width / 2);
+          half.height = Math.floor(src.height / 2);
+          chain.push(half);
+          src = half;
+        }
+      }
       let src: HTMLCanvasElement = canvas;
-      while (src.width / 2 >= tw && src.height / 2 >= th) {
-        const half = document.createElement("canvas");
-        half.width = Math.floor(src.width / 2);
-        half.height = Math.floor(src.height / 2);
+      for (const half of chain) {
         const hc = half.getContext("2d")!;
         hc.imageSmoothingQuality = "high";
+        hc.clearRect(0, 0, half.width, half.height);
         hc.drawImage(src, 0, 0, half.width, half.height);
         src = half;
       }
@@ -171,7 +194,9 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
     }
 
     // Nothing to draw while the logo is faded out or hidden (the story hides the header logo and the big
-    // logo most of the time), so skip the work; a header-sized logo is also drawn at 30 fps at most.
+    // logo most of the time), so skip the work; a header-sized logo is also drawn at 30 fps at most, and
+    // so is the story's big logo (externalReveal): its on-screen position is already eased toward the
+    // scroll target elsewhere, so nothing downstream can tell 30fps flame-wobble from 60fps.
     // Hidden-ness is recomputed only when an ancestor's style/class actually changes, never on every
     // animation frame — getComputedStyle() is expensive and the loop runs at 60–120Hz.
     const computeHidden = () => {
@@ -198,7 +223,7 @@ export function FlameLogo({ className, ignite = true, replayKey = 0, glow = true
     function frame(now: number) {
       raf = 0;
       if (cancelled || !visible) return;
-      if ((small && now - lastDraw < 33) || isHidden) {
+      if (((small || externalReveal) && now - lastDraw < 33) || isHidden) {
         raf = requestAnimationFrame(frame);
         return;
       }

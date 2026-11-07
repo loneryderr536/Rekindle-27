@@ -19,6 +19,7 @@ export function BrandPage({
 }) {
   return (
     <div id="o26-root" className={`flex flex-1 flex-col${dark ? ` o26-dark o26-dark-${dark}` : ""}`}>
+      {dark && <div className={`o26-dark-bg o26-dark-bg-${dark}`} aria-hidden="true" />}
       <div className="o26-glass" aria-hidden="true" />
       <LandingHeader solid current={current} />
       <main className="flex flex-1 flex-col">{children}</main>

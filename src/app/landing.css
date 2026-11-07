@@ -773,3 +773,41 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   visibility: visible;
   opacity: 1;
 }
+
+/* Opening tagline: "One" holds, the rest of the line rolls up (for Christ → for the Nation → for the Youth). --tg is the start delay. */
+.o26-tag {
+  --tg: 1.3s;
+  position: absolute;
+  left: 0;
+  top: 585px;
+  width: 1920px;
+  display: flex;
+  justify-content: center;
+  color: #fdfbf4;
+  pointer-events: none;
+}
+.o26-tag-line {
+  display: grid;
+  overflow: hidden; /* clips the rolls */
+  font-weight: 500;
+  letter-spacing: 2px;
+  font-size: 68px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+/* Each phrase is a whole "One …" line, centred; the grid is as wide as the widest. */
+.o26-tag-phrase { grid-area: 1 / 1; justify-self: center; opacity: 0; transform: translateY(110%); }
+.o26-tag-p1 { animation: tgCycle 1.6s linear calc(var(--tg) + 0.65s) forwards; }
+.o26-tag-p2 { animation: tgCycle 1.6s linear calc(var(--tg) + 2s) forwards; }
+.o26-tag-p3 { animation: tgIn 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) calc(var(--tg) + 3.35s) forwards; }
+@keyframes tgIn { from { opacity: 0; transform: translateY(110%); } to { opacity: 1; transform: none; } }
+@keyframes tgCycle {
+  0% { opacity: 0; transform: translateY(110%); animation-timing-function: cubic-bezier(0.2, 0.8, 0.25, 1); }
+  15.6% { opacity: 1; transform: none; }
+  84.4% { opacity: 1; transform: none; animation-timing-function: ease-in; }
+  100% { opacity: 0; transform: translateY(-110%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .o26-tag-p1, .o26-tag-p2 { display: none; }
+  .o26-tag-p3 { animation: none; opacity: 1; transform: none; }
+}

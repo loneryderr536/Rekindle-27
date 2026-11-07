@@ -12,6 +12,21 @@ const BOY_X = 479, BOY_Y = 54, BOY_SIZE = 1099.68, SRC = 3792, K = BOY_SIZE / SR
 const BLINK_BOX = [894, 1128, 1723, 1405]; // in 3792-px frame coordinates
 const PIVOT = [900, 1330]; // lean / breath pivot (hips), world units
 const CAM = { scale: 2.0, x: -1870, y: 215 }; // the push-in
+/*
+ * On a narrow phone the shared scene window (StoryIntro's layout()) stays at least 1100 world-px
+ * wide so the title text never gets cropped sideways, but that leaves a portrait screen showing a
+ * much taller slice of the world than the boy's 1100×1100 artwork fills — before the push-in camera
+ * (which only starts at 1.8s) he reads as a small figure floating in a sea of background. Rather
+ * than reworking that shared window (the title, logo-landing spot and texture all depend on it) or
+ * starting the push-in early (it's tuned to land exactly on the snap, 4.3s), mobile just starts the
+ * push-in camera from a bigger, down-left point instead of from "no zoom" — so he fills the screen,
+ * bottom-left, from the moment he's risen, and still eases into the exact same close-up for the
+ * snap. That starting point is computed per-device below (mobileCam0), not a fixed constant: how
+ * tall the visible window gets varies a lot (a phone's address bar showing/hiding, notch, etc.), and
+ * a fixed value tuned for one window looked right there and floated or over-cropped on another.
+ */
+/** Fraction of the visible window's height his (zoomed) box should fill, bottom-flush — tuned by eye. */
+const MOBILE_FILL = 0.74;
 const SNAP_T = 4.3;
 export const BOY_DURATION = 6.6;
 
@@ -66,12 +81,14 @@ export type BoyHandle = {
   seek: (t: number) => void;
   /** Extra world units of scene below the 1080 frame (tall phone screens), so he starts fully out of view. */
   setExtra: (extra: number) => void;
+  /** Whether to use the mobile push-in (bigger, earlier, biased down-left). */
+  setMobile: (mobile: boolean) => void;
   destroy: () => void;
 };
 
 export function createBoyAnimation(canvas: HTMLCanvasElement, basePath: string): BoyHandle {
   const ctx = canvas.getContext("2d");
-  if (!ctx) return { seek() {}, setExtra() {}, destroy() {} };
+  if (!ctx) return { seek() {}, setExtra() {}, setMobile() {}, destroy() {} };
   const g = ctx;
 
   const load = (name: string) => {
@@ -84,6 +101,7 @@ export function createBoyAnimation(canvas: HTMLCanvasElement, basePath: string):
 
   let time = 0;
   let extra = 0;
+  let mobile = false;
   let destroyed = false;
 
   /** Canvas backing size follows its on-screen size (the story scales the whole scene with a CSS transform). */
@@ -117,8 +135,19 @@ export function createBoyAnimation(canvas: HTMLCanvasElement, basePath: string):
     const alpha = track(TRACKS.fade, t);
     const sx = t > SNAP_T ? track(TRACKS.shakeX, t) : 0;
     const sy = t > SNAP_T ? track(TRACKS.shakeY, t) : 0;
+    let cam0 = { scale: 1, x: 0, y: 0 };
+    if (mobile) {
+      // The window actually visible on this device, in world units (x0/y0 = the world point that
+      // lands at the screen's top-left corner; Hworld = how tall a slice of the world is shown).
+      const x0 = -fx / s, y0 = -fy / s, Hworld = ch / s;
+      const cs0 = (MOBILE_FILL * Hworld) / BOY_SIZE;
+      // Flush against the window's left edge, and against its bottom edge once fully risen (boyY 60).
+      cam0 = { scale: cs0, x: x0 - cs0 * BOY_X, y: y0 + Hworld - cs0 * (60 + BOY_Y + BOY_SIZE) };
+    }
     const c = track(TRACKS.cam, t);
-    const cs = 1 + (CAM.scale - 1) * c, cx = CAM.x * c, cy = CAM.y * c;
+    const cs = cam0.scale + (CAM.scale - cam0.scale) * c;
+    const cx = cam0.x + (CAM.x - cam0.x) * c;
+    const cy = cam0.y + (CAM.y - cam0.y) * c;
     const boyY = track([[0, 1280 + extra], [1.45, 60, "sineInOut"]], t);
     g.setTransform(s, 0, 0, s, fx, fy);
     g.translate(sx, sy);
@@ -210,6 +239,9 @@ export function createBoyAnimation(canvas: HTMLCanvasElement, basePath: string):
     seek: (t) => render(Math.max(0, Math.min(BOY_DURATION, t))),
     setExtra: (e) => {
       extra = e;
+    },
+    setMobile: (m) => {
+      mobile = m;
     },
     destroy: () => {
       destroyed = true;

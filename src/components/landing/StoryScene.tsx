@@ -1,7 +1,6 @@
 import { BoyAnimation } from "@/components/landing/BoyAnimation";
 import { FlameLogo } from "@/components/landing/FlameLogo";
-
-const TAGLINE = "One for Christ, One for the Nation, One for the Youth";
+import { TaglineMotion } from "@/components/landing/TaglineMotion";
 
 const NOTES: { fill: string; shape: "note8" | "note16"; x: number; y: number }[] = [
   { fill: "#F9A90B", shape: "note8", x: 560, y: 700 },
@@ -86,11 +85,6 @@ export function StoryScene() {
           <text id="title-main" x="960" y="520" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="230" fill="#F9A90B" letterSpacing="6" opacity="0">
             ONE·26
           </text>
-          <text id="title-tag" x="960" y="620" textAnchor="middle" className="o26-ff-poppins" fontWeight="400" fontSize="42" fill="#FDFBF4" letterSpacing="3" style={{ whiteSpace: "pre" }}>
-            {Array.from(TAGLINE).map((ch, i) => (
-              <tspan key={i} className="tag-ch" opacity="0">{ch}</tspan>
-            ))}
-          </text>
           <g id="scrollcue" opacity="0">
             <text x="960" y="930" textAnchor="middle" className="o26-ff-poppins" fontWeight="500" fontSize="22" fill="#FDFBF4" letterSpacing="6" opacity="0.7">
               SCROLL
@@ -112,7 +106,7 @@ export function StoryScene() {
           <text id="o26-endtext-t" x="960" y="560" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
             One in Christ
           </text>
-          <text id="o26-endtext-t" x="960" y="630" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
+          <text id="o26-endtext-t2" x="960" y="630" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0B1020" letterSpacing="1">
             One for the Nation
           </text>
           <text id="o26-endtext-u" x="960" y="700" textAnchor="middle" className="o26-ff-fredoka" fontWeight="600" fontSize="64" fill="#0A5470" letterSpacing="1">
@@ -120,6 +114,9 @@ export function StoryScene() {
           </text>
         </g>
       </svg>
+
+      {/* HTML, not SVG: it rolls its words in a clipped window. It travels with the title (see StoryIntro). */}
+      <TaglineMotion id="o26-tagline" />
     </div>
   );
 }

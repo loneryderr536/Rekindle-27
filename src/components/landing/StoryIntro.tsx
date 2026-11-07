@@ -68,10 +68,9 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   const landY = y0 + (headH - logoPx) / 2 / s - 240; // 240 = logo art top in the scene
 
   g.set("#shake", { x: 0, y: 0 });
-  g.set("#o26-title", { y: 0 });
+  g.set(["#o26-title", "#o26-tagline"], { y: 0 });
   g.set("#presenters", { opacity: 0, y: 16 });
   g.set("#title-main", { opacity: 0, scale: 0.9, transformOrigin: "50% 50%" });
-  g.set(".tag-ch", { opacity: 0 });
   g.set("#scrollcue", { opacity: 0, y: 0 });
   g.set("#o26-day-disc", { scale: 0, transformOrigin: "50% 50%" });
   g.set("#o26-tex-cream", { opacity: 0 });
@@ -91,12 +90,11 @@ function buildTimeline({ s, y0, ext: E, mobile }: Geo): gsap.core.Timeline {
   // 1. Presenters, then the title
   tl.to("#presenters", { opacity: 1, y: 0, duration: 0.7 }, 0.15)
     .to("#title-main", { opacity: 1, scale: 1, duration: 1.1, ease: "back.out(1.6)" }, 0.6)
-    .to(".tag-ch", { opacity: 1, duration: 0.25, stagger: 0.025 }, 1.2)
     .to("#scrollcue", { opacity: 1, duration: 0.4 }, 2.3)
     .to("#scrollcue", { y: 10, duration: 0.35, yoyo: true, repeat: 1, ease: "sine.inOut" }, 2.4);
   // 2. Title lifts away as the boy rises into frame (the boy, his push-in, sparks, snap ring and flash are
   //    drawn by BoyAnimation, scrubbed from the same playhead at BOY_AT)
-  tl.to("#o26-title", { y: -700 - E, duration: 1.45, ease: "sine.inOut" }, 2.7)
+  tl.to(["#o26-title", "#o26-tagline"], { y: -700 - E, duration: 1.45, ease: "sine.inOut" }, 2.7)
     .to("#scrollcue", { opacity: 0, duration: 0.3 }, 2.7);
   // 3. SNAP at 7.0: the stars shake and daylight spreads out from the fingertips
   tl.to("#o26-day-disc", { scale: 1, duration: 1.9, ease: "power2.inOut" }, 7.35)
@@ -154,6 +152,7 @@ export function StoryIntro() {
     const texCream = $<HTMLDivElement>("#o26-tex-cream");
     const endK = $<SVGTextElement>("#o26-endtext-k");
     const endT = $<SVGTextElement>("#o26-endtext-t");
+    const endT2 = $<SVGTextElement>("#o26-endtext-t2");
     const endU = $<SVGTextElement>("#o26-endtext-u");
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -198,11 +197,13 @@ export function StoryIntro() {
       boyCanvas.style.width = `${W}px`;
       boyCanvas.style.height = `${H}px`;
       boyPlayer.current?.setExtra(Math.max(0, (H - 1080) / 2));
+      boyPlayer.current?.setMobile(w <= 640);
       lastBoyT = NaN; // draw him again at the new size
       const narrow = W < 1300;
       endK.setAttribute("font-size", narrow ? "30" : "24");
       endK.setAttribute("letter-spacing", narrow ? "6" : "10");
       endT.setAttribute("font-size", narrow ? "84" : "64");
+      endT2.setAttribute("font-size", narrow ? "84" : "64");
       endU.setAttribute("font-size", narrow ? "84" : "64");
       const key = `${w}x${h}`;
       if (force || key !== layoutKey) {

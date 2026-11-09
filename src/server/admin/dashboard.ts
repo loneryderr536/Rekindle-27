@@ -8,10 +8,12 @@ export type BookingSummary = {
   amountPaise: number; seatCount: number; createdAt: Date;
 };
 
+export type DiscountUsage = { code: string; percent: number; active: boolean; maxUses: number | null; used: number };
+
 export async function getDashboard(now: Date = new Date()): Promise<{
-  tiers: TierCounts[]; revenuePaise: number; recent: BookingSummary[];
+  tiers: TierCounts[]; revenuePaise: number; recent: BookingSummary[]; discounts: DiscountUsage[];
 }> {
-  const [t, rev, recent] = await Promise.all([
+  const [t, rev, recent, disc] = await Promise.all([
     db.execute<{
       name: string; available: number; held: number; sold: number; blocked: number; comp: number;
     }>(sql`
@@ -35,8 +37,21 @@ export async function getDashboard(now: Date = new Date()): Promise<{
       SELECT id, public_code, name, status, amount_paise, seat_count, created_at
         FROM bookings WHERE status <> 'expired'
        ORDER BY created_at DESC, id LIMIT 20`),
+    // A "use" matches findDiscount: paid, comp or refund-due bookings, or a pending one whose hold is still live.
+    db.execute<{ code: string; percent: number; active: boolean; max_uses: number | null; used: number }>(sql`
+      SELECT d.code, d.percent, d.active, d.max_uses,
+             count(b.id)::int AS used
+        FROM discount_codes d
+        LEFT JOIN bookings b ON b.discount_code = d.code
+         AND (b.status IN ('paid', 'comp', 'refund_due')
+              OR (b.status = 'pending' AND b.hold_expires_at > ${now}))
+       GROUP BY d.id, d.code, d.percent, d.active, d.max_uses
+       ORDER BY d.code`),
   ]);
   return {
+    discounts: disc.rows.map((r) => ({
+      code: r.code, percent: r.percent, active: r.active, maxUses: r.max_uses, used: r.used,
+    })),
     tiers: t.rows,
     revenuePaise: Number(rev.rows[0].total),
     recent: recent.rows.map((r) => ({

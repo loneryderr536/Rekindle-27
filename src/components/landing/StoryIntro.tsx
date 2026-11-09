@@ -212,7 +212,7 @@ export function StoryIntro() {
         const keep = tl ? tl.time() : 0;
         tl?.kill();
         ctx.add(() => {
-          tl = buildTimeline({ s, y0, ext: Math.max(0, (H - 1080) / 2), mobile: w <= 640 });
+          tl = buildTimeline({ s, y0, ext: Math.max(0, (H - 1080) / 2), mobile: w <= 768 });
         });
         tl!.time(0);
         tl!.time(keep);
@@ -222,7 +222,7 @@ export function StoryIntro() {
     const loop = (now: number) => {
       raf = requestAnimationFrame(loop);
       const into = window.scrollY - section.offsetTop;
-      const mobile = window.innerWidth <= 760;
+      const mobile = window.innerWidth <= 768;
       const len = mobile ? MOBILE_LEN : DESKTOP_LEN;
       const p = Math.min(1, Math.max(0, into / len));
       // The floating "Book Tickets" pill fades in on the same beat as the in-scene "SCROLL" cue, then

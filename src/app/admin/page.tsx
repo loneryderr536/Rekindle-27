@@ -82,6 +82,38 @@ export default async function AdminHome() {
         </div>
       </section>
 
+      <section aria-labelledby="discounts-h" className="space-y-3">
+        <h2 id="discounts-h" className="font-display text-lg font-bold">Discount codes</h2>
+        <div className="overflow-x-auto o26-card">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-line text-muted">
+              <tr>
+                <th className="p-3">Code</th>
+                <th className="p-3 text-right">Discount</th>
+                <th className="p-3 text-right">Used</th>
+                <th className="p-3 text-right">Left</th>
+                <th className="p-3">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {d.discounts.map((c) => (
+                <tr key={c.code} className="border-b border-line last:border-0">
+                  <th scope="row" className="p-3 font-semibold">{c.code}</th>
+                  <td className="p-3 text-right tabular-nums">{c.percent}%</td>
+                  <td className="p-3 text-right tabular-nums">
+                    {c.used}{c.maxUses !== null ? ` / ${c.maxUses}` : ""}
+                  </td>
+                  <td className="p-3 text-right tabular-nums">
+                    {c.maxUses !== null ? Math.max(c.maxUses - c.used, 0) : "No limit"}
+                  </td>
+                  <td className="p-3">{c.active ? "Active" : "Off"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section aria-labelledby="recent-h" className="space-y-3">
         <div className="flex items-baseline justify-between">
           <h2 id="recent-h" className="font-display text-lg font-bold">Recent bookings</h2>

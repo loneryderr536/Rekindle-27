@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FlameLogo } from "@/components/landing/FlameLogo";
 import { LINKS } from "@/components/landing/links";
 
@@ -29,6 +29,18 @@ export function LandingHeader({ solid = false, current }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
   const cur = (key: Props["current"]) => (current === key ? ("page" as const) : undefined);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target?.closest("#o26-menu") && !target?.closest(".o26-menu-btn")) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    return () => window.removeEventListener("pointerdown", onPointerDown);
+  }, [menuOpen]);
 
   return (
     <header id="o26-header" className={solid ? "o26-header-solid" : undefined}>

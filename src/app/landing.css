@@ -88,7 +88,7 @@ html:has(#o26-root) body {
   border-radius: 0 0 28px 28px;
   box-shadow: inset 0 1px 0 rgba(253, 251, 244, 0.1), 0 14px 40px -8px rgba(11, 16, 32, 0.35), 0 4px 12px -4px rgba(11, 16, 32, 0.2);
 }
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   #o26-header { background-size: auto, 540px 540px; border-radius: 0 0 22px 22px; }
 }
 .o26-nav {
@@ -231,8 +231,10 @@ html:has(#o26-root) body {
     #o26-story { height: calc(100lvh + 3200px); }
   }
 }
-/* No rubber-band bounce at the top or bottom of the page. */
-html:has(#o26-root) { overscroll-behavior-y: none; }
+/* No rubber-band bounce at the top or bottom of the page on desktop pointers. */
+@media (hover: hover) and (pointer: fine) {
+  html:has(#o26-root) { overscroll-behavior-y: none; }
+}
 
 /* The cream day that spreads out from the snap and covers the night. */
 #o26-day {
@@ -402,8 +404,14 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
 #o26-root .o26-bookcta:focus-visible {
   color: #0b1020;
 }
-@media (max-width: 760px) {
-  .o26-bookcta { right: 14px; bottom: 44px; height: 42px; padding: 0 16px; font-size: 14px; }
+@media (max-width: 768px) {
+  .o26-bookcta {
+    right: 14px;
+    bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
+    height: 42px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
 }
 
 /* Sections ------------------------------------------------------------------- */
@@ -759,7 +767,7 @@ html:has(#o26-root) { overscroll-behavior-y: none; }
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .o26-hdesk { display: none !important; }
   .o26-hmob { display: flex !important; }
 }

@@ -964,16 +964,40 @@ html:has(#o26-root) body {
   gap: 12px;
 }
 
+.o26-map-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .o26-map {
+  display: block;
+  width: 100%;
   height: 280px;
+  border: 0;
   border-radius: 28px;
   background: #e6dfcc;
-  display: flex;
+}
+
+.o26-map-link {
+  align-self: flex-start;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #2e3443;
+  min-height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  background: #f9a90b;
+  color: #0b1020;
   font-weight: 600;
   font-size: 15px;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .o26-map-link {
+    align-self: stretch;
+  }
 }
 
 #faq details {

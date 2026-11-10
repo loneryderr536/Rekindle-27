@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent } from "react";
+import { EVENT } from "@/lib/event";
 
 type Artist = {
   name: string;
@@ -243,7 +244,7 @@ export function LineupHero() {
       <p className="p-in p-d3 p-lead" style={{ maxWidth: 520 }}>
         A night of worship and live music. Come ready to sing — this isn&apos;t a concert to watch, it&apos;s worship to join.
       </p>
-      <span className="p-in p-d3" style={{ fontSize: 15, color: "#C9CCD8" }}>Worship &amp; live music · [TIME]</span>
+      <span className="p-in p-d3" style={{ fontSize: 15, color: "#C9CCD8" }}>Worship &amp; live music · {EVENT.gatesOpen}</span>
       <div className="p-in p-d4" role="tablist" aria-label="Choose who to see" style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 10 }}>
         {ARTISTS.map((a, k) => (
           <button

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { AttendeeForm } from "@/components/AttendeeForm";
 import { BrandPage, RegisterSteps } from "@/components/landing/BrandPage";
 import { LINKS } from "@/components/landing/links";
+import { EVENT } from "@/lib/event";
 
 export const metadata: Metadata = { title: "Register" };
 
@@ -36,15 +37,15 @@ export default function RegisterPage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 14, fontSize: 16 }}>
               <span style={row}>
                 <Icon><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></Icon>
-                Tue, 26 January 2027 · [TIME]
+                Tue, 26 January 2027 · {EVENT.gatesOpen}
               </span>
               <span style={row}>
                 <Icon><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></Icon>
-                [VENUE], [CITY]
+                {EVENT.place}
               </span>
               <span style={row}>
                 <Icon><path d="M3 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" /><path d="M13 5v2M13 11v2M13 17v2" /></Icon>
-                Entry [FREE / ₹—]
+                Entry {EVENT.entryFee} per person
               </span>
             </div>
             <div style={{ flexGrow: 1, minHeight: 12 }} />

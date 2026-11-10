@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { FlameLogo } from "@/components/landing/FlameLogo";
 import { LINKS } from "@/components/landing/links";
+import { EVENT } from "@/lib/event";
 
 function FlameIcon({ width = 14, height = 18, fill = "#FF4520" }: { width?: number; height?: number; fill?: string }) {
   return (
@@ -65,7 +66,7 @@ const PLAN = [
 
 const FAQ = [
   { q: "Who is ONE·26 for?", a: "It's planned with young people in mind, and everyone is welcome — friends, families and first-timers.", open: true },
-  { q: "Is there an entry fee?", a: "[ANSWER]" },
+  { q: "Is there an entry fee?", a: `Yes. Entry is ${EVENT.entryFee} per person. Choose your seats on the Register page.` },
   { q: "Can I bring friends?", a: "Yes — add them when you register and we'll keep your seats together." },
   { q: "Where do I park?", a: "[PARKING INFO]" },
 ];
@@ -169,7 +170,19 @@ export function FaqSection() {
       <div className="o26-wrap">
         <div className="o26-faq-l">
           <h2 className="o26-h2 o26-ff-fredoka">Good to know <span className="o26-hot">•</span></h2>
-          <div role="img" aria-label="Map placeholder" className="o26-map">[MAP · VENUE ADDRESS]</div>
+          <div className="o26-map-wrap">
+            <iframe
+              className="o26-map"
+              title={`Map of ${EVENT.place}`}
+              src={`https://www.google.com/maps?q=${encodeURIComponent(EVENT.mapQuery)}&output=embed`}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              allowFullScreen
+            />
+            <a className="o26-map-link" href={EVENT.mapLink} target="_blank" rel="noopener noreferrer">
+              Open in Google Maps
+            </a>
+          </div>
         </div>
         <div className="o26-faq-r">
           {FAQ.map((f) => (

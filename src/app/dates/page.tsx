@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { BrandPage } from "@/components/landing/BrandPage";
 import { LINKS } from "@/components/landing/links";
+import { EVENT } from "@/lib/event";
 
 export const metadata: Metadata = {
   title: "Key dates",
@@ -14,7 +15,7 @@ type DateRow = { day: string; mon: string; dayColor: string; title: string; note
 const ROWS: DateRow[] = [
   { day: "[DD]", mon: "[MON]", dayColor: "#0A5470", title: "Registration opens", note: "Seats are first-come, first-served", cta: "Register", delay: "p-d3" },
   { day: "[DD]", mon: "[MON]", dayColor: "#0A5470", title: "Registration closes", note: "Or sooner, once all 1,000 seats are taken", cta: "Remind me", delay: "p-d4" },
-  { day: "26", mon: "JAN", dayColor: "#FF4520", title: "ONE·26 night", note: "Gates open [TIME] · Starts [TIME]", cta: "Save my seat", solid: true, delay: "p-d5" },
+  { day: "26", mon: "JAN", dayColor: "#FF4520", title: "ONE·26 night", note: `Gates open ${EVENT.gatesOpen}`, cta: "Save my seat", solid: true, delay: "p-d5" },
 ];
 
 function icon(d: ReactNode) {
@@ -27,15 +28,15 @@ function icon(d: ReactNode) {
 
 const FACTS: { bg: string; fg: string; icon: ReactNode; label: string; value: string; delay: string }[] = [
   {
-    bg: "#0A5470", fg: "#FDFBF4", label: "Venue", value: "[VENUE], [CITY]", delay: "p-d4",
+    bg: "#0A5470", fg: "#FDFBF4", label: "Venue", value: EVENT.place, delay: "p-d4",
     icon: icon(<><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></>),
   },
   {
-    bg: "#0B1020", fg: "#FDFBF4", label: "Gates open", value: "[TIME]", delay: "p-d5",
+    bg: "#0B1020", fg: "#FDFBF4", label: "Gates open", value: EVENT.gatesOpen, delay: "p-d5",
     icon: icon(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>),
   },
   {
-    bg: "#F9A90B", fg: "#0B1020", label: "Entry", value: "[FREE / ₹—]", delay: "p-d5",
+    bg: "#F9A90B", fg: "#0B1020", label: "Entry", value: `${EVENT.entryFee} per person`, delay: "p-d5",
     icon: icon(<><path d="M3 9a3 3 0 0 0 0 6v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a3 3 0 0 0 0-6V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2z" /><path d="M13 5v2M13 11v2M13 17v2" /></>),
   },
 ];
@@ -50,7 +51,7 @@ export default function DatesPage() {
             padding: "clamp(56px, 8vw, 104px) 24px clamp(56px, 7vw, 96px)",
           }}
         >
-          <span className="p-in p-d1 p-eyebrow">ONE·26 · [VENUE], [CITY]</span>
+          <span className="p-in p-d1 p-eyebrow">ONE·26 · {EVENT.place}</span>
           <h1 className="p-in p-d2 p-h1 o26-ff-fredoka" style={{ fontSize: "clamp(46px, 7vw, 92px)" }}>
             Key dates <span style={{ color: "#F9A90B" }}>•</span>
           </h1>

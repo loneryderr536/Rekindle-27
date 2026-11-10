@@ -7,16 +7,21 @@ html:has(#o26-root) {
   scroll-behavior: smooth;
   scroll-padding-top: 84px;
 }
+
 html:has(#o26-root),
 html:has(#o26-root) body {
   overflow-x: clip;
 }
+
 html:has(#o26-root) body {
   margin: 0;
   background: #fdfbf4 url("/landing/tex-cream.webp") repeat center top / 760px 760px;
 }
+
 @media (max-width: 760px) {
-  html:has(#o26-root) body { background-size: 540px 540px; }
+  html:has(#o26-root) body {
+    background-size: 540px 540px;
+  }
 }
 
 #o26-root {
@@ -26,53 +31,118 @@ html:has(#o26-root) body {
   font-family: var(--o26-poppins), system-ui, sans-serif;
   color: #0b1020;
 }
+
 /* In Tailwind's base layer, so utility classes and buttons styled as links keep their own colours. */
 @layer base {
   #o26-root a {
     color: #0a5470;
   }
+
   #o26-root a:hover {
     color: #083f54;
   }
 }
+
 .o26-ff-fredoka {
   font-family: var(--o26-fredoka), sans-serif;
 }
+
 .o26-ff-poppins {
   font-family: var(--o26-poppins), sans-serif;
 }
 
 @keyframes o26Reveal {
-  from { opacity: 0; transform: translateY(70px) scale(0.97); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(70px) scale(0.97);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
+
 @keyframes o26Slide {
-  from { opacity: 0; transform: translateX(-56px); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateX(-56px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
+
 @keyframes o26Grow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
+  from {
+    transform: scaleY(0);
+  }
+
+  to {
+    transform: scaleY(1);
+  }
 }
+
 @keyframes o26Zoom {
-  from { transform: scale(1.2); }
-  to { transform: scale(1); }
+  from {
+    transform: scale(1.2);
+  }
+
+  to {
+    transform: scale(1);
+  }
 }
+
 @keyframes o26Pop {
-  from { opacity: 0; transform: translateY(-10px) scale(0.96); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
+
 @keyframes o26Float {
-  0%, 100% { transform: translateY(0) rotate(-6deg); }
-  50% { transform: translateY(-18px) rotate(6deg); }
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+
+  50% {
+    transform: translateY(-18px) rotate(6deg);
+  }
 }
+
 @keyframes o26Glow {
-  0%, 100% { filter: drop-shadow(0 0 0 rgba(255, 90, 20, 0)); }
-  50% { filter: drop-shadow(0 0 14px rgba(255, 110, 20, 0.55)); }
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 0 rgba(255, 90, 20, 0));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 14px rgba(255, 110, 20, 0.55));
+  }
 }
+
 @keyframes o26Spark {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.12); opacity: 0.85; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.12);
+    opacity: 0.85;
+  }
 }
 
 /* Header ------------------------------------------------------------------- */
@@ -88,9 +158,14 @@ html:has(#o26-root) body {
   border-radius: 0 0 28px 28px;
   box-shadow: inset 0 1px 0 rgba(253, 251, 244, 0.1), 0 14px 40px -8px rgba(11, 16, 32, 0.35), 0 4px 12px -4px rgba(11, 16, 32, 0.2);
 }
+
 @media (max-width: 768px) {
-  #o26-header { background-size: auto, 540px 540px; border-radius: 0 0 22px 22px; }
+  #o26-header {
+    background-size: auto, 540px 540px;
+    border-radius: 0 0 22px 22px;
+  }
 }
+
 .o26-nav {
   position: relative;
   height: 76px;
@@ -102,14 +177,22 @@ html:has(#o26-root) body {
   align-items: center;
   gap: 12px;
 }
+
 .o26-hl,
 .o26-hr {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.o26-hl { justify-content: flex-start; }
-.o26-hr { justify-content: flex-end; }
+
+.o26-hl {
+  justify-content: flex-start;
+}
+
+.o26-hr {
+  justify-content: flex-end;
+}
+
 #o26-root .o26-hlink {
   display: flex;
   align-items: center;
@@ -122,13 +205,18 @@ html:has(#o26-root) body {
   font-size: 15px;
   transition: background-color 0.35s ease, color 0.35s ease;
 }
+
 #o26-root .o26-hlink:hover,
 #o26-root .o26-hlink:focus-visible,
 #o26-root .o26-hlink[aria-current="page"] {
   background: rgba(253, 251, 244, 0.08);
   color: #f9a90b;
 }
-.o26-hmob { display: none !important; }
+
+.o26-hmob {
+  display: none !important;
+}
+
 .o26-menu-btn {
   margin-right: auto;
   width: 46px;
@@ -142,10 +230,26 @@ html:has(#o26-root) body {
   cursor: pointer;
   padding: 0;
 }
-.o26-logo-link { display: block; line-height: 0; padding: 6px 26px; }
+
+.o26-logo-link {
+  display: block;
+  line-height: 0;
+  padding: 6px 26px;
+}
+
 /* The living flame canvas (1093×1237); the story lands the burning logo on this slot. */
-#o26-hlogo { display: block; height: 66px; width: auto; aspect-ratio: 1093 / 1237; }
-#o26-hlogo canvas { height: 100% !important; width: auto !important; }
+#o26-hlogo {
+  display: block;
+  height: 66px;
+  width: auto;
+  aspect-ratio: 1093 / 1237;
+}
+
+#o26-hlogo canvas {
+  height: 100% !important;
+  width: auto !important;
+}
+
 #o26-root .o26-mob-cta {
   margin-left: auto;
   align-items: center;
@@ -159,6 +263,7 @@ html:has(#o26-root) body {
   font-size: 15px;
   box-shadow: 0 8px 20px rgba(249, 169, 11, 0.3);
 }
+
 .o26-menu {
   position: absolute;
   top: 72px;
@@ -177,6 +282,7 @@ html:has(#o26-root) body {
   transform-origin: top left;
   animation: o26Pop 0.25s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
+
 #o26-root .o26-menu a {
   display: flex;
   align-items: center;
@@ -189,11 +295,17 @@ html:has(#o26-root) body {
   font-weight: 600;
   font-size: 19px;
 }
+
 #o26-root .o26-menu a:hover,
 #o26-root .o26-menu a:focus-visible {
   background: #f4efe2;
 }
-.o26-menu-num { width: 26px; font-size: 13px; color: #0a5470; }
+
+.o26-menu-num {
+  width: 26px;
+  font-size: 13px;
+  color: #0a5470;
+}
 
 /* Scroll story --------------------------------------------------------------- */
 #o26-story {
@@ -201,6 +313,7 @@ html:has(#o26-root) body {
   height: calc(100vh + 6500px);
   background: #fdfbf4 url("/landing/tex-cream.webp") repeat center top / 760px 760px;
 }
+
 #o26-stage {
   position: sticky;
   top: 0;
@@ -208,15 +321,22 @@ html:has(#o26-root) body {
   overflow: hidden;
   background: #0b1020;
 }
+
 /*
  * The pinned stage always covers the whole screen. 100lvh is the tallest the screen gets (browser toolbars
  * slid away), so the next page never shows below the story when a phone's toolbar collapses; it is also
  * a fixed size, so the story is not rebuilt each time the toolbar moves.
  */
 @supports (height: 100lvh) {
-  #o26-story { height: calc(100lvh + 6500px); }
-  #o26-stage { height: 100lvh; }
+  #o26-story {
+    height: calc(100lvh + 6500px);
+  }
+
+  #o26-stage {
+    height: 100lvh;
+  }
 }
+
 /*
  * Shorter on phones: the pinned scroll length here must match StoryIntro.tsx's MOBILE_LEN —
  * 6500px of ~300px swipes is 20+ flicks of an apparently unchanging screen, which reads as stuck
@@ -224,16 +344,24 @@ html:has(#o26-root) body {
  * win on a matching screen regardless of 100lvh support.
  */
 @media (max-width: 760px) {
-  #o26-story { height: calc(100vh + 3200px); }
-}
-@supports (height: 100lvh) {
-  @media (max-width: 760px) {
-    #o26-story { height: calc(100lvh + 3200px); }
+  #o26-story {
+    height: calc(100vh + 3200px);
   }
 }
+
+@supports (height: 100lvh) {
+  @media (max-width: 760px) {
+    #o26-story {
+      height: calc(100lvh + 3200px);
+    }
+  }
+}
+
 /* No rubber-band bounce at the top or bottom of the page on desktop pointers. */
 @media (hover: hover) and (pointer: fine) {
-  html:has(#o26-root) { overscroll-behavior-y: none; }
+  html:has(#o26-root) {
+    overscroll-behavior-y: none;
+  }
 }
 
 /* The cream day that spreads out from the snap and covers the night. */
@@ -243,6 +371,7 @@ html:has(#o26-root) body {
   overflow: hidden;
   pointer-events: none;
 }
+
 /* A flat cream circle that grows from the middle (scale only, so the browser never repaints it). */
 #o26-day-disc {
   position: absolute;
@@ -255,6 +384,7 @@ html:has(#o26-root) body {
   background: #fdfbf4;
   will-change: transform;
 }
+
 /* The warm glow behind the burning logo. */
 #logoglow {
   position: absolute;
@@ -267,6 +397,7 @@ html:has(#o26-root) body {
   opacity: 0;
   pointer-events: none;
 }
+
 /*
  * The paper pattern behind the story. It is its own layer moved with a transform (cheap, on the GPU) as
  * the page scrolls, so it travels like the page beneath the pinned stage without repainting a big background.
@@ -280,19 +411,51 @@ html:has(#o26-root) body {
   will-change: transform;
   pointer-events: none;
 }
-.o26-tex-navy { background: url("/landing/tex-navy.webp") repeat center top / 760px 760px; }
-.o26-tex-cream { background: url("/landing/tex-cream.webp") repeat center top / 760px 760px; }
+
+.o26-tex-navy {
+  background: url("/landing/tex-navy.webp") repeat center top / 760px 760px;
+}
+
+.o26-tex-cream {
+  background: url("/landing/tex-cream.webp") repeat center top / 760px 760px;
+}
+
 @media (max-width: 760px) {
-  .o26-tex { bottom: -540px; }
-  .o26-tex-navy, .o26-tex-cream { background-size: 540px 540px; }
+  .o26-tex {
+    bottom: -540px;
+  }
+
+  .o26-tex-navy,
+  .o26-tex-cream {
+    background-size: 540px 540px;
+  }
 }
+
 @keyframes o26Twinkle {
-  0%, 100% { opacity: 0.25; }
-  50% { opacity: 0.95; }
+
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
 }
-.o26-star { animation: o26Twinkle 3s ease-in-out infinite; }
-.o26-star:nth-child(2n) { animation-delay: -1.3s; animation-duration: 4.1s; }
-.o26-star:nth-child(3n) { animation-delay: -2.1s; }
+
+.o26-star {
+  animation: o26Twinkle 3s ease-in-out infinite;
+}
+
+.o26-star:nth-child(2n) {
+  animation-delay: -1.3s;
+  animation-duration: 4.1s;
+}
+
+.o26-star:nth-child(3n) {
+  animation-delay: -2.1s;
+}
+
 #o26-world {
   position: absolute;
   left: 0;
@@ -301,6 +464,7 @@ html:has(#o26-root) body {
   height: 1080px;
   transform-origin: 0 0;
 }
+
 /* StoryIntro sizes the boy's canvas to the visible window of the scene (it can be bigger than 1920×1080). */
 #o26-world .o26-boy {
   position: absolute;
@@ -310,6 +474,7 @@ html:has(#o26-root) body {
   height: 1080px;
   max-width: none;
 }
+
 #o26-world svg,
 #o26-world .o26-layer {
   position: absolute;
@@ -320,6 +485,7 @@ html:has(#o26-root) body {
   max-width: none;
   overflow: visible;
 }
+
 #firevid {
   position: absolute;
   left: 410px;
@@ -328,13 +494,18 @@ html:has(#o26-root) body {
   height: 1100px;
   opacity: 0;
 }
+
 #firevid video,
 #firevid img {
   width: 100%;
   height: 100%;
   max-width: none;
 }
-#i-fire { display: none; }
+
+#i-fire {
+  display: none;
+}
+
 #logo {
   position: absolute;
   left: 700.74px;
@@ -343,6 +514,7 @@ html:has(#o26-root) body {
   height: 587.96px;
   opacity: 0;
 }
+
 /* The flame canvas is 1093×1237 (logo plus 30px of padding for swinging tongues) and fills the #logo box. */
 #logo .o26-logo-art {
   position: absolute;
@@ -351,6 +523,7 @@ html:has(#o26-root) body {
   width: 100%;
   height: 100%;
 }
+
 #o26-scrub {
   position: absolute;
   z-index: 5;
@@ -362,12 +535,14 @@ html:has(#o26-root) body {
   background: rgba(253, 251, 244, 0.22);
   overflow: hidden;
 }
+
 #o26-scrub-fill {
   width: 0%;
   height: 100%;
   border-radius: 2px;
   background: linear-gradient(90deg, #0a5470, #f9a90b, #ff4520);
 }
+
 /*
  * Floating CTA so the story can be skipped straight to booking instead of scrolled through.
  * Its opacity/transform are driven entirely from StoryIntro's per-frame scroll loop (time-based
@@ -376,9 +551,17 @@ html:has(#o26-root) body {
  * The transition just smooths those JS-driven changes; the glow pulse only touches box-shadow.
  */
 @keyframes o26BookCtaGlow {
-  0%, 100% { box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 0 rgba(249, 169, 11, 0); }
-  50% { box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 22px rgba(249, 169, 11, 0.85); }
+
+  0%,
+  100% {
+    box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 0 rgba(249, 169, 11, 0);
+  }
+
+  50% {
+    box-shadow: 0 10px 24px rgba(11, 16, 32, 0.45), 0 0 22px rgba(249, 169, 11, 0.85);
+  }
 }
+
 #o26-root .o26-bookcta {
   position: absolute;
   z-index: 6;
@@ -400,10 +583,12 @@ html:has(#o26-root) body {
   transition: opacity 0.25s ease, transform 0.25s ease;
   animation: o26BookCtaGlow 2.6s ease-in-out 2.8s infinite;
 }
+
 #o26-root .o26-bookcta:hover,
 #o26-root .o26-bookcta:focus-visible {
   color: #0b1020;
 }
+
 @media (max-width: 768px) {
   .o26-bookcta {
     right: 14px;
@@ -420,18 +605,24 @@ html:has(#o26-root) body {
   margin: 0 auto;
   box-sizing: border-box;
 }
+
 .o26-h1 {
   margin: 0;
   font-weight: 600;
   font-size: clamp(44px, 6.4vw, 84px);
   line-height: 0.98;
 }
+
 .o26-h2 {
   margin: 0;
   font-weight: 600;
   font-size: clamp(34px, 4.4vw, 52px);
 }
-.o26-hot { color: #ff4520; }
+
+.o26-hot {
+  color: #ff4520;
+}
+
 .o26-eyebrow {
   display: flex;
   align-items: center;
@@ -442,6 +633,7 @@ html:has(#o26-root) body {
   text-transform: uppercase;
   color: #0a5470;
 }
+
 .o26-lead {
   margin: 0;
   font-size: clamp(17px, 1.6vw, 19px);
@@ -450,20 +642,25 @@ html:has(#o26-root) body {
   max-width: 560px;
 }
 
-#rekindle { position: relative; }
-#rekindle > div {
+#rekindle {
+  position: relative;
+}
+
+#rekindle>div {
   padding: clamp(56px, 7vw, 104px) 24px clamp(48px, 6vw, 88px);
   display: flex;
   flex-wrap: wrap;
   gap: clamp(28px, 4vw, 64px);
   align-items: flex-start;
 }
+
 .o26-col {
   flex: 1 1 440px;
   min-width: 0;
   display: flex;
   flex-direction: column;
 }
+
 .o26-quote {
   margin: 6px 0 0;
   padding: 22px 26px;
@@ -476,6 +673,7 @@ html:has(#o26-root) body {
   max-width: 560px;
   box-sizing: border-box;
 }
+
 .o26-quote cite {
   display: block;
   margin-top: 10px;
@@ -485,7 +683,14 @@ html:has(#o26-root) body {
   letter-spacing: 1.5px;
   color: #f9a90b;
 }
-.o26-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+
+.o26-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
 #o26-root .o26-cta {
   display: flex;
   align-items: center;
@@ -500,6 +705,7 @@ html:has(#o26-root) body {
   font-size: 19px;
   box-shadow: 0 14px 30px rgba(249, 169, 11, 0.35);
 }
+
 #o26-root .o26-cta-ghost {
   display: flex;
   align-items: center;
@@ -512,7 +718,13 @@ html:has(#o26-root) body {
   font-weight: 600;
   font-size: 16px;
 }
-.o26-h-steps { margin: 0; font-weight: 600; font-size: clamp(28px, 3vw, 38px); }
+
+.o26-h-steps {
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(28px, 3vw, 38px);
+}
+
 #steps {
   list-style: none;
   margin: 0;
@@ -521,7 +733,8 @@ html:has(#o26-root) body {
   flex-direction: column;
   gap: 12px;
 }
-#steps > li {
+
+#steps>li {
   display: flex;
   gap: 16px;
   align-items: flex-start;
@@ -530,6 +743,7 @@ html:has(#o26-root) body {
   background: #fff;
   box-shadow: 0 10px 26px rgba(11, 16, 32, 0.06);
 }
+
 .o26-step-ic {
   flex-shrink: 0;
   width: 48px;
@@ -540,10 +754,30 @@ html:has(#o26-root) body {
   justify-content: center;
   animation: o26Spark 3s ease-in-out infinite;
 }
-.o26-step-body { display: flex; flex-direction: column; gap: 4px; }
-.o26-step-k { font-size: 12px; font-weight: 600; letter-spacing: 1.5px; color: #0a5470; }
-.o26-step-t { font-weight: 600; font-size: 21px; }
-.o26-step-d { font-size: 15px; line-height: 1.6; color: #2e3443; }
+
+.o26-step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.o26-step-k {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  color: #0a5470;
+}
+
+.o26-step-t {
+  font-weight: 600;
+  font-size: 21px;
+}
+
+.o26-step-d {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #2e3443;
+}
 
 #about {
   padding: clamp(24px, 4vw, 48px) 24px clamp(40px, 5vw, 64px);
@@ -552,29 +786,74 @@ html:has(#o26-root) body {
   gap: 40px;
   align-items: flex-start;
 }
-#about > div { flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; }
-#about > div:first-child { gap: 14px; }
-#about > div:first-child .o26-eyebrow { letter-spacing: 1.5px; }
-#about > div:last-child { gap: 18px; font-size: 17px; line-height: 1.7; color: #2e3443; }
-#about p { margin: 0; }
-.o26-h-about { margin: 0; font-weight: 600; font-size: clamp(36px, 4.6vw, 58px); line-height: 1.02; }
-.o26-ref { font-weight: 600; color: #0a5470; }
 
-.o26-stats-wrap { padding: 0 24px clamp(64px, 8vw, 110px); }
+#about>div {
+  flex: 1 1 420px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#about>div:first-child {
+  gap: 14px;
+}
+
+#about>div:first-child .o26-eyebrow {
+  letter-spacing: 1.5px;
+}
+
+#about>div:last-child {
+  gap: 18px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: #2e3443;
+}
+
+#about p {
+  margin: 0;
+}
+
+.o26-h-about {
+  margin: 0;
+  font-weight: 600;
+  font-size: clamp(36px, 4.6vw, 58px);
+  line-height: 1.02;
+}
+
+.o26-ref {
+  font-weight: 600;
+  color: #0a5470;
+}
+
+.o26-stats-wrap {
+  padding: 0 24px clamp(64px, 8vw, 110px);
+}
+
 #stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(8px, 2vw, 20px);
 }
-#stats > div {
+
+#stats>div {
   padding: clamp(16px, 3vw, 32px);
   border-radius: 28px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.o26-stat-n { font-weight: 600; font-size: clamp(32px, 7vw, 72px); line-height: 1; font-variant-numeric: tabular-nums; }
-.o26-stat-l { font-size: clamp(13px, 1.6vw, 16px); font-weight: 500; }
+
+.o26-stat-n {
+  font-weight: 600;
+  font-size: clamp(32px, 7vw, 72px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.o26-stat-l {
+  font-size: clamp(13px, 1.6vw, 16px);
+  font-weight: 500;
+}
 
 #plan {
   padding: 0 24px clamp(64px, 8vw, 110px);
@@ -582,13 +861,26 @@ html:has(#o26-root) body {
   flex-direction: column;
   gap: 24px;
 }
-.o26-plan-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; }
-.o26-plan-sub { font-size: 16px; color: #4a5160; }
+
+.o26-plan-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.o26-plan-sub {
+  font-size: 16px;
+  color: #4a5160;
+}
+
 .o26-plan {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: 20px;
 }
+
 #o26-root .o26-plan a {
   position: relative;
   overflow: hidden;
@@ -603,27 +895,75 @@ html:has(#o26-root) body {
   box-shadow: 0 20px 40px rgba(11, 16, 32, 0.14);
   transition: transform 0.3s cubic-bezier(0.2, 0.7, 0.2, 1), box-shadow 0.3s;
 }
+
 #o26-root .o26-plan a:hover,
 #o26-root .o26-plan a:focus-visible {
   transform: translateY(-6px);
   box-shadow: 0 28px 50px rgba(11, 16, 32, 0.22);
 }
-.o26-plan-k { font-size: 13px; font-weight: 600; letter-spacing: 2px; }
-.o26-plan-t { font-weight: 600; font-size: clamp(30px, 3vw, 38px); line-height: 1.05; }
-.o26-plan-d { font-size: 15px; line-height: 1.6; opacity: 0.9; }
-.o26-plan-go { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 16px; }
-.o26-plan-go svg { transition: transform 0.3s; }
-.o26-plan a:hover .o26-plan-go svg { transform: translateX(4px); }
 
-#faq { background: rgba(244, 239, 226, 0.55); border-radius: 48px 48px 0 0; }
-#faq > div {
+.o26-plan-k {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.o26-plan-t {
+  font-weight: 600;
+  font-size: clamp(30px, 3vw, 38px);
+  line-height: 1.05;
+}
+
+.o26-plan-d {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.o26-plan-go {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.o26-plan-go svg {
+  transition: transform 0.3s;
+}
+
+.o26-plan a:hover .o26-plan-go svg {
+  transform: translateX(4px);
+}
+
+#faq {
+  background: rgba(244, 239, 226, 0.55);
+  border-radius: 48px 48px 0 0;
+}
+
+#faq>div {
   padding: clamp(64px, 8vw, 110px) 24px;
   display: flex;
   flex-wrap: wrap;
   gap: 40px;
 }
-.o26-faq-l { flex: 1 1 360px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.o26-faq-r { flex: 1 1 460px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+
+.o26-faq-l {
+  flex: 1 1 360px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.o26-faq-r {
+  flex: 1 1 460px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .o26-map {
   height: 280px;
   border-radius: 28px;
@@ -635,15 +975,38 @@ html:has(#o26-root) body {
   font-weight: 600;
   font-size: 15px;
 }
-#faq details { background: #fff; border-radius: 20px; padding: 20px 24px; }
-#faq summary { cursor: pointer; font-weight: 600; font-size: 21px; }
-#faq details p { margin: 12px 0 0; font-size: 16px; line-height: 1.6; color: #2e3443; }
 
-.o26-footer { background: #0b1020 url("/landing/tex-navy.webp") repeat center top / 760px 760px; color: #fdfbf4; }
-@media (max-width: 760px) {
-  .o26-footer { background-size: 540px 540px; }
+#faq details {
+  background: #fff;
+  border-radius: 20px;
+  padding: 20px 24px;
 }
-.o26-footer > div {
+
+#faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 21px;
+}
+
+#faq details p {
+  margin: 12px 0 0;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #2e3443;
+}
+
+.o26-footer {
+  background: #0b1020 url("/landing/tex-navy.webp") repeat center top / 760px 760px;
+  color: #fdfbf4;
+}
+
+@media (max-width: 760px) {
+  .o26-footer {
+    background-size: 540px 540px;
+  }
+}
+
+.o26-footer>div {
   padding: 56px 24px 40px;
   display: flex;
   flex-direction: column;
@@ -651,34 +1014,142 @@ html:has(#o26-root) body {
   text-align: center;
   gap: 18px;
 }
-.o26-foot-name { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.o26-foot-title { font-weight: 600; font-size: 30px; color: #f9a90b; }
-.o26-foot-org { font-size: 14px; color: #c9ccd8; }
-.o26-foot-rule { width: min(420px, 80%); height: 1px; background: linear-gradient(90deg, rgba(249, 169, 11, 0), rgba(249, 169, 11, 0.45), rgba(249, 169, 11, 0)); }
-.o26-foot-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 28px; font-size: 15px; }
-#o26-root .o26-foot-links a { color: #fdfbf4; padding: 10px 0; text-decoration: none; transition: color 0.3s ease; }
+
+.o26-foot-name {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.o26-foot-title {
+  font-weight: 600;
+  font-size: 30px;
+  color: #f9a90b;
+}
+
+.o26-foot-org {
+  font-size: 14px;
+  color: #c9ccd8;
+}
+
+.o26-foot-rule {
+  width: min(420px, 80%);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(249, 169, 11, 0), rgba(249, 169, 11, 0.45), rgba(249, 169, 11, 0));
+}
+
+.o26-foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 28px;
+  font-size: 15px;
+}
+
+#o26-root .o26-foot-links a {
+  color: #fdfbf4;
+  padding: 10px 0;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
 #o26-root .o26-foot-links a:hover,
-#o26-root .o26-foot-links a:focus-visible { color: #f9a90b; }
-.o26-foot-links span { padding: 10px 0; }
+#o26-root .o26-foot-links a:focus-visible {
+  color: #f9a90b;
+}
+
+.o26-foot-links span {
+  padding: 10px 0;
+}
+
 @keyframes o26FtFlame {
-  0%, 100% { transform: scale(1, 1) skewX(0deg); }
-  25% { transform: scale(1.02, 1.05) skewX(-1.6deg); }
-  50% { transform: scale(0.99, 1.01) skewX(1.2deg); }
-  75% { transform: scale(1.015, 1.04) skewX(-0.8deg); }
+
+  0%,
+  100% {
+    transform: scale(1, 1) skewX(0deg);
+  }
+
+  25% {
+    transform: scale(1.02, 1.05) skewX(-1.6deg);
+  }
+
+  50% {
+    transform: scale(0.99, 1.01) skewX(1.2deg);
+  }
+
+  75% {
+    transform: scale(1.015, 1.04) skewX(-0.8deg);
+  }
 }
+
 @keyframes o26FtSpark {
-  0% { opacity: 0; transform: translate(0, 0) scale(1); }
-  15% { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--dx), -52px) scale(0.4); }
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(1);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), -52px) scale(0.4);
+  }
 }
-.o26-ft-logo { position: relative; width: 96px; height: 96px; display: flex; align-items: flex-end; justify-content: center; }
+
+.o26-ft-logo {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
 /* The same living flame logo as the header. */
-.o26-ft-flame { position: relative; display: block; height: 96px; width: auto; aspect-ratio: 1093 / 1237; }
-.o26-ft-flame canvas { height: 100% !important; width: auto !important; }
-.o26-ft-spark { position: absolute; bottom: 26px; width: 4px; height: 4px; border-radius: 50%; background: #f9a90b; opacity: 0; animation: o26FtSpark 2.4s ease-out infinite; }
-.o26-ft-spark:nth-of-type(1) { left: 44%; --dx: -14px; }
-.o26-ft-spark:nth-of-type(2) { left: 56%; --dx: 12px; animation-delay: 0.8s; background: #ff7a2e; }
-.o26-ft-spark:nth-of-type(3) { left: 50%; --dx: -4px; animation-delay: 1.6s; }
+.o26-ft-flame {
+  position: relative;
+  display: block;
+  height: 96px;
+  width: auto;
+  aspect-ratio: 1093 / 1237;
+}
+
+.o26-ft-flame canvas {
+  height: 100% !important;
+  width: auto !important;
+}
+
+.o26-ft-spark {
+  position: absolute;
+  bottom: 26px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f9a90b;
+  opacity: 0;
+  animation: o26FtSpark 2.4s ease-out infinite;
+}
+
+.o26-ft-spark:nth-of-type(1) {
+  left: 44%;
+  --dx: -14px;
+}
+
+.o26-ft-spark:nth-of-type(2) {
+  left: 56%;
+  --dx: 12px;
+  animation-delay: 0.8s;
+  background: #ff7a2e;
+}
+
+.o26-ft-spark:nth-of-type(3) {
+  left: 50%;
+  --dx: -4px;
+  animation-delay: 1.6s;
+}
 
 /* A soft diagonal glass sheen fixed over the paper; the content sits above it. */
 .o26-glass {
@@ -694,15 +1165,32 @@ html:has(#o26-root) body {
     rgba(253, 251, 244, 0.34);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), inset 0 0 120px rgba(255, 255, 255, 0.18);
 }
-#o26-root > section,
-#o26-root > main,
-#o26-root > footer { position: relative; z-index: 1; }
+
+#o26-root>section,
+#o26-root>main,
+#o26-root>footer {
+  position: relative;
+  z-index: 1;
+}
 
 /* Motion --------------------------------------------------------------------- */
-.o26-note { animation: o26Float 6s ease-in-out infinite; }
-.o26-note:nth-child(2n) { animation-duration: 7.5s; animation-delay: -2s; }
-.o26-note:nth-child(3n) { animation-duration: 5.2s; animation-delay: -4s; }
-.o26-logo-glow { animation: o26Glow 3.2s ease-in-out infinite; }
+.o26-note {
+  animation: o26Float 6s ease-in-out infinite;
+}
+
+.o26-note:nth-child(2n) {
+  animation-duration: 7.5s;
+  animation-delay: -2s;
+}
+
+.o26-note:nth-child(3n) {
+  animation-duration: 5.2s;
+  animation-delay: -4s;
+}
+
+.o26-logo-glow {
+  animation: o26Glow 3.2s ease-in-out infinite;
+}
 
 /* IntersectionObserver fallback for browsers without scroll-driven animations. */
 .o26-io {
@@ -710,16 +1198,24 @@ html:has(#o26-root) body {
   transform: translateY(60px) scale(0.97);
   transition: opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1), transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
 }
-.o26-io.o26-io-x { transform: translateX(-56px); }
-.o26-io.o26-seen { opacity: 1; transform: none; }
+
+.o26-io.o26-io-x {
+  transform: translateX(-56px);
+}
+
+.o26-io.o26-seen {
+  opacity: 1;
+  transform: none;
+}
 
 @media (prefers-reduced-motion: no-preference) {
   @supports (animation-timeline: view()) {
-    #rekindle > div > *,
-    #steps > li,
-    #about > div,
-    #stats > div,
-    #plan > div,
+
+    #rekindle>div>*,
+    #steps>li,
+    #about>div,
+    #stats>div,
+    #plan>div,
     #faq h2,
     #faq [role="img"],
     #faq details {
@@ -727,22 +1223,27 @@ html:has(#o26-root) body {
       animation-timeline: view();
       animation-range: entry 5% cover 30%;
     }
-    #steps > li:nth-child(2),
-    #about > div:nth-child(2),
-    #stats > div:nth-child(2),
+
+    #steps>li:nth-child(2),
+    #about>div:nth-child(2),
+    #stats>div:nth-child(2),
     #faq details:nth-of-type(2n) {
       animation-range: entry 12% cover 36%;
     }
-    #steps > li:nth-child(3),
-    #stats > div:nth-child(3) {
+
+    #steps>li:nth-child(3),
+    #stats>div:nth-child(3) {
       animation-range: entry 19% cover 42%;
     }
-    #steps > li:nth-child(4) {
+
+    #steps>li:nth-child(4) {
       animation-range: entry 26% cover 48%;
     }
   }
 }
+
 @media (prefers-reduced-motion: reduce) {
+
   .o26-note,
   .o26-logo-glow,
   .o26-step-ic,
@@ -750,6 +1251,7 @@ html:has(#o26-root) body {
   .o26-ft-spark {
     animation: none !important;
   }
+
   .o26-bookcta {
     animation: none !important;
     transition: none !important;
@@ -757,22 +1259,32 @@ html:has(#o26-root) body {
     transform: none !important;
     pointer-events: auto !important;
   }
+
   .o26-io {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
   }
+
   html:has(#o26-root) {
     scroll-behavior: auto;
   }
 }
 
 @media (max-width: 768px) {
-  .o26-hdesk { display: none !important; }
-  .o26-hmob { display: flex !important; }
+  .o26-hdesk {
+    display: none !important;
+  }
+
+  .o26-hmob {
+    display: flex !important;
+  }
 }
+
 @media (max-width: 680px) {
-  #faq { border-radius: 28px; }
+  #faq {
+    border-radius: 28px;
+  }
 }
 
 /* Pages other than the landing page show the header from the start, in the page flow. */
@@ -794,28 +1306,84 @@ html:has(#o26-root) body {
   color: #fdfbf4;
   pointer-events: none;
 }
+
 .o26-tag-line {
   display: grid;
-  overflow: hidden; /* clips the rolls */
+  overflow: hidden;
+  /* clips the rolls */
   font-weight: 500;
   letter-spacing: 2px;
   font-size: 68px;
   line-height: 1.3;
   white-space: nowrap;
 }
+
 /* Each phrase is a whole "One …" line, centred; the grid is as wide as the widest. */
-.o26-tag-phrase { grid-area: 1 / 1; justify-self: center; opacity: 0; transform: translateY(110%); }
-.o26-tag-p1 { animation: tgCycle 1.6s linear calc(var(--tg) + 0.65s) forwards; }
-.o26-tag-p2 { animation: tgCycle 1.6s linear calc(var(--tg) + 2s) forwards; }
-.o26-tag-p3 { animation: tgIn 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) calc(var(--tg) + 3.35s) forwards; }
-@keyframes tgIn { from { opacity: 0; transform: translateY(110%); } to { opacity: 1; transform: none; } }
-@keyframes tgCycle {
-  0% { opacity: 0; transform: translateY(110%); animation-timing-function: cubic-bezier(0.2, 0.8, 0.25, 1); }
-  15.6% { opacity: 1; transform: none; }
-  84.4% { opacity: 1; transform: none; animation-timing-function: ease-in; }
-  100% { opacity: 0; transform: translateY(-110%); }
+.o26-tag-phrase {
+  grid-area: 1 / 1;
+  justify-self: center;
+  opacity: 0;
+  transform: translateY(110%);
 }
+
+.o26-tag-p1 {
+  animation: tgCycle 1.6s linear calc(var(--tg) + 0.65s) forwards;
+}
+
+.o26-tag-p2 {
+  animation: tgCycle 1.6s linear calc(var(--tg) + 2s) forwards;
+}
+
+.o26-tag-p3 {
+  animation: tgIn 0.25s cubic-bezier(0.2, 0.8, 0.25, 1) calc(var(--tg) + 3.35s) forwards;
+}
+
+@keyframes tgIn {
+  from {
+    opacity: 0;
+    transform: translateY(110%);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tgCycle {
+  0% {
+    opacity: 0;
+    transform: translateY(110%);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.25, 1);
+  }
+
+  15.6% {
+    opacity: 1;
+    transform: none;
+  }
+
+  84.4% {
+    opacity: 1;
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-110%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .o26-tag-p1, .o26-tag-p2 { display: none; }
-  .o26-tag-p3 { animation: none; opacity: 1; transform: none; }
+
+  .o26-tag-p1,
+  .o26-tag-p2 {
+    display: none;
+  }
+
+  .o26-tag-p3 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }

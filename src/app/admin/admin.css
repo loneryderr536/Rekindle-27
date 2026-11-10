@@ -25,7 +25,8 @@
   font-size: 18px;
   text-decoration: none;
 }
-#o26-admin-logo { display: block; height: 40px; width: auto; aspect-ratio: 1093 / 1237; }
+.o26-admin-logo { display: block; height: 40px; width: auto; aspect-ratio: 1093 / 1237; }
+.o26-admin-logo canvas { height: 100% !important; width: auto !important; }
 .o26-admin-links {
   display: flex;
   flex-wrap: wrap;
@@ -33,3 +34,40 @@
   gap: 2px;
 }
 #o26-root .o26-admin-links .o26-hlink { height: 40px; font-size: 14px; }
+
+/*
+ * Phone layout: mirrors the public header (menu button, centred title, pill on the right).
+ * Desktop is untouched; the phone-only block is hidden above 768px, the desktop row below it.
+ */
+.o26-admin-mob { display: none; }
+.o26-menu.o26-admin-menu { display: none; }
+
+@media (max-width: 768px) {
+  .o26-admin-desk { display: none !important; }
+  .o26-admin-bar { display: block; min-height: 0; padding: 0 clamp(16px, 3vw, 40px); }
+  .o26-admin-mob {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 10px;
+    height: 76px;
+  }
+  .o26-admin-mob-l { display: flex; justify-content: flex-start; }
+  .o26-admin-mob-r { display: flex; justify-content: flex-end; }
+  .o26-admin-menu-btn { display: inline-flex; margin-right: 0; flex-shrink: 0; }
+  .o26-admin-title-m { margin-right: 0; justify-content: center; font-size: 16px; white-space: nowrap; }
+  .o26-menu.o26-admin-menu { display: flex; }
+  #o26-root .o26-admin-mob-r .o26-hlink,
+  #o26-root .o26-admin-mob-r .o26-hlink:hover,
+  #o26-root .o26-admin-mob-r .o26-hlink:focus-visible {
+    height: 46px;
+    padding: 0 18px;
+    border-radius: 23px;
+    background: #f9a90b;
+    color: #0b1020;
+    font-size: 15px;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px rgba(249, 169, 11, 0.3);
+    cursor: pointer;
+  }
+}

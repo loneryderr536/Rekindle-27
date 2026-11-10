@@ -154,12 +154,12 @@ export function ScanStation() {
         <h2 id="manual-h" className="font-display text-xl font-bold text-plum">
           Manual check-in
         </h2>
-        <form onSubmit={runSearch} className="flex gap-2">
+        <form onSubmit={runSearch} className="flex items-stretch gap-2">
           <label className="field flex-1">
             <span className="sr-only">Booking code or phone</span>
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Booking code or phone" maxLength={40} />
           </label>
-          <button type="submit" className="btn-primary min-h-12">
+          <button type="submit" className="btn-primary min-h-12 shrink-0 !px-5">
             Search
           </button>
         </form>

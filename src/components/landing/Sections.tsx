@@ -122,7 +122,7 @@ export function AboutSection() {
       <div>
         <p>
           ONE·26 is a yearly evening of worship, Scripture and live music, presented by the Christos Marthoma Yuvajana
-          Sakyam &amp; Young Family Fellowship. It&apos;s planned with the young people of our nation in mind — and
+          Sakhyam &amp; Young Family Fellowship. It&apos;s planned with the young people of our nation in mind — and
           everyone is welcome.
         </p>
         <p>
@@ -198,7 +198,7 @@ export function LandingFooter() {
         </a>
         <div className="o26-foot-name">
           <span className="o26-foot-title o26-ff-fredoka">ONE·26</span>
-          <span className="o26-foot-org">Christos Marthoma Yuvajana Sakyam &amp; Young Family Fellowship</span>
+          <span className="o26-foot-org">Christos Marthoma Yuvajana Sakhyam &amp; Young Family Fellowship</span>
         </div>
         <div className="o26-foot-rule" aria-hidden="true" />
         <div className="o26-foot-links">

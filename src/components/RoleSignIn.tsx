@@ -34,7 +34,7 @@ export function RoleSignIn({ next, defaultRole = "guest", denied }: { next: stri
             role="tab"
             aria-selected={role === t.role}
             onClick={() => setRole(t.role)}
-            className={`flex-1 rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
+            className={`flex min-h-11 flex-1 items-center justify-center rounded-full px-1.5 py-2 text-center text-[13px] font-semibold leading-tight transition-colors sm:px-3 sm:text-sm ${
               role === t.role ? "bg-marigold text-ink" : "text-muted"
             }`}
           >

@@ -1,11 +1,7 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { AdminLogout } from "@/components/AdminLogout";
-import { StaffBar } from "@/components/StaffBar";
+import { StaffBar, type StaffLink } from "@/components/StaffBar";
 
-const LINKS = [
+const LINKS: StaffLink[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/checkins", label: "Check-ins" },
   { href: "/admin/bookings", label: "Bookings" },
@@ -18,14 +14,8 @@ const LINKS = [
 
 /** The admin nav, in the same navy-textured bar as the public site and the gate scanner. */
 export function AdminHeader() {
-  const pathname = usePathname();
   return (
-    <StaffBar title="Admin">
-      {LINKS.map((l) => (
-        <Link key={l.href} href={l.href} className="o26-hlink" aria-current={pathname === l.href ? "page" : undefined}>
-          {l.label}
-        </Link>
-      ))}
+    <StaffBar title="Admin" links={LINKS}>
       <AdminLogout />
     </StaffBar>
   );

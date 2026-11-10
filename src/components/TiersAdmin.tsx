@@ -55,7 +55,7 @@ function TierRow({ tier }: { tier: TierView }) {
   return (
     <tr className="border-b border-line last:border-0">
       <td colSpan={4} className="p-3">
-        <form onSubmit={save} className="flex flex-wrap items-end gap-3">
+        <form onSubmit={save} className="flex flex-wrap items-end gap-3 max-sm:*:w-full">
           <label className="field"><span>Name</span><input required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></label>
           <label className="field"><span>Price (₹)</span><input required inputMode="decimal" value={rupees} onChange={(e) => setRupees(e.target.value)} /></label>
           <label className="field"><span>Colour</span><input required type="color" value={color} onChange={(e) => setColor(e.target.value)} className="!h-11 !p-1" /></label>
@@ -75,6 +75,14 @@ export function TiersAdmin({ tiers }: { tiers: TierView[] }) {
   const [color, setColor] = useState("#d4a017");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /** Cancel on the New tier form: forget what was typed and any error, so nothing is added. */
+  function resetNew() {
+    setName("");
+    setRupees("");
+    setColor("#d4a017");
+    setErr(null);
+  }
 
   async function create(e: FormEvent) {
     e.preventDefault();
@@ -101,12 +109,13 @@ export function TiersAdmin({ tiers }: { tiers: TierView[] }) {
           <tbody>{tiers.map((t) => <TierRow key={t.id} tier={t} />)}</tbody>
         </table>
       </div>
-      <form onSubmit={create} className="flex flex-wrap items-end gap-3 o26-card p-4">
+      <form onSubmit={create} className="flex flex-wrap items-end gap-3 o26-card p-4 max-sm:*:w-full">
         <h2 className="w-full font-display text-xl font-bold text-plum">New tier</h2>
         <label className="field"><span>Name</span><input required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} /></label>
         <label className="field"><span>Price (₹)</span><input required inputMode="decimal" value={rupees} onChange={(e) => setRupees(e.target.value)} /></label>
         <label className="field"><span>Colour</span><input required type="color" value={color} onChange={(e) => setColor(e.target.value)} className="!h-11 !p-1" /></label>
         <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Adding..." : "Add tier"}</button>
+        <button type="button" className="btn-ghost" disabled={busy} onClick={resetNew}>Cancel</button>
         {err && <p role="alert" className="w-full text-sm text-danger">{err}</p>}
       </form>
     </div>

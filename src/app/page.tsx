@@ -18,7 +18,7 @@ function daysToGo(now: number = Date.now()): number {
 export const metadata: Metadata = {
   title: { absolute: "ONE·26 Rekindle" },
   description:
-    "ONE·26 Rekindle — an evening of worship, Scripture and live music on 26 January 2027, presented by the Christos Marthoma Yuvajana Sakyam & Young Family Fellowship.",
+    "ONE·26 Rekindle — an evening of worship, Scripture and live music on 26 January 2027, presented by the Christos Marthoma Yuvajana Sakhyam & Young Family Fellowship.",
 };
 
 export const viewport: Viewport = { themeColor: "#0B1020", viewportFit: "cover" };
